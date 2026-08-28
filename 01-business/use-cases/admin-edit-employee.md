@@ -27,14 +27,17 @@ Thông tin nhân viên được cập nhật.
 
 1. Chọn chỉnh sửa.
 2. Hệ thống hiển thị form.
-3. Nhập thay đổi.
-4. Hệ thống kiểm tra.
-5. Lưu dữ liệu.
+3. Nhập thay đổi account/profile, bao gồm thông tin liên hệ, role, lương hoặc ngày vào làm nếu được phân quyền.
+4. Có thể tải ảnh đại diện mới; hệ thống lưu file và cập nhật `employees.avatar_file_id`.
+5. Hệ thống kiểm tra.
+6. Lưu dữ liệu.
 
 ## Luồng thay thế / ngoại lệ
 
 - Hủy thao tác.
 - Thông tin không hợp lệ.
+- Email hoặc phone trùng account khác; lương âm.
+- File ảnh không hợp lệ hoặc upload thất bại.
 
 ## Ghi chú phạm vi
 

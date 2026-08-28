@@ -23,12 +23,16 @@
 - Mỗi variant chỉ có một `list_price`; không lưu thêm `price_sale`.
 - Effective selling price được tính từ `list_price` và discount đang áp dụng.
 - `list_price`, tồn kho `quantity` và các giá trị tiền không được âm.
+- `options.name` là unique; một variant có tối đa một option chưa bị xóa cho mỗi `options.type`.
 - Inventory MVP chỉ dùng stock tổng `product_variants.quantity`; không hỗ trợ `CONTINUE`, `BACKORDER`, reservation hoặc stock movement.
 - Khi đặt hàng, quantity yêu cầu không được vượt tồn kho hiện có.
 - Sản phẩm có thể ngừng trưng bày.
 - Report nói chỉ xóa sản phẩm khi chưa nhập về kho; khả năng chứng minh rule này phải được kiểm tra ở data design.
 - Danh mục chỉ được xóa nếu chưa có sản phẩm thuộc danh mục.
-- Nhà cung cấp chỉ được xóa nếu không còn liên kết với sản phẩm.
+- Product và supplier có quan hệ nhiều-nhiều qua `product_suppliers`; nhà cung cấp chỉ được xóa khi không còn liên kết với product.
+- File/media dùng `files` làm registry; entity nghiệp vụ chỉ lưu `file_id`, không lưu URL như identity.
+- Mỗi variant có tối đa một ảnh main đang `ACTIVE`; gallery ảnh liên kết với variant qua `product_images`.
+- Signed URL được resolve khi đọc và không phải source of truth của file.
 
 ## Cart & Order
 
@@ -36,6 +40,8 @@
 - Giỏ cho phép thêm, đổi số lượng và xóa mặt hàng.
 - Mỗi variant chỉ xuất hiện một lần trong cùng giỏ; thêm lại variant sẽ tăng/cập nhật quantity.
 - Giỏ có thể thuộc customer đã đăng nhập hoặc session của khách vãng lai.
+- Mỗi cart có chính xác một owner: `customer_id` hoặc `session_token`, không được đồng thời có cả hai hoặc thiếu cả hai.
+- Mỗi customer và mỗi guest session có tối đa một cart `ACTIVE`.
 - Đơn hàng được tạo từ giỏ.
 - Khi đặt hàng, người dùng cung cấp/chọn địa chỉ giao hàng, mã giảm giá nếu có và phương thức thanh toán.
 - Phương thức giao hàng được chọn từ danh mục `shipping_methods`.
@@ -75,7 +81,7 @@
   - `ALL_ITEMS`: không có category target và không có variant target.
   - `CATEGORY`: có ít nhất một category target và không có variant target.
   - `VARIANT`: có ít nhất một variant target và không có category target.
-- Invariant scope-target phải được kiểm tra atomically trong service transaction hoặc bằng database trigger; không được chỉ kiểm tra ở frontend.
+- Invariant scope-target được ghi atomically trong service transaction và được enforce lại bằng deferred database constraint trigger; không được chỉ kiểm tra ở frontend.
 - Mỗi `order_item` tối đa một item promotion.
 - Mỗi `order` tối đa một order voucher.
 - Item promotion và order voucher được cộng dồn theo thứ tự item trước, order sau.

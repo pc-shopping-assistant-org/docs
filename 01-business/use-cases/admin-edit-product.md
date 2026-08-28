@@ -27,13 +27,17 @@ Thông tin sản phẩm được cập nhật.
 
 1. Chọn chỉnh sửa.
 2. Hệ thống hiển thị form.
-3. Nhập thay đổi.
+3. Chỉnh sửa thông tin product, category, supplier, specifications hoặc mô tả.
 4. Xác nhận.
-5. Hệ thống kiểm tra và lưu.
+5. Hệ thống thay đổi product cùng các liên kết `product_suppliers` trong một transaction.
 
 ## Luồng thay thế / ngoại lệ
 
 - Thông tin không hợp lệ.
+- Category không tồn tại hoặc không thể sử dụng.
+- Supplier được chọn không tồn tại hoặc không active.
+
+Gallery ảnh thuộc variant và không được cập nhật gián tiếp bằng use case này.
 
 ## Ghi chú phạm vi
 

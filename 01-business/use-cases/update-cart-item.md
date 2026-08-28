@@ -27,11 +27,13 @@ Số lượng mặt hàng trong giỏ được cập nhật.
 
 1. Mở giỏ hàng.
 2. Thay đổi số lượng.
-3. Hệ thống kiểm tra và cập nhật giỏ.
+3. Hệ thống xác minh cart thuộc customer/session hiện tại.
+4. Hệ thống kiểm tra quantity dương, không vượt tồn kho và cập nhật dòng hiện tại.
 
 ## Luồng thay thế / ngoại lệ
 
-- Số lượng không hợp lệ.
+- Số lượng không dương hoặc vượt tồn kho.
+- Cart không thuộc customer/session hiện tại hoặc không còn `ACTIVE`.
 
 ## Ghi chú phạm vi
 

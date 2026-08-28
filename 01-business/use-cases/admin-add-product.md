@@ -27,14 +27,19 @@ Sản phẩm mới được lưu.
 
 1. Chọn thêm sản phẩm.
 2. Hệ thống hiển thị form.
-3. Nhập thông tin.
-4. Xác nhận.
-5. Hệ thống kiểm tra hợp lệ.
-6. Lưu sản phẩm và thông báo thành công.
+3. Nhập thông tin product và chọn đúng một category chính.
+4. Chọn không, một hoặc nhiều supplier đang active nếu có.
+5. Nhập specifications và mô tả nếu có.
+6. Xác nhận.
+7. Hệ thống lưu product cùng các liên kết `product_suppliers` trong một transaction và thông báo thành công.
 
 ## Luồng thay thế / ngoại lệ
 
 - Thông tin không hợp lệ → yêu cầu chỉnh sửa.
+- Category không tồn tại hoặc không thể sử dụng → từ chối lưu.
+- Supplier được chọn không tồn tại hoặc không active → từ chối lưu.
+
+Ảnh được quản lý theo variant trong use case thêm biến thể; product không giữ URL hoặc file ảnh trực tiếp.
 
 ## Ghi chú phạm vi
 

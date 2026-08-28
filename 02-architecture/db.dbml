@@ -25,22 +25,25 @@ Table employees {
   account_id uuid [pk, ref: - accounts.id]
   first_name varchar(100) [not null]
   last_name varchar(100) [not null]
-  avatar varchar(255)
+  avatar_file_id uuid [ref: > files.id]
   address varchar(255)
   gender varchar(10) [not null, note: 'MALE, FEMALE']
-  salary int [not null, default: 0]
+  salary bigint [not null, default: 0]
   birthday date
-  joined_at date
-  note text
+  joined_at date [not null, default: `current_date`]
   created_at timestamp [not null, default: `current_timestamp`]
   updated_at timestamp
+
+  checks {
+    `salary >= 0`
+  }
 }
 
 Table customers {
   account_id uuid [pk, ref: - accounts.id]
   first_name varchar(100) [not null]
   last_name varchar(100) [not null]
-  avatar varchar(255)
+  avatar_file_id uuid [ref: > files.id]
   gender varchar(10) [note: 'MALE, FEMALE, OTHER']
   birthday date
   created_at timestamp [not null, default: `current_timestamp`]
@@ -68,7 +71,7 @@ Table brands {
   name varchar(255) [not null, unique]
   seo_name varchar(255) [not null, unique]
   description text
-  image_url varchar(255)
+  image_file_id uuid [ref: > files.id]
   status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
   created_at timestamp [not null, default: `current_timestamp`]
 }
@@ -122,12 +125,13 @@ Table category_attributes {
 Table suppliers {
   id uuid [pk, default: `uuidv7()`]
   name varchar(255) [not null, unique]
-  email varchar(255) [not null, unique]
-  phone varchar(15) [not null]
+  email varchar(255) [unique]
+  phone varchar(15)
   address varchar(255)
   description text
   status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
   created_at timestamp [not null, default: `current_timestamp`]
+  updated_at timestamp
 }
 
 Table products {
@@ -136,10 +140,8 @@ Table products {
   seo_name varchar(255) [not null, unique]
   brand_id uuid
   category_id uuid [not null, ref: > categories.id, note: 'Primary category only; merchandising collections/tags are separate concepts']
-  supplier_id uuid
   specifications jsonb
   description text
-  image_url varchar(255)
   status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
   created_at timestamp [not null, default: `current_timestamp`]
   created_by uuid
@@ -154,11 +156,9 @@ Table product_variants {
   quantity int [not null, default: 0]
   sku varchar(100) [not null, unique]
   model varchar(100)
-  specifications jsonb
   description text
-  warranty varchar(100)
+  warranty_months int [not null]
   barcode varchar(100) [unique]
-  image_url varchar(255)
   release_at date
   status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
   created_at timestamp [not null, default: `current_timestamp`]
@@ -169,6 +169,17 @@ Table product_variants {
   checks {
     `list_price >= 0`
     `quantity >= 0`
+    `warranty_months > 0`
+  }
+}
+
+Table product_suppliers {
+  product_id uuid [not null, ref: > products.id]
+  supplier_id uuid [not null, ref: > suppliers.id]
+  created_at timestamp [not null, default: `current_timestamp`]
+
+  indexes {
+    (product_id, supplier_id) [pk]
   }
 }
 
@@ -176,13 +187,37 @@ Table product_images {
   id uuid [pk, default: `uuidv7()`]
   name varchar(255)
   product_variant_id uuid [not null, ref: > product_variants.id]
-  image_url varchar(255) [not null]
+  file_id uuid [not null, ref: > files.id]
   is_main boolean [not null, default: false]
   status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
   created_at timestamp [not null, default: `current_timestamp`]
 
+  indexes {
+    (product_variant_id, file_id) [unique]
+  }
+
   // Partial unique index is defined in 03-data/database-constraints.sql:
-  // one ACTIVE image with is_main=true per product variant.
+  // one ACTIVE image with is_main=true per product variant
+}
+
+Table files {
+  id uuid [pk, default: `uuidv7()`]
+  storage_provider varchar(30) [not null, note: 'LOCAL, S3, CLOUDINARY, ...']
+  storage_key varchar(500) [not null]
+  original_name varchar(255) [not null]
+  mime_type varchar(100) [not null]
+  size_bytes bigint [not null]
+  public_url varchar(2048)
+  status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, DELETED']
+  created_at timestamp [not null, default: `current_timestamp`]
+
+  indexes {
+    (storage_provider, storage_key) [unique]
+  }
+
+  checks {
+    `size_bytes >= 0`
+  }
 }
 
 Table product_reviews {
@@ -201,14 +236,11 @@ Table product_reviews {
 Table options {
   id uuid [pk, default: `uuidv7()`]
   type varchar(50) [not null, note: 'Loại: Màu sắc, Dung lượng, RAM...']
-  name varchar(100) [not null, note: 'Unique within type, not globally']
+  name varchar(100) [not null, unique]
   value text [not null, note: 'Giá trị tương ứng']
   status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
   created_at timestamp [not null, default: `current_timestamp`]
 
-  indexes {
-    (type, name) [unique]
-  }
 }
 
 Table variant_options {
@@ -245,6 +277,8 @@ Table discounts {
 
   checks {
     `start_at < end_at`
+    `min_order_amount >= 0`
+    `application_scope IN ('ORDER', 'ALL_ITEMS', 'CATEGORY', 'VARIANT')`
     `((discount_type = 'PERCENT' AND value > 0 AND value <= 100) OR (discount_type = 'FIXED' AND value > 0))`
   }
 }
@@ -375,6 +409,7 @@ Table payments {
 
   checks {
     `amount >= 0`
+    `((status = 'PAID' AND paid_at IS NOT NULL) OR (status IN ('PENDING', 'FAILED') AND paid_at IS NULL))`
   }
 }
 
@@ -384,7 +419,6 @@ Table payments {
 // =====================================================================
 Ref: categories.parent_id > categories.id
 Ref: products.brand_id > brands.id
-Ref: products.supplier_id > suppliers.id
 Ref: products.created_by > employees.account_id
 Ref: products.updated_by > employees.account_id
 Ref: product_variants.updated_by > employees.account_id
@@ -392,11 +426,9 @@ Ref: discounts.created_by > employees.account_id
 Ref: discounts.updated_by > employees.account_id
 Ref: orders.customer_id > customers.account_id
 Ref: orders.order_discount_id > discounts.id
-Ref: orders.shipping_method_id > shipping_methods.id
 Ref: orders.created_by > employees.account_id
 Ref: orders.updated_by > employees.account_id
 Ref: order_items.item_discount_id > discounts.id
 Ref: carts.customer_id > customers.account_id
-Ref: payments.payment_method_id > payment_methods.id
 Ref: payments.created_by > employees.account_id
 Ref: payments.updated_by > employees.account_id

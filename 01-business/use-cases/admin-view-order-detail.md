@@ -26,12 +26,12 @@ Xem chi tiết đơn hàng theo phạm vi nghiệp vụ được report mô tả
 ## Luồng chính
 
 1. Chọn một đơn hàng.
-2. Hệ thống tải thông tin chi tiết.
-3. Hiển thị dữ liệu đơn.
+2. Hệ thống tải snapshot người nhận, địa chỉ, shipping method/fee, các dòng hàng, discount, payment attempts và lịch sử trạng thái hiện có.
+3. Hiển thị dữ liệu tài chính từ snapshot của order, không tính lại bằng giá catalog hoặc bảng phí hiện tại.
 
 ## Luồng thay thế / ngoại lệ
 
-- Không được report đặc tả thêm.
+- Order không tồn tại: hệ thống thông báo không tìm thấy.
 
 ## Ghi chú phạm vi
 

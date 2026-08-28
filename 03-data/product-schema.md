@@ -10,6 +10,8 @@ Product
 - `products.category_id` là category chính duy nhất của product.
 - `categories.parent_id` tạo taxonomy phân cấp.
 - `product_variants` chứa các SKU bán được và thông tin thay đổi theo variant như SKU, tồn kho tổng `quantity` và giá.
+- `product_images` chứa gallery theo variant; mỗi variant có tối đa một ảnh main đang `ACTIVE`.
+- `product_suppliers` biểu diễn quan hệ nhiều-nhiều giữa product và supplier.
 - MVP không có reservation, backorder hoặc stock movement.
 - Collection/tag là lớp phân loại merchandising riêng trong tương lai, không dùng `categories` để thay thế.
 

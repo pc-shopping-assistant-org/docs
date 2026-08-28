@@ -26,12 +26,13 @@ Chi tiết sản phẩm, giá và số lượng của đơn được hiển th�
 ## Luồng chính
 
 1. Chọn một đơn hàng.
-2. Hệ thống tải thông tin đơn và các mặt hàng.
-3. Hiển thị chi tiết.
+2. Hệ thống xác minh order thuộc customer hiện tại.
+3. Hệ thống tải snapshot người nhận, địa chỉ, shipping method/fee, các dòng hàng, payment attempts và trạng thái order.
+4. Hiển thị `unit_price`, item discount, subtotal, order discount và total đúng theo snapshot lúc đặt hàng.
 
 ## Luồng thay thế / ngoại lệ
 
-- Không được report đặc tả thêm.
+- Order không tồn tại hoặc không thuộc customer hiện tại: không trả dữ liệu đơn.
 
 ## Ghi chú phạm vi
 

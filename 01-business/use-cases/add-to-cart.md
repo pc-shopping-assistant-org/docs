@@ -17,7 +17,7 @@ Thêm sản phẩm vào giỏ hàng theo phạm vi nghiệp vụ được report
 
 ## Điều kiện trước
 
-Khách hàng có sản phẩm muốn mua; report có mâu thuẫn về việc có bắt buộc đăng nhập hay không.
+Variant tồn tại và đang có thể bán. Request xác định customer đã đăng nhập hoặc một guest session hợp lệ.
 
 ## Điều kiện sau
 
@@ -27,12 +27,15 @@ Sản phẩm được thêm vào giỏ.
 
 1. Khách hàng chọn sản phẩm/biến thể.
 2. Chọn thêm vào giỏ.
-3. Hệ thống thêm mặt hàng vào giỏ.
-4. Giỏ hàng được cập nhật.
+3. Hệ thống tìm cart `ACTIVE` duy nhất của customer hoặc guest session; nếu chưa có thì tạo cart với đúng một owner.
+4. Nếu variant đã có trong cart, hệ thống tăng/cập nhật quantity; nếu chưa có thì tạo `cart_item`.
+5. Hệ thống kiểm tra quantity dương và không vượt tồn kho hiện có.
+6. Giỏ hàng được cập nhật.
 
 ## Luồng thay thế / ngoại lệ
 
-- Sản phẩm/biến thể không hợp lệ hoặc không thể mua.
+- Sản phẩm/variant không hợp lệ, không thể bán hoặc không đủ tồn kho.
+- Customer/session có dữ liệu cart active xung đột: hệ thống từ chối và không tạo thêm cart.
 
 ## Ghi chú phạm vi
 

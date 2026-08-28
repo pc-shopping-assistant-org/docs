@@ -7,15 +7,22 @@
 ```sql
 CHECK (rating BETWEEN 1 AND 5)
 CHECK (product_variants.quantity >= 0)
+CHECK (employees.salary >= 0)
 CHECK (cart_items.quantity > 0)
 CHECK (order_items.quantity > 0)
 CHECK (list_price >= 0)
 CHECK (unit_price >= 0)
 CHECK (amount >= 0)
+CHECK (
+  (status = 'PAID' AND paid_at IS NOT NULL)
+  OR (status IN ('PENDING', 'FAILED') AND paid_at IS NULL)
+)
 CHECK (shipping_fee >= 0)
 CHECK (discount_amount >= 0)
 CHECK (item_discount >= 0)
 CHECK (start_at < end_at)
+CHECK (min_order_amount >= 0)
+CHECK (application_scope IN ('ORDER', 'ALL_ITEMS', 'CATEGORY', 'VARIANT'))
 ```
 
 Discount value phải phụ thuộc type:
@@ -38,11 +45,25 @@ CHECK (
 
 `customers` và `employees` là profile 1–1, dùng `account_id` vừa là primary key vừa là foreign key tới `accounts.id`. Hai bảng profile không duplicate email/phone. Khi account bị `LOCKED`, profile vẫn được giữ nguyên.
 
+Thông tin việc làm như `salary` và `joined_at` thuộc `employees`; credential và trạng thái khóa vẫn thuộc `accounts`.
+
 Customer không có `point` vì MVP chưa có loyalty domain hoặc rule tích điểm.
+
+## File and media ownership
+
+`files` là registry chung cho metadata của file; entity khác chỉ giữ foreign key tới `files.id`. Storage identity duy nhất là `(storage_provider, storage_key)`.
+
+`public_url` là optional cache/public address, không phải identity của file. Với signed URL có thời hạn, application phải sinh lại từ `storage_key` thay vì lưu làm source of truth.
+
+Các quan hệ media chính:
+
+- `employees.avatar_file_id` và `customers.avatar_file_id`;
+- `brands.image_file_id`;
+- `product_images.file_id` cho gallery của từng product variant.
 
 ## Product image invariant
 
-Mỗi product variant có tối đa một ảnh chính đang active. Invariant được enforce bằng partial unique index:
+Mỗi product variant có tối đa một ảnh chính đang active. `product_variants` không giữ thêm một cột ảnh riêng để tránh hai nguồn cùng mô tả ảnh đại diện. Invariant được enforce bằng partial unique index:
 
 ```sql
 CREATE UNIQUE INDEX ux_variant_main_image
@@ -88,11 +109,11 @@ Cart được lưu trong PostgreSQL để giữ trạng thái giỏ hàng ổn �
 - Chỉ cho phép một cart `ACTIVE` trên mỗi customer và một cart `ACTIVE` trên mỗi session:
 
 ```sql
-CREATE UNIQUE INDEX carts_one_active_customer
+CREATE UNIQUE INDEX ux_carts_active_customer
 ON carts (customer_id)
 WHERE status = 'ACTIVE' AND customer_id IS NOT NULL;
 
-CREATE UNIQUE INDEX carts_one_active_session
+CREATE UNIQUE INDEX ux_carts_active_session
 ON carts (session_token)
 WHERE status = 'ACTIVE' AND session_token IS NOT NULL;
 ```
@@ -123,9 +144,17 @@ Mỗi dòng `payments` là một payment attempt của order:
 - `amount` bắt buộc lưu số tiền của attempt; không suy ra từ order tại thời điểm đọc.
 - `provider_transaction_code` lưu mã giao dịch từ provider nếu có.
 - Một order có thể có nhiều attempt `FAILED` trước khi có một attempt `PAID`.
-- `amount` phải là số dương và không được thay đổi sau khi attempt đã được ghi nhận.
+- `amount` không được âm và không được thay đổi sau khi attempt đã được ghi nhận.
 - `paid_at` chỉ được set khi attempt chuyển sang `PAID`.
 - Với cùng một order, chỉ một attempt được xem là thanh toán thành công; việc bảo đảm invariant này nằm ở application transaction hoặc database constraint.
+
+PostgreSQL enforce tối đa một attempt `PAID` cho mỗi order bằng partial unique index:
+
+```sql
+CREATE UNIQUE INDEX ux_payments_one_paid_per_order
+ON payments (order_id)
+WHERE status = 'PAID';
+```
 
 ## Discount scope and targets
 
@@ -147,7 +176,7 @@ Scope-target là cross-table invariant, không thể enforce bằng một `CHECK
 | `CATEGORY` | >= 1 | 0 |
 | `VARIANT` | 0 | >= 1 |
 
-Khi tạo hoặc cập nhật discount, service phải validate và ghi discount cùng target trong một transaction. Nếu cần enforce ở database, dùng constraint trigger để chặn trạng thái trung gian hoặc trạng thái không hợp lệ.
+Khi tạo hoặc cập nhật discount, service phải ghi discount cùng target trong một transaction. Database enforce invariant bằng deferred constraint trigger trên `discounts`, `discount_categories` và `discount_variants`; trạng thái trung gian được phép tồn tại trong transaction nhưng phải hợp lệ tại thời điểm commit.
 
 ## Product pricing
 
@@ -162,6 +191,12 @@ effective  = 18.000.000
 ```
 
 Khi checkout, giá thực tế dùng cho từng dòng phải được snapshot vào `order_items.unit_price`; thay đổi list price hoặc promotion về sau không làm thay đổi order cũ.
+
+## Product suppliers
+
+Supplier là master data độc lập. Quan hệ với product được normalize qua `product_suppliers(product_id, supplier_id)` thay vì đặt `supplier_id` trực tiếp trên `products`, vì một product có thể được nhập từ nhiều supplier và một supplier có thể cung cấp nhiều product.
+
+Không được hard-delete hoặc chuyển supplier sang `DELETED` khi vẫn còn dòng liên kết trong `product_suppliers`. Application phải kiểm tra invariant này trong cùng transaction; foreign key chặn hard-delete khi quan hệ vẫn tồn tại.
 
 ## Inventory scope
 
@@ -217,9 +252,9 @@ Review chỉ được tạo khi order tương ứng đã `COMPLETED`. Không lư
 
 ## Variant options
 
-`options.name` không unique toàn cục; cùng tên có thể xuất hiện ở các type khác nhau. Uniqueness đúng là `(options.type, options.name)`.
+`options.name` là unique toàn cục để mỗi option có một tên định danh duy nhất.
 
-Một variant chỉ được gắn tối đa một option cho mỗi type. Vì `type` nằm ở bảng `options`, invariant này cần được enforce bằng trigger PostgreSQL (kiểm tra type của option mới với các option đã gắn cho variant), ngoài unique key `(product_variant_id, option_id)`.
+Một variant chỉ được gắn tối đa một option chưa bị xóa cho mỗi type. Vì `type` nằm ở bảng `options`, invariant này được enforce bằng deferred constraint trigger PostgreSQL trên cả `variant_options` và thay đổi của `options`, ngoài unique key `(product_variant_id, option_id)`.
 
 ## Discount application layers
 

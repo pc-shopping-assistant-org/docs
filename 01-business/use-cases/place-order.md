@@ -28,25 +28,35 @@ Khách hàng đã đăng nhập hoặc xác thực thành công; giỏ hàng có
 1. Mở giỏ hàng.
 2. Chọn đặt hàng.
 3. Hệ thống mở trang đặt hàng.
-4. Khách hàng nhập thông tin cần thiết.
-5. Chọn địa chỉ giao hàng.
-6. Nhập mã giảm giá nếu có.
-7. Chọn phương thức thanh toán.
-8. Xác nhận đặt hàng.
-9. Hệ thống lưu đơn và thông báo thành công.
+4. Khách hàng nhập/chọn tên người nhận, số điện thoại và địa chỉ giao hàng.
+5. Chọn phương thức giao hàng; hệ thống lấy phí hiện hành.
+6. Hệ thống áp dụng tối đa một item promotion cho mỗi dòng.
+7. Khách hàng nhập tối đa một order voucher nếu có.
+8. Chọn phương thức thanh toán.
+9. Hệ thống kiểm tra tồn kho, discount và tính tổng tiền theo công thức chuẩn.
+10. Hệ thống snapshot thông tin giao hàng, giá từng dòng, discount, phí giao hàng và tổng tiền vào order.
+11. Hệ thống tạo order và payment attempt trong một transaction; cart chuyển sang `CONVERTED`.
+12. Order online bắt đầu ở `PENDING_PAYMENT`; order COD bắt đầu ở `PENDING_CONFIRMATION`.
 
 ## Discount calculation
 
 Đơn hàng có thể áp dụng đồng thời một item promotion cho mỗi dòng và một order voucher cho toàn đơn. Không cho phép nhiều voucher trên cùng order.
 
 ```text
-20.000.000 - 2.000.000 - 500.000 + 30.000 = 17.530.000
+item_gross = unit_price * quantity
+item_net   = item_gross - item_discount
+subtotal   = sum(item_net)
+total      = subtotal - order_discount + shipping_fee
 ```
 
 ## Luồng thay thế / ngoại lệ
 
-- Thông tin đơn hàng không hợp lệ → yêu cầu nhập lại.
+- Thông tin người nhận hoặc địa chỉ không hợp lệ → yêu cầu nhập lại.
+- Cart không thuộc customer/session hiện tại, không còn `ACTIVE` hoặc trống → từ chối checkout.
+- Tồn kho không đủ → từ chối checkout và trả về các dòng cần cập nhật.
+- Voucher không hợp lệ, hết hạn hoặc không đạt `min_order_amount` → không tạo order.
+- Tổng tiền snapshot không khớp công thức chuẩn → rollback transaction.
 
-## Ghi chú phạm vi
+## Quy tắc snapshot
 
-Tài liệu này chỉ tái cấu trúc nội dung có căn cứ từ report. Các rule chưa được nguồn xác định (ví dụ quy tắc tồn kho chi tiết, số lần review, discount stacking, AI clarification bắt buộc) không được tự bổ sung.
+Order lưu `recipient_name`, `recipient_phone`, `delivery_address`, `subtotal_amount`, `discount_amount`, `shipping_fee` và `total_amount`. Việc customer sửa địa chỉ, catalog đổi `list_price`, discount hết hạn hoặc phí vận chuyển thay đổi về sau không làm thay đổi order cũ.

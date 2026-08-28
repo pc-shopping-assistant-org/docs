@@ -28,7 +28,9 @@ Thông tin chi tiết sản phẩm được hiển thị.
 1. Khách hàng mở trang sản phẩm.
 2. Hệ thống hiển thị danh sách sản phẩm.
 3. Khách hàng chọn một sản phẩm.
-4. Hệ thống hiển thị chi tiết sản phẩm.
+4. Hệ thống hiển thị chi tiết product và các variant đang bán.
+5. Khi khách hàng chọn variant, hệ thống tải gallery `product_images` đang active của variant đó.
+6. Ảnh main của variant được ưu tiên hiển thị; URL được resolve từ file storage metadata.
 
 ## Luồng thay thế / ngoại lệ
 

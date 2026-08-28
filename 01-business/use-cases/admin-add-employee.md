@@ -27,14 +27,17 @@ Tài khoản nhân viên được tạo.
 
 1. Chọn thêm tài khoản nhân viên.
 2. Hệ thống hiển thị form.
-3. Nhập thông tin.
-4. Hệ thống kiểm tra.
-5. Lưu tài khoản và cập nhật danh sách.
+3. Nhập email, phone, mật khẩu ban đầu, role và employee profile gồm họ tên, ngày vào làm, lương cùng thông tin cá nhân cần thiết.
+4. Có thể tải ảnh đại diện; hệ thống lưu file và gán `employees.avatar_file_id`.
+5. Hệ thống kiểm tra.
+6. Lưu account/profile và cập nhật danh sách.
 
 ## Luồng thay thế / ngoại lệ
 
 - Người dùng hủy.
 - Thông tin không hợp lệ; rollback theo đặc tả report.
+- Email hoặc phone đã tồn tại; lương âm hoặc ngày vào làm không hợp lệ.
+- File ảnh không hợp lệ hoặc upload thất bại.
 
 ## Ghi chú phạm vi
 

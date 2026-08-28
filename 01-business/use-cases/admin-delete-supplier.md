@@ -27,12 +27,12 @@ Nhà cung cấp được xóa.
 
 1. Chọn nhà cung cấp.
 2. Chọn xóa.
-3. Hệ thống kiểm tra liên kết.
-4. Nếu hợp lệ, xóa.
+3. Hệ thống kiểm tra liên kết trong `product_suppliers`.
+4. Nếu không còn liên kết, hệ thống xóa mềm supplier trong một transaction.
 
 ## Luồng thay thế / ngoại lệ
 
-- Còn liên kết với sản phẩm → không cho xóa.
+- Còn liên kết với product → không cho xóa.
 
 ## Ghi chú phạm vi
 

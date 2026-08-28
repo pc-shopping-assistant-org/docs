@@ -26,12 +26,14 @@ Dữ liệu thương hiệu được quản lý qua giao diện triển khai.
 ## Luồng chính
 
 1. Mở quản lý thương hiệu.
-2. Thực hiện các thao tác mà giao diện hỗ trợ.
-3. Hệ thống cập nhật dữ liệu.
+2. Thêm hoặc chỉnh sửa thông tin thương hiệu.
+3. Có thể tải ảnh thương hiệu; hệ thống lưu file và gán `brands.image_file_id`.
+4. Hệ thống cập nhật dữ liệu.
 
 ## Luồng thay thế / ngoại lệ
 
 - Chương 3 không đặc tả formal requirements/use case chi tiết cho thương hiệu.
+- File ảnh không hợp lệ hoặc upload thất bại.
 
 ## Ghi chú phạm vi
 
