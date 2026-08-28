@@ -1,0 +1,402 @@
+// =====================================================================
+// DBDiagram.io Schema Definition (DBML)
+// Project: E-Commerce System (ECM)
+// Generated from schema.sql
+// =====================================================================
+
+Table roles {
+  id uuid [pk, default: `uuidv7()`]
+  name varchar(50) [not null, unique]
+  status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
+}
+
+Table accounts {
+  id uuid [pk, default: `uuidv7()`]
+  email varchar(255) [not null, unique]
+  phone varchar(15) [not null, unique]
+  password_hash varchar(255) [not null]
+  role_id uuid [not null, ref: > roles.id]
+  status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, LOCKED, DELETED']
+  created_at timestamp [not null, default: `current_timestamp`]
+  updated_at timestamp
+}
+
+Table employees {
+  account_id uuid [pk, ref: - accounts.id]
+  first_name varchar(100) [not null]
+  last_name varchar(100) [not null]
+  avatar varchar(255)
+  address varchar(255)
+  gender varchar(10) [not null, note: 'MALE, FEMALE']
+  salary int [not null, default: 0]
+  birthday date
+  joined_at date
+  note text
+  created_at timestamp [not null, default: `current_timestamp`]
+  updated_at timestamp
+}
+
+Table customers {
+  account_id uuid [pk, ref: - accounts.id]
+  first_name varchar(100) [not null]
+  last_name varchar(100) [not null]
+  avatar varchar(255)
+  gender varchar(10) [note: 'MALE, FEMALE, OTHER']
+  birthday date
+  created_at timestamp [not null, default: `current_timestamp`]
+  updated_at timestamp
+}
+
+Table customer_addresses {
+  id uuid [pk, default: `uuidv7()`]
+  customer_id uuid [not null, ref: > customers.account_id, note: 'References the customer profile key, which is accounts.id']
+  recipient_name varchar(100) [not null]
+  phone varchar(15) [not null]
+  address_line varchar(500) [not null]
+  is_default boolean [not null, default: false]
+  created_at timestamp [not null, default: `current_timestamp`]
+  updated_at timestamp
+
+  indexes {
+    // Partial unique default-address index is defined in 03-data/database-constraints.sql.
+    (customer_id, is_default)
+  }
+}
+
+Table brands {
+  id uuid [pk, default: `uuidv7()`]
+  name varchar(255) [not null, unique]
+  seo_name varchar(255) [not null, unique]
+  description text
+  image_url varchar(255)
+  status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
+  created_at timestamp [not null, default: `current_timestamp`]
+}
+
+Table categories {
+  id uuid [pk, default: `uuidv7()`]
+  name varchar(255) [not null, unique]
+  seo_name varchar(255) [not null, unique]
+  parent_id uuid
+  status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
+  created_at timestamp [not null, default: `current_timestamp`]
+}
+
+Table attribute_definitions {
+  id uuid [pk, default: `uuidv7()`]
+  key varchar(100) [not null, unique]
+  display_name varchar(255) [not null]
+  data_type varchar(20) [not null, note: 'NUMBER, STRING, ENUM, BOOLEAN']
+  unit varchar(50)
+  allowed_values jsonb
+  aliases jsonb
+  filterable boolean [not null, default: false]
+  comparable boolean [not null, default: false]
+  status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
+  created_at timestamp [not null, default: `current_timestamp`]
+}
+
+Table category_attribute_groups {
+  id uuid [pk, default: `uuidv7()`]
+  category_id uuid [not null, ref: > categories.id]
+  name varchar(100) [not null, note: 'Màn hình, Camera, Pin & Sạc...']
+  display_order int [not null, default: 0]
+  status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
+  created_at timestamp [not null, default: `current_timestamp`]
+}
+
+Table category_attributes {
+  id uuid [pk, default: `uuidv7()`]
+  category_group_id uuid [not null, ref: > category_attribute_groups.id]
+  attribute_id uuid [not null, ref: > attribute_definitions.id]
+  required boolean [not null, default: false]
+  display_order int [not null, default: 0]
+  status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
+  created_at timestamp [not null, default: `current_timestamp`]
+
+  indexes {
+    (category_group_id, attribute_id) [unique]
+  }
+}
+
+Table suppliers {
+  id uuid [pk, default: `uuidv7()`]
+  name varchar(255) [not null, unique]
+  email varchar(255) [not null, unique]
+  phone varchar(15) [not null]
+  address varchar(255)
+  description text
+  status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
+  created_at timestamp [not null, default: `current_timestamp`]
+}
+
+Table products {
+  id uuid [pk, default: `uuidv7()`]
+  name varchar(255) [not null]
+  seo_name varchar(255) [not null, unique]
+  brand_id uuid
+  category_id uuid [not null, ref: > categories.id, note: 'Primary category only; merchandising collections/tags are separate concepts']
+  supplier_id uuid
+  specifications jsonb
+  description text
+  image_url varchar(255)
+  status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
+  created_at timestamp [not null, default: `current_timestamp`]
+  created_by uuid
+  updated_at timestamp
+  updated_by uuid
+}
+
+Table product_variants {
+  id uuid [pk, default: `uuidv7()`]
+  product_id uuid [not null, ref: > products.id]
+  list_price bigint [not null]
+  quantity int [not null, default: 0]
+  sku varchar(100) [not null, unique]
+  model varchar(100)
+  specifications jsonb
+  description text
+  warranty varchar(100)
+  barcode varchar(100) [unique]
+  image_url varchar(255)
+  release_at date
+  status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
+  created_at timestamp [not null, default: `current_timestamp`]
+  created_by uuid [not null, ref: > employees.account_id]
+  updated_at timestamp
+  updated_by uuid
+
+  checks {
+    `list_price >= 0`
+    `quantity >= 0`
+  }
+}
+
+Table product_images {
+  id uuid [pk, default: `uuidv7()`]
+  name varchar(255)
+  product_variant_id uuid [not null, ref: > product_variants.id]
+  image_url varchar(255) [not null]
+  is_main boolean [not null, default: false]
+  status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
+  created_at timestamp [not null, default: `current_timestamp`]
+
+  // Partial unique index is defined in 03-data/database-constraints.sql:
+  // one ACTIVE image with is_main=true per product variant.
+}
+
+Table product_reviews {
+  id uuid [pk, default: `uuidv7()`]
+  order_item_id uuid [not null, unique, ref: > order_items.id]
+  rating int [not null, note: '1 to 5']
+  comment text
+  status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
+  created_at timestamp [not null, default: `current_timestamp`]
+
+  checks {
+    `rating BETWEEN 1 AND 5`
+  }
+}
+
+Table options {
+  id uuid [pk, default: `uuidv7()`]
+  type varchar(50) [not null, note: 'Loại: Màu sắc, Dung lượng, RAM...']
+  name varchar(100) [not null, note: 'Unique within type, not globally']
+  value text [not null, note: 'Giá trị tương ứng']
+  status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
+  created_at timestamp [not null, default: `current_timestamp`]
+
+  indexes {
+    (type, name) [unique]
+  }
+}
+
+Table variant_options {
+  id uuid [pk, default: `uuidv7()`]
+  product_variant_id uuid [not null, ref: > product_variants.id]
+  option_id uuid [not null, ref: > options.id]
+  status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
+  created_at timestamp [not null, default: `current_timestamp`]
+
+  indexes {
+    (product_variant_id, option_id) [unique]
+  }
+
+  // A database trigger must reject a second option whose options.type
+  // already exists for this product_variant_id.
+}
+
+Table discounts {
+  id uuid [pk, default: `uuidv7()`]
+  code varchar(50) [unique, note: 'Nullable: promotion may be automatic and have no coupon code']
+  title varchar(255) [not null]
+  discount_type varchar(10) [not null, note: 'PERCENT, FIXED']
+  value int [not null]
+  application_scope varchar(20) [not null, note: 'ORDER, ALL_ITEMS, CATEGORY, VARIANT']
+  start_at timestamp [not null]
+  end_at timestamp [not null]
+  min_order_amount bigint [not null, default: 0]
+  description text
+  created_by uuid
+  updated_by uuid
+  created_at timestamp [not null, default: `current_timestamp`]
+  updated_at timestamp
+  status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, EXPIRED, DISABLED, DELETED']
+
+  checks {
+    `start_at < end_at`
+    `((discount_type = 'PERCENT' AND value > 0 AND value <= 100) OR (discount_type = 'FIXED' AND value > 0))`
+  }
+}
+
+Table shipping_methods {
+  id uuid [pk, default: `uuidv7()`]
+  code varchar(50) [not null, unique, note: 'STANDARD, EXPRESS, SAME_DAY']
+  name varchar(100) [not null]
+  status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE']
+  created_at timestamp [not null, default: `current_timestamp`]
+  updated_at timestamp
+}
+
+Table orders {
+  id uuid [pk, default: `uuidv7()`]
+  customer_id uuid [note: 'References customers.account_id when order belongs to a registered customer']
+  order_discount_id uuid [note: 'At most one order voucher']
+  shipping_method_id uuid [not null, ref: > shipping_methods.id]
+  subtotal_amount bigint [not null]
+  discount_amount bigint [not null, default: 0]
+  shipping_fee bigint [not null]
+  total_amount bigint [not null]
+  order_time timestamp [not null, default: `current_timestamp`]
+  note text
+  // Intentional order-time snapshot; do not replace with a live address FK.
+  delivery_address varchar(500) [not null]
+  recipient_name varchar(100) [not null]
+  recipient_phone varchar(15) [not null]
+  delivered_at timestamp
+  created_at timestamp [not null, default: `current_timestamp`]
+  created_by uuid
+  updated_at timestamp
+  updated_by uuid
+  status varchar(30) [not null, default: 'PENDING_CONFIRMATION', note: 'PENDING_PAYMENT, PENDING_CONFIRMATION, CONFIRMED, SHIPPING, COMPLETED, CANCELLED']
+
+  checks {
+    `subtotal_amount >= 0`
+    `discount_amount >= 0`
+    `shipping_fee >= 0`
+    `total_amount >= 0`
+  }
+}
+
+Table order_items {
+  id uuid [pk, default: `uuidv7()`]
+  order_id uuid [not null, ref: > orders.id]
+  product_variant_id uuid [not null, ref: > product_variants.id]
+  quantity int [not null]
+  unit_price bigint [not null]
+  item_discount_id uuid [note: 'At most one item promotion']
+  item_discount bigint [not null, default: 0]
+  status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, CANCELLED']
+  created_at timestamp [not null, default: `current_timestamp`]
+
+  checks {
+    `quantity > 0`
+    `unit_price >= 0`
+    `item_discount >= 0`
+  }
+}
+
+Table discount_categories {
+  discount_id uuid [not null, ref: > discounts.id]
+  category_id uuid [not null, ref: > categories.id]
+
+  indexes {
+    (discount_id, category_id) [pk]
+  }
+}
+
+Table discount_variants {
+  discount_id uuid [not null, ref: > discounts.id]
+  variant_id uuid [not null, ref: > product_variants.id]
+
+  indexes {
+    (discount_id, variant_id) [pk]
+  }
+}
+
+Table carts {
+  id uuid [pk, default: `uuidv7()`]
+  customer_id uuid [note: 'References customers.account_id when cart belongs to a registered customer']
+  session_token varchar(255)
+  status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, CONVERTED, ABANDONED, EXPIRED']
+  created_at timestamp [not null, default: `current_timestamp`]
+  updated_at timestamp
+
+  checks {
+    `((customer_id IS NOT NULL) <> (session_token IS NOT NULL))`
+  }
+}
+
+Table cart_items {
+  cart_id uuid [not null, ref: > carts.id]
+  variant_id uuid [not null, ref: > product_variants.id]
+  quantity int [not null]
+
+  indexes {
+    (cart_id, variant_id) [pk]
+  }
+
+  checks {
+    `quantity > 0`
+  }
+}
+
+Table payment_methods {
+  id uuid [pk, default: `uuidv7()`]
+  code varchar(50) [not null, unique, note: 'COD, STRIPE_CARD, BANK_TRANSFER']
+  name varchar(100) [not null]
+  status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE']
+  created_at timestamp [not null, default: `current_timestamp`]
+  updated_at timestamp
+}
+
+Table payments {
+  id uuid [pk, default: `uuidv7()`]
+  order_id uuid [not null, ref: > orders.id]
+  payment_method_id uuid [not null, ref: > payment_methods.id]
+  amount bigint [not null]
+  paid_at timestamp
+  provider_transaction_code varchar(100) [unique]
+  created_at timestamp [not null, default: `current_timestamp`]
+  created_by uuid
+  updated_at timestamp
+  updated_by uuid
+  status varchar(20) [not null, default: 'PENDING', note: 'PENDING, PAID, FAILED']
+
+  checks {
+    `amount >= 0`
+  }
+}
+
+
+// =====================================================================
+// NULLABLE FOREIGN KEY REFERENCES (tách riêng vì dbdiagram.io ref > yêu cầu NOT NULL)
+// =====================================================================
+Ref: categories.parent_id > categories.id
+Ref: products.brand_id > brands.id
+Ref: products.supplier_id > suppliers.id
+Ref: products.created_by > employees.account_id
+Ref: products.updated_by > employees.account_id
+Ref: product_variants.updated_by > employees.account_id
+Ref: discounts.created_by > employees.account_id
+Ref: discounts.updated_by > employees.account_id
+Ref: orders.customer_id > customers.account_id
+Ref: orders.order_discount_id > discounts.id
+Ref: orders.shipping_method_id > shipping_methods.id
+Ref: orders.created_by > employees.account_id
+Ref: orders.updated_by > employees.account_id
+Ref: order_items.item_discount_id > discounts.id
+Ref: carts.customer_id > customers.account_id
+Ref: payments.payment_method_id > payment_methods.id
+Ref: payments.created_by > employees.account_id
+Ref: payments.updated_by > employees.account_id
