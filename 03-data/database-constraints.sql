@@ -36,7 +36,7 @@ BEGIN
     JOIN options o ON o.id = vo.option_id
     WHERE vo.status <> 'DELETED'
       AND o.status <> 'DELETED'
-    GROUP BY vo.product_variant_id, o.type
+    GROUP BY vo.product_variant_id, upper(trim(o.type))
     HAVING COUNT(*) > 1
   ) THEN
     RAISE EXCEPTION

@@ -26,8 +26,11 @@ Khách hàng có quyền xem đơn của mình.
 ## Luồng chính
 
 1. Nhập số hóa đơn/mã đơn theo mô tả report.
-2. Hệ thống tìm trong phạm vi đơn của khách.
-3. Hiển thị kết quả.
+2. Client gửi giá trị qua query `keyword`; backend chấp nhận UUID đầy đủ,
+   UUID không dấu gạch hoặc mã hóa đơn `INV-XXXXXXXX` (8 ký tự đầu UUID).
+3. Hệ thống tìm trong phạm vi đơn của khách và áp dụng thêm status/cursor nếu
+   được gửi.
+4. Hiển thị kết quả.
 
 ## Luồng thay thế / ngoại lệ
 

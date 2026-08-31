@@ -33,6 +33,10 @@ Mật khẩu mới được thiết lập thành công.
 6. Người dùng nhập mật khẩu mới.
 7. Hệ thống cập nhật mật khẩu.
 
+Người dùng có thể xác định tài khoản bằng email hoặc số điện thoại. Vì hệ thống
+hiện chỉ có kênh OTP email, khi nhập số điện thoại hệ thống vẫn gửi và xác minh
+OTP qua email đang lưu trong `accounts`.
+
 ## Luồng thay thế / ngoại lệ
 
 - Thông tin tài khoản không hợp lệ.

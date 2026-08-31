@@ -1,5 +1,9 @@
 # Use Case Inventory
 
+> Implementation tracking: [USECASE_IMPLEMENTATION.md](../../../USECASE_IMPLEMENTATION.md)
+>
+> API/schema audit: [implementation-matrix.md](./implementation-matrix.md)
+
 Bộ này được trích và tái cấu trúc từ report. Có 4 mức nguồn:
 
 - **FORMAL** — có bảng/biểu đồ đặc tả use case trực tiếp trong Chương 3.2.2.

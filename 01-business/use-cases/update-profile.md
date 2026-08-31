@@ -33,6 +33,22 @@ Thông tin cá nhân được cập nhật.
 6. Địa chỉ giao hàng được quản lý riêng qua `customer_addresses`, không lưu trực tiếp trên customer profile.
 7. Hệ thống lưu thay đổi.
 
+### Saved address API
+
+Profile flow exposes the normalized address collection for the authenticated
+customer:
+
+- `GET /api/v1/users/addresses` — list addresses, default first.
+- `POST /api/v1/users/addresses` — create; the first address becomes default.
+- `PUT /api/v1/users/addresses/{addressId}` — replace address fields.
+- `PATCH /api/v1/users/addresses/{addressId}/default` — select the default.
+- `DELETE /api/v1/users/addresses/{addressId}` — delete an owned address.
+
+The service clears the previous default in the same transaction and the
+database partial unique index prevents more than one default per customer.
+Checkout may pass `customerAddressId`; the order still snapshots recipient and
+address values, so later edits do not change order history.
+
 ## Luồng thay thế / ngoại lệ
 
 - Email/số điện thoại trùng hoặc dữ liệu không hợp lệ.

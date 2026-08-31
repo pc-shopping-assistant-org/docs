@@ -26,7 +26,7 @@ Thông tin khuyến mãi được cập nhật.
 ## Luồng chính
 
 1. Chọn khuyến mãi.
-2. Chỉnh sửa thông tin, phạm vi áp dụng và danh sách target.
+2. Chỉnh sửa thông tin, code (nếu cần), phạm vi áp dụng và danh sách target.
 3. Hệ thống kiểm tra giá trị, thời gian và tính nhất quán giữa scope với target.
 4. Hệ thống thay thế thông tin discount cùng target trong một transaction.
 
@@ -42,3 +42,6 @@ Thông tin khuyến mãi được cập nhật.
 - `CATEGORY` phải có ít nhất một category target và không có variant target.
 - `VARIANT` phải có ít nhất một variant target và không có category target.
 - Việc đổi scope và thay target là atomic; không lưu trạng thái dở dang.
+- `code` là optional cho promotion tự động; khi PUT không gửi `code` thì giữ
+  code hiện tại, còn chuỗi rỗng sẽ xóa code. Code phải unique và chỉ hợp lệ với
+  scope `ORDER`.

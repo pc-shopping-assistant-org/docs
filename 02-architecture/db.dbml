@@ -254,8 +254,8 @@ Table variant_options {
     (product_variant_id, option_id) [unique]
   }
 
-  // A database trigger must reject a second option whose options.type
-  // already exists for this product_variant_id.
+  // A deferred database trigger must reject a second non-deleted option whose
+  // normalized options.type (trim + uppercase) already exists for this variant.
 }
 
 Table discounts {

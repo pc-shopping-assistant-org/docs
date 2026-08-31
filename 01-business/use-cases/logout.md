@@ -36,3 +36,13 @@ Phiên đăng nhập kết thúc.
 ## Ghi chú phạm vi
 
 Tài liệu này chỉ tái cấu trúc nội dung có căn cứ từ report. Các rule chưa được nguồn xác định (ví dụ quy tắc tồn kho chi tiết, số lần review, discount stacking, AI clarification bắt buộc) không được tự bổ sung.
+
+## Ghi chú triển khai
+
+API yêu cầu Bearer access token ở `POST /api/v1/auth/logout`. Client nên gửi
+thêm `refreshToken` trong body để backend blacklist cả token pair; nếu không có
+body, access token vẫn được revoke theo compatibility path. Flow này đã được
+verify bằng unit, API và runtime checks. Chính sách revoke bền vững sau Redis
+mất dữ liệu và việc có bắt buộc refresh token vẫn được theo dõi riêng trong
+`ISSUE-038`. Khi Redis không khả dụng, backend fail-closed ở logout, refresh và
+access-token authentication, không báo logout thành công giả.

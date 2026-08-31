@@ -27,7 +27,7 @@ Tài khoản nhân viên được tạo.
 
 1. Chọn thêm tài khoản nhân viên.
 2. Hệ thống hiển thị form.
-3. Nhập email, phone, mật khẩu ban đầu, role và employee profile gồm họ tên, ngày vào làm, lương cùng thông tin cá nhân cần thiết.
+3. Nhập email, phone, mật khẩu ban đầu, role và employee profile gồm họ tên, ngày vào làm, lương cùng thông tin cá nhân cần thiết. `salary` không âm; `joinedAt` mặc định ngày hiện tại nếu bỏ trống.
 4. Có thể tải ảnh đại diện; hệ thống lưu file và gán `employees.avatar_file_id`.
 5. Hệ thống kiểm tra.
 6. Lưu account/profile và cập nhật danh sách.
