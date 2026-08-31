@@ -287,9 +287,14 @@ Table shipping_methods {
   id uuid [pk, default: `uuidv7()`]
   code varchar(50) [not null, unique, note: 'STANDARD, EXPRESS, SAME_DAY']
   name varchar(100) [not null]
+  fee bigint [not null, default: 0, note: 'Current tariff in minor currency units; copied to orders.shipping_fee at checkout']
   status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE']
   created_at timestamp [not null, default: `current_timestamp`]
   updated_at timestamp
+
+  checks {
+    `fee >= 0`
+  }
 }
 
 Table orders {

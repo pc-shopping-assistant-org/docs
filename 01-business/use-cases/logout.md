@@ -39,10 +39,13 @@ Tài liệu này chỉ tái cấu trúc nội dung có căn cứ từ report. C�
 
 ## Ghi chú triển khai
 
-API yêu cầu Bearer access token ở `POST /api/v1/auth/logout`. Client nên gửi
-thêm `refreshToken` trong body để backend blacklist cả token pair; nếu không có
-body, access token vẫn được revoke theo compatibility path. Flow này đã được
-verify bằng unit, API và runtime checks. Chính sách revoke bền vững sau Redis
-mất dữ liệu và việc có bắt buộc refresh token vẫn được theo dõi riêng trong
-`ISSUE-038`. Khi Redis không khả dụng, backend fail-closed ở logout, refresh và
-access-token authentication, không báo logout thành công giả.
+API yêu cầu Bearer access token ở `POST /api/v1/auth/logout`. Logout tạo marker
+`tokens-revoked-before` theo account trong Redis trong suốt thời gian sống của
+refresh token, nên mọi access/refresh token phát hành trước cutoff-second của
+logout đều bị từ chối (JWT NumericDate có độ chính xác theo giây). Client có thể
+gửi thêm `refreshToken` trong body để lưu blacklist riêng cho token đó; body
+không bắt buộc. Redis local dùng AOF + named volume.
+Nếu production làm mất dữ liệu Redis không thể khôi phục, rotate
+`JWT_SECRET_KEY` rồi restart backend trước khi nhận traffic để vô hiệu hóa toàn
+bộ JWT đang tồn tại. Khi Redis không khả dụng, backend fail-closed ở logout,
+refresh và access-token authentication, không báo logout thành công giả.

@@ -49,7 +49,7 @@ audit source-level cập nhật **2026-08-31**; trạng thái hoàn tất chính
 | UC-CART-001 | Thêm sản phẩm vào giỏ | PostgreSQL `carts`/`cart_items`, account or `X-Cart-Session` guest | `SOURCE-IMPLEMENTED` | `F3-CART` |
 | UC-CART-002 | Cập nhật số lượng trong giỏ | Quantity validation and stock check in transaction | `SOURCE-IMPLEMENTED` | `F3-CART` |
 | UC-CART-003 | Xóa sản phẩm khỏi giỏ | Item removal/clear with owner and ACTIVE-cart checks | `SOURCE-IMPLEMENTED` | `F3-CART` |
-| UC-ORD-001 | Đặt hàng | Cart checkout, canonical state, discount stacking, money/address snapshots, payment attempt | `SOURCE-IMPLEMENTED` | `F4-ORDER-PAYMENT` |
+| UC-ORD-001 | Đặt hàng | Cart checkout, canonical state, discount stacking, money/address snapshots, configured shipping fee snapshot, payment attempt | `SOURCE-IMPLEMENTED` | `F4-ORDER-PAYMENT` |
 | UC-ORD-002 | Xem trạng thái đơn hàng | Customer-owned order detail/list returns canonical status | `SOURCE-IMPLEMENTED` | `F4-ORDER-PAYMENT` |
 | UC-ORD-003 | Hủy đơn hàng | Pending-state boundary, stock restoration, item history retained | `SOURCE-IMPLEMENTED` | `F4-ORDER-PAYMENT` |
 | UC-ORD-004 | Xem lịch sử mua hàng | Cursor order history scoped to account | `SOURCE-IMPLEMENTED` | `F4-ORDER-PAYMENT` |
@@ -135,8 +135,8 @@ audit source-level cập nhật **2026-08-31**; trạng thái hoàn tất chính
 - `SOURCE-IMPLEMENTED` không đồng nghĩa `COMPLETED`: tracker chỉ nâng trạng thái
   sau khi flow, authorization, transaction, DB invariant và test phù hợp được
   verify.
-- Shipping method đã normalize nhưng tariff hiện là local mapping trong
-  `OrderServiceImpl`; xem ISSUE-018.
+- Shipping method tariff is stored in `shipping_methods.fee`; checkout copies it
+  to `orders.shipping_fee` and no longer contains a code-to-price switch.
 - Production provider/model, secret rotation and index freshness are deferred
   hardening; the configurable model/fallback and local vector runtime are
   verified in F6, see ISSUE-019.

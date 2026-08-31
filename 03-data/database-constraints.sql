@@ -4,6 +4,11 @@ CREATE UNIQUE INDEX ux_customer_default_address
 ON customer_addresses (customer_id)
 WHERE is_default = true;
 
+-- Shipping method tariffs are non-negative. Orders snapshot the selected fee
+-- into orders.shipping_fee at checkout.
+-- Implemented as a table CHECK in the Flyway migration:
+-- CHECK (fee >= 0)
+
 -- One active main image per product variant.
 CREATE UNIQUE INDEX ux_variant_main_image
 ON product_images (product_variant_id)

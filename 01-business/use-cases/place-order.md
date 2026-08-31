@@ -30,7 +30,7 @@ Khách hàng đã đăng nhập hoặc xác thực thành công; giỏ hàng có
 3. Hệ thống mở trang đặt hàng.
 4. Khách hàng nhập/chọn tên người nhận, số điện thoại và địa chỉ giao hàng, hoặc
    chọn một `customerAddressId` đã lưu.
-5. Chọn phương thức giao hàng; hệ thống lấy phí hiện hành.
+5. Chọn phương thức giao hàng; hệ thống lấy `shipping_methods.fee` hiện hành.
 6. Hệ thống áp dụng tối đa một item promotion cho mỗi dòng.
 7. Khách hàng nhập tối đa một order voucher nếu có.
 8. Chọn phương thức thanh toán.

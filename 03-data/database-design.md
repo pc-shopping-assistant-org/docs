@@ -17,7 +17,8 @@ CHECK (
   (status = 'PAID' AND paid_at IS NOT NULL)
   OR (status IN ('PENDING', 'FAILED') AND paid_at IS NULL)
 )
-CHECK (shipping_fee >= 0)
+CHECK (shipping_methods.fee >= 0)
+CHECK (orders.shipping_fee >= 0)
 CHECK (discount_amount >= 0)
 CHECK (item_discount >= 0)
 CHECK (start_at < end_at)
@@ -230,14 +231,19 @@ Snapshot tương ứng:
 
 ## Shipping method and fee snapshot
 
-Phương thức giao hàng được normalize vào `shipping_methods` với `code`, `name` và `status`.
+Phương thức giao hàng được normalize vào `shipping_methods` với `code`, `name`,
+`fee` và `status`. `shipping_methods.fee` là tariff hiện hành, tính bằng đơn
+vị tiền nhỏ nhất giống các cột tiền khác.
 
 Khi tạo order, application lưu:
 
 - `orders.shipping_method_id`: phương thức đã chọn;
-- `orders.shipping_fee`: phí giao hàng tại thời điểm checkout.
+- `orders.shipping_fee`: phí giao hàng tại thời điểm checkout, copy từ
+  `shipping_methods.fee`.
 
-`shipping_fee` là snapshot, không được tính lại từ giá hiện tại của `shipping_methods`. Vì vậy nếu phí giao nhanh thay đổi từ 30.000 lên 40.000, order cũ vẫn giữ đúng 30.000.
+`shipping_fee` là snapshot, không được tính lại từ giá hiện tại của
+`shipping_methods`. Vì vậy nếu phí giao nhanh thay đổi từ 30.000 lên 40.000,
+chỉ cần cập nhật `shipping_methods.fee`; order cũ vẫn giữ đúng 30.000.
 
 ## Product review ownership
 

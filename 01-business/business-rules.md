@@ -44,7 +44,8 @@
 - Mỗi customer và mỗi guest session có tối đa một cart `ACTIVE`.
 - Đơn hàng được tạo từ giỏ.
 - Khi đặt hàng, người dùng cung cấp/chọn địa chỉ giao hàng, mã giảm giá nếu có và phương thức thanh toán.
-- Phương thức giao hàng được chọn từ danh mục `shipping_methods`.
+- Phương thức giao hàng được chọn từ danh mục `shipping_methods`; tariff hiện
+  hành nằm ở `shipping_methods.fee`.
 - Phí giao hàng phải được snapshot vào order tại thời điểm checkout; thay đổi bảng giá giao hàng không làm thay đổi order cũ.
 - Customer có thể lưu nhiều địa chỉ giao hàng và chọn một địa chỉ mặc định.
 - Khi tạo đơn, thông tin người nhận và địa chỉ phải được snapshot vào order.

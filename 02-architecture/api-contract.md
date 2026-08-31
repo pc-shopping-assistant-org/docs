@@ -67,10 +67,14 @@ Swagger UI at `/swagger-ui.html`. Both documentation routes are public; actual
 API authorization remains enforced by the backend security configuration.
 
 `POST /api/v1/auth/logout` is the exception to the otherwise public auth route
-group: it requires the current Bearer access token. The optional body
-`{"refreshToken":"..."}` lets the backend blacklist the complete token pair;
-clients should send it when available. Tokens are retained in Redis only for
-their remaining lifetime. The backend fails closed for logout, refresh and
-access-token authentication when Redis cannot read/write revocation state; durable
-revocation across Redis data loss and the optional refresh-token compatibility
-path remain tracked in `ISSUE-038`.
+group: it requires the current Bearer access token. Logout writes an
+account-level `tokens-revoked-before` marker for the configured refresh-token
+lifetime, which invalidates every token issued before the logout cutoff second
+for that account. The optional
+body `{"refreshToken":"..."}` additionally blacklists the supplied refresh
+token explicitly. Tokens are retained in Redis only for their remaining
+lifetime, and Redis is deployed with AOF persistence in the local compose
+stack. The backend fails closed for logout, refresh and access-token
+authentication when Redis cannot read/write revocation state. If production
+Redis data is lost, rotate `JWT_SECRET_KEY` before restoring traffic to
+invalidate all outstanding JWTs.
