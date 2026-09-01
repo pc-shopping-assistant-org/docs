@@ -26,6 +26,32 @@ HTTP request
     -> canonical ApiResponse or SSE envelopes
 ```
 
+## Clean-architecture foundation
+
+The AI service is organized for capability vertical slices. The HTTP adapter
+(`api/`) depends on the assistant inbound port, application use cases depend
+on small outbound ports, and infrastructure binds concrete HTTP/model/vector
+adapters in one composition root:
+
+```text
+api -> application/use_cases -> application/ports
+                                      ^
+                                      |
+                         infrastructure adapters
+capabilities/<feature>/ owns feature schemas, graphs and tools
+```
+
+`infrastructure/composition.py` is the only default wiring location. It builds
+the catalog client/retriever, context store, PydanticAI answer generator and
+request-scoped `PydanticGraphRunner` adapters. FastAPI gets the application
+port through `api/dependencies.py`, which keeps routes free of provider and
+graph construction. A generic `UseCase` port and a capability scaffold are
+available for future search, guided-selection and workflow slices.
+
+The current `services/assistant_service.py` and `graphs/*_graph.py` paths are
+thin compatibility seams for existing callers; new code should use
+`application/use_cases` and `capabilities/<feature>/graphs`.
+
 `CatalogRetriever` là protocol cấp use-case; baseline dùng
 `BackendCatalogRetriever` để gọi catalog backend. Khi cấu hình
 `AI_RETRIEVAL_BACKEND=hybrid` hoặc `qdrant`, service dùng

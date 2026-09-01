@@ -18,6 +18,12 @@ trong khi route JSON tiếp tục validate `ShoppingAnswer`. Sử dụng
 và comparison flow. Semantic retrieval có port embedding/vector riêng, được
 cấu hình độc lập với model boundary.
 
+Các capability được tổ chức theo vertical slice dưới
+`capabilities/<feature>/`. Use case chỉ nhận outbound ports; adapter
+`PydanticGraphRunner` cô lập API runtime của Pydantic Graph, còn
+`infrastructure/composition.py` là composition root duy nhất. FastAPI resolve
+inbound port qua dependency injection thay vì tự khởi tạo provider/graph.
+
 ## Consequences
 
 - Frontend có contract ổn định trước khi chốt provider.
@@ -27,3 +33,5 @@ cấu hình độc lập với model boundary.
   trước khi claim AI production (ISSUE-019).
 - Adapter model không tự biến keyword search thành vector retrieval; Qdrant và
   embedding provider được quản lý bởi retrieval adapter riêng.
+- Có thể thêm capability hoặc thay graph runner/model provider mà không đổi
+  HTTP contract; compatibility re-exports chỉ tồn tại trong giai đoạn migrate.
