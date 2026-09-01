@@ -66,6 +66,12 @@ The backend publishes the OpenAPI document at `/v3/api-docs` and the interactive
 Swagger UI at `/swagger-ui.html`. Both documentation routes are public; actual
 API authorization remains enforced by the backend security configuration.
 
+`POST /api/v1/auth/google` accepts `{ "idToken": "..." }` from Google Identity
+Services. The backend verifies the token and links the stable Google `sub` to an
+existing local account before issuing the normal JWT pair. A missing link is
+returned with the static `GOOGLE_ACCOUNT_NOT_LINKED` message key; the endpoint
+does not create an account implicitly.
+
 `POST /api/v1/auth/logout` is the exception to the otherwise public auth route
 group: it requires the current Bearer access token. Logout writes an
 account-level `tokens-revoked-before` marker for the configured refresh-token

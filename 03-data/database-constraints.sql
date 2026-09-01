@@ -4,6 +4,12 @@ CREATE UNIQUE INDEX ux_customer_default_address
 ON customer_addresses (customer_id)
 WHERE is_default = true;
 
+-- A verified Google provider subject can link to at most one account. Local
+-- accounts that have not linked Google keep this field NULL.
+CREATE UNIQUE INDEX ux_accounts_google_subject
+ON accounts (google_subject)
+WHERE google_subject IS NOT NULL;
+
 -- Shipping method tariffs are non-negative. Orders snapshot the selected fee
 -- into orders.shipping_fee at checkout.
 -- Implemented as a table CHECK in the Flyway migration:

@@ -26,12 +26,15 @@ docker compose --env-file env/prod.env -f compose-file/compose.yaml pull ai-serv
 docker compose --env-file env/prod.env -f compose-file/compose.yaml up -d
 ```
 
-The backend now contains the canonical Flyway baseline at
-`backend-api/server/src/main/resources/db/migration/V1__init.sql`. It creates
-the schema and PostgreSQL constraints represented by `db.dbml`. Run the
-backend once against a fresh local database to let Flyway apply it before
-serving application traffic. Existing development databases created from the
-old V1 must be recreated because this is a replacement baseline.
+The backend contains the canonical Flyway baseline at
+`backend-api/server/src/main/resources/db/migration/V1__init.sql` plus
+incremental migrations such as `V2__add_shipping_method_fee.sql` and
+`V3__add_google_subject_to_accounts.sql`. They create the schema and
+PostgreSQL constraints represented by `db.dbml`. Run the backend once against a
+fresh local database to let Flyway apply all pending migrations before serving
+application traffic. Existing development databases created from the old V1
+must be recreated because that was a replacement baseline; databases already
+on the canonical V2 baseline only need the normal V3 migration.
 
 ## Local staging
 

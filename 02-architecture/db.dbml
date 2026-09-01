@@ -14,6 +14,7 @@ Table accounts {
   id uuid [pk, default: `uuidv7()`]
   email varchar(255) [not null, unique]
   phone varchar(15) [not null, unique]
+  google_subject varchar(255) [unique, note: 'Nullable verified Google sub; unique for linked accounts']
   password_hash varchar(255) [not null]
   role_id uuid [not null, ref: > roles.id]
   status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, LOCKED, DELETED']

@@ -9,6 +9,10 @@
 - Mật khẩu đăng ký tối thiểu 8 ký tự, gồm chữ thường, chữ hoa và số.
 - Email và số điện thoại đăng ký không được trùng theo luồng report.
 - Đổi/quên mật khẩu sử dụng OTP.
+- Google Login chỉ chấp nhận ID token đã verify (signature, issuer, audience và
+  `email_verified`); MVP liên kết Google `sub` với tài khoản local đã tồn tại.
+- Google Login không tự tạo customer mới vì luồng đăng ký local vẫn yêu cầu
+  phone, password và địa chỉ giao hàng.
 - Chức năng quản trị yêu cầu đăng nhập đúng vai trò.
 - Tài khoản có thể bị khóa mà dữ liệu hồ sơ vẫn được giữ.
 - Khóa customer hoặc employee được thực hiện bằng `accounts.status = LOCKED`; không xóa profile.

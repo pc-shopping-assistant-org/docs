@@ -36,7 +36,7 @@ audit source-level cập nhật **2026-08-31**; trạng thái hoàn tất chính
 
 | ID | Feature | Evidence | Status | Batch |
 | --- | --- | --- | --- | --- |
-| UC-AUTH-001 | Đăng nhập email/phone | `AuthController`, `AuthServiceImpl`, account lookup và status checks | `SOURCE-IMPLEMENTED` | `F1-AUTH` |
+| UC-AUTH-001 | Đăng nhập email/phone/Google | `AuthController`, `AuthServiceImpl`, account lookup/status checks, verified Google `sub` linking | `SOURCE-IMPLEMENTED` | `F1-AUTH` |
 | UC-AUTH-002 | Đăng ký tài khoản | OTP registration, account + customer + default address transaction | `SOURCE-IMPLEMENTED` | `F1-AUTH` |
 | UC-AUTH-003 | Khôi phục/đặt lại mật khẩu | OTP forgot/reset bằng email hoặc phone, ghi `accounts.password_hash` | `SOURCE-IMPLEMENTED` | `F1-AUTH` |
 | UC-AUTH-004 | Đăng xuất | Authenticated JWT blacklist endpoint; optional refresh-token body revokes the full token pair; Redis revocation failures fail closed | `VERIFIED` | `F1-AUTH` |

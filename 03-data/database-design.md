@@ -41,6 +41,8 @@ CHECK (
 
 - `email` và `phone` là unique tại `accounts`;
 - `password_hash` lưu credential đã hash;
+- `google_subject` là nullable unique provider identity cho Google Login; chỉ
+  lưu sau khi backend verify ID token và không tự tạo account thiếu profile;
 - `role_id` xác định role;
 - `status` (`ACTIVE`, `LOCKED`, ...) điều khiển quyền đăng nhập.
 

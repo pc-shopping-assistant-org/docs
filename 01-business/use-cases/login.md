@@ -30,11 +30,26 @@ Người dùng đăng nhập thành công và có thể truy cập chức năng 
 3. Hệ thống kiểm tra thông tin đăng nhập.
 4. Nếu hợp lệ, hệ thống xác thực thành công và chuyển vào hệ thống.
 
+### Luồng thay thế: Google Login
+
+1. Người dùng chọn tiếp tục với Google.
+2. Google Identity Services trả về ID token cho browser.
+3. Backend verify chữ ký, issuer, audience và `email_verified` của token.
+4. Backend tìm account đã liên kết theo Google `sub`; với lần đầu, email đã
+   verify chỉ được dùng để liên kết vào một account local đang tồn tại.
+5. Nếu account hợp lệ, hệ thống phát hành cùng cặp JWT như đăng nhập mật khẩu.
+
+MVP không tự provision account từ Google vì account local vẫn yêu cầu phone,
+password và địa chỉ. Google account chưa liên kết phải hoàn tất đăng ký local
+trước.
+
 ## Luồng thay thế / ngoại lệ
 
 - Thông tin đăng nhập không hợp lệ → yêu cầu nhập lại.
 - Người dùng chọn quên mật khẩu.
 - Người dùng hủy đăng nhập.
+- ID token Google không hợp lệ, chưa verify email, chưa cấu hình client ID hoặc
+  chưa liên kết account local.
 
 ## Ghi chú phạm vi
 
