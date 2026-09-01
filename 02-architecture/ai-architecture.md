@@ -46,7 +46,9 @@ the catalog client/retriever, context store, PydanticAI answer generator and
 request-scoped `PydanticGraphRunner` adapters. FastAPI gets the application
 port through `api/dependencies.py`, which keeps routes free of provider and
 graph construction. A generic `UseCase` port and a capability scaffold are
-available for future search, guided-selection and workflow slices.
+available for future search, guided-selection and workflow slices. Runtime
+provider/retrieval choices and assistant branches are typed enums; their values
+remain compatible with the environment/API strings.
 
 The current `services/assistant_service.py` and `graphs/*_graph.py` paths are
 thin compatibility seams for existing callers; new code should use
