@@ -61,7 +61,7 @@ audit source-level cập nhật **2026-08-31**; trạng thái hoàn tất chính
 
 | ID | Feature | Evidence | Status | Batch |
 | --- | --- | --- | --- | --- |
-| UC-AI-001 | Chatbot AI Agent | `/api/v1/chat`, bounded conversation context, shopping planning graph, `CatalogRetriever` boundary, PydanticAI model adapter/fallback and canonical envelope; runtime model + fallback verified | `VERIFIED` | `F6-AI` |
+| UC-AI-001 | Chatbot AI Agent | `/api/v1/chat` and `/api/v1/chat/stream` (SSE), bounded conversation context, shopping planning graph, `CatalogRetriever` boundary, streaming/text PydanticAI adapters for OpenAI/Gemini, deterministic fallback and canonical envelope; runtime fallback verified, live provider E2E pending | `VERIFIED` | `F6-AI` |
 | UC-AI-002 | Semantic product search | `/api/v1/search`, shopping planning graph, configurable Qdrant/embedding adapter + cursor-aware catalog indexer, active-status gate, backend lexical fallback and product cards; disposable Qdrant runtime verified | `VERIFIED` | `F6-AI` |
 | UC-AI-003 | Tư vấn sản phẩm | `/api/v1/consult`, shopping planning graph, `CatalogRetriever`-backed context, catalog-grounded fallback and PydanticAI answer; runtime model + fallback verified | `VERIFIED` | `F6-AI` |
 | UC-AI-004 | So sánh sản phẩm | `/api/v1/compare`, pydantic-graph comparison flow, PydanticAI answer and partial errors; runtime model + missing-product branch verified | `VERIFIED` | `F6-AI` |
