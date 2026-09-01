@@ -8,11 +8,15 @@ cần graph deterministic để kiểm soát input trước khi gọi model.
 
 ## Decision
 
-Sử dụng PydanticAI làm adapter model với output `ShoppingAnswer`. Agent được khởi
-tạo lazy từ `AI_MODEL_NAME`; không cấu hình model thì dùng deterministic
-backend-grounded fallback. Sử dụng `pydantic-graph` cho orchestration có state,
-đã áp dụng cho shopping planning và comparison flow. Semantic retrieval có port
-embedding/vector riêng, được cấu hình độc lập với model boundary.
+Sử dụng PydanticAI làm adapter model với output `ShoppingAnswer`. Application
+chỉ phụ thuộc các port `AnswerGenerator` và `StreamingAnswerGenerator`; agent
+provider được tạo lazy trong infrastructure. `AI_PROVIDER` hỗ trợ `fallback`,
+`openai` và `gemini`; không cấu hình model thì dùng deterministic
+backend-grounded fallback. Streaming chat dùng agent text-only để phát delta,
+trong khi route JSON tiếp tục validate `ShoppingAnswer`. Sử dụng
+`pydantic-graph` cho orchestration có state, đã áp dụng cho shopping planning
+và comparison flow. Semantic retrieval có port embedding/vector riêng, được
+cấu hình độc lập với model boundary.
 
 ## Consequences
 

@@ -3,9 +3,10 @@
 ## Boundary
 
 `ai-service` là một FastAPI service tách khỏi backend nghiệp vụ. Nó cung cấp
-`/api/v1/chat`, `/api/v1/search`, `/api/v1/consult`, `/api/v1/compare` và
-`/api/v1/evaluate`. Tất cả route dùng envelope `{data, message, errors}`; giá
-trị `message` là key tĩnh để frontend mapping.
+`/api/v1/chat`, `/api/v1/chat/stream` (SSE), `/api/v1/search`,
+`/api/v1/consult`, `/api/v1/compare` và `/api/v1/evaluate`. Tất cả route dùng
+envelope `{data, message, errors}`; giá trị `message` là key tĩnh để frontend
+mapping.
 
 Backend API vẫn là source of truth cho product, variant, list price, stock và
 trạng thái hiển thị. AI service chỉ gọi các catalog endpoint qua
@@ -19,9 +20,10 @@ HTTP request
     -> AssistantService
        -> BackendClient (catalog context)
           -> CatalogRetriever boundary
-       -> PydanticAIAnswerGenerator (optional model)
-       -> deterministic fallback when model is absent/unavailable
-    -> canonical ApiResponse
+       -> AnswerGenerator / StreamingAnswerGenerator port
+          -> OpenAI or Gemini PydanticAI adapter (lazy)
+          -> deterministic fallback when model is absent/unavailable
+    -> canonical ApiResponse or SSE envelopes
 ```
 
 `CatalogRetriever` là protocol cấp use-case; baseline dùng
@@ -40,11 +42,14 @@ khi lấy product detail. Chat giữ context giới hạn trong process bằng
 
 ## Model boundary and fallback
 
-`AI_MODEL_NAME` là tùy chọn. Khi unset, các route vẫn trả kết quả grounded từ
-backend bằng deterministic fallback. Khi set theo định dạng PydanticAI (ví dụ
-`openai:gpt-4o-mini`), adapter tạo agent lazy với output schema
-`ShoppingAnswer`. Provider/network/configuration failure không làm route thành
-500 và không thay đổi response key; adapter quay về fallback và ghi warning.
+`AI_PROVIDER=fallback` và `AI_MODEL_NAME` là tùy chọn. Khi unset, các route vẫn
+trả kết quả grounded từ backend bằng deterministic fallback. Khi chọn
+`AI_PROVIDER=openai` hoặc `AI_PROVIDER=gemini`, infrastructure adapter tạo
+agent lazy với output schema `ShoppingAnswer`; stream dùng agent text-only để
+phát delta. Provider/network/configuration failure không làm route thành 500
+và không thay đổi response key; adapter quay về fallback và ghi warning. Legacy
+định dạng `provider:model` của PydanticAI vẫn được chấp nhận khi provider để
+`fallback`.
 
 Qdrant retrieval và catalog indexer đã có boundary executable; embedding
 provider, collection provisioning, freshness và lựa chọn model/provider
