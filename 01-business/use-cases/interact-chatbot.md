@@ -36,4 +36,15 @@ Người dùng nhận phản hồi AI dựa trên truy vấn.
 
 ## Ghi chú phạm vi
 
+### Frontend presentation — owner-approved simplification (2026-10-04)
+
+One chat workspace replaces the five customer-facing workflow tabs. Natural
+search/advice uses the existing SSE chat adapter; one attached catalog product
+uses evaluation and two to five attached products use comparison. All results
+appear in the same UI transcript. Catalog deep links preserve product IDs.
+The individual APIs and official UC identities remain unchanged. Specialized
+turns are not yet persisted in the server chat context (`ISSUE-074`); browser
+acceptance remains pending. This UI consolidation does not mean the backend
+already has a complete unified intent/tool dispatcher.
+
 Tài liệu này chỉ tái cấu trúc nội dung có căn cứ từ report. Các rule chưa được nguồn xác định (ví dụ quy tắc tồn kho chi tiết, số lần review, discount stacking, AI clarification bắt buộc) không được tự bổ sung.
