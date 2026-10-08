@@ -1,6 +1,9 @@
 # Stateful chat V1 — P0 contract
 
-Status: contract implemented/verified; routes and persistence NOT implemented.
+Status: contract implemented/verified. P2 opt-in POST conversation and GET-by-ID
+are implemented with auth/owner checks and lifecycle wiring; owner reported native
+foundation gates PASS on 2026-10-09 (ISSUE-091 resolved). New ReAct source is internal,
+not wired to these routes. Other routes below remain planned, not implemented.
 Scope: UC-AI-001/003 and guided PC build. Existing `/chat`, `/chat/stream`, search,
 compare and evaluate remain unchanged until P5 migration. No PydanticAI runtime.
 
@@ -10,6 +13,14 @@ All routes below require the verified identity RS256 access JWT and owner-scoped
 lookups. Missing/invalid token: 401 `AI_UNAUTHENTICATED`. Nonexistent or another
 owner's conversation/run: 404 `AI_CONVERSATION_NOT_FOUND` (do not reveal ownership).
 Owner, checkpoint selector and execution evidence are never request fields.
+
+P2 enablement: AI_STATEFUL_ENABLED=true with database/JWKS config. Disabled by
+default, the two foundation routes are absent from OpenAPI. Enabled startup
+requires applied Alembic 0002_call_attempts and separately bootstrapped saver tables;
+missing migration/config fails startup, never silently falls back to RAM.
+Published GET uses exact accepted checkpoint channels consultation/public_build,
+not graph latest; corrupt or missing accepted state is an error, not an empty state.
+List/messages/runs/cancel/events/delete require the later P4/P5 vertical slices.
 
 Every HTTP response and SSE data frame is `{data, message, errors}`. Success
 errors is `[]`; error data is null, static message/code and field/details in
@@ -44,6 +55,12 @@ SSE offsets are scoped/validated, not SQL predicates or checkpoint selectors.
 SSE disconnect does not implicitly cancel a run. Reconnect reads persisted events
 after the acknowledged offset, with owner authorization on every connection;
 unknown/expired event history fails explicitly, never resumes from graph latest.
+The subscriber is independent of execution. Submit commits a durable PENDING
+run; a lifecycle-owned managed executor claims it. No detached request task or
+SSE-triggered graph execution. Explicit cancellation does not release the shared
+thread until verified executor stop/drain. Internal P4-A supervisor/attempt ledger
+source is implemented; durable admission/publication coordinator and P2 lifespan
+wiring remain unfinished.
 Persisting/deduplicating events and reconnect behavior belong to P4/P5.
 
 ## State, patch and setup

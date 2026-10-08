@@ -1,0 +1,99 @@
+// AI application DBML. CHECKs and deferred active slot: ai-stateful-constraints.sql.
+Table conversations {
+  id uuid [pk, not null]
+  account_id uuid [not null]
+  title varchar(200)
+  revision bigint [not null]
+  accepted_checkpoint_id text
+  active_run_id uuid
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  indexes {
+    (account_id, updated_at, id)
+  }
+}
+Table agent_runs {
+  id uuid [pk, not null]
+  conversation_id uuid [not null]
+  request_id uuid [not null]
+  request_hash varchar(64) [not null]
+  request_payload jsonb [not null]
+  kind varchar(10) [not null]
+  status varchar(30) [not null]
+  base_revision bigint [not null]
+  base_checkpoint_ref jsonb
+  last_checkpoint_ref jsonb
+  final_checkpoint_ref jsonb
+  executor_stop_evidence jsonb
+  versions jsonb
+  error jsonb
+  replay_snapshot jsonb
+  authorized_recovery_source_refs jsonb [not null]
+  execution_id uuid
+  worker_instance_id uuid
+  lease_generation bigint [not null]
+  lease_expires_at timestamptz
+  heartbeat_at timestamptz
+  cancel_requested boolean [not null]
+  attempt_count integer [not null]
+  max_attempts integer [not null]
+  retry_policy_version text [not null]
+  retry_deadline timestamptz [not null]
+  trace_id text
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  started_at timestamptz
+  finished_at timestamptz
+  indexes {
+    (conversation_id, id) [unique]
+    (conversation_id, request_id) [unique]
+    (conversation_id, created_at, id)
+    (status, lease_expires_at)
+  }
+}
+Table conversation_messages {
+  id uuid [pk, not null]
+  conversation_id uuid [not null]
+  run_id uuid [not null]
+  sequence bigint [not null]
+  role varchar(10) [not null]
+  content text [not null]
+  payload jsonb
+  created_at timestamptz [not null]
+  indexes {
+    (run_id, role) [unique]
+    (conversation_id, sequence) [unique]
+  }
+}
+Ref: agent_runs.conversation_id > conversations.id
+Ref: conversation_messages.conversation_id > conversations.id
+Ref: conversations.(id, active_run_id) > agent_runs.(conversation_id, id)
+Ref: conversation_messages.(conversation_id, run_id) > agent_runs.(conversation_id, id)
+
+// Alembic 0002_call_attempts; budgets do not reset on generation/recovery.
+Table agent_call_budgets {
+  run_id uuid [pk, not null]
+  model_limit integer [not null, note: '>= 0; explicit per-run policy, no default']
+  tool_io_limit integer [not null, note: '>= 0; counts every backend outbound attempt']
+  deadline timestamptz [not null]
+}
+Table agent_call_attempts {
+  id uuid [pk, not null]
+  run_id uuid [not null]
+  execution_id uuid [not null]
+  worker_instance_id uuid [not null]
+  generation bigint [not null, note: '> 0']
+  kind varchar(10) [not null, note: 'MODEL, TOOL_IO']
+  operation_key varchar(200) [not null]
+  request_hash varchar(64) [not null]
+  attempt_number integer [not null, note: '> 0']
+  status varchar(10) [not null, default: 'RESERVED', note: 'RESERVED, SUCCEEDED, FAILED, UNKNOWN']
+  reserved_at timestamptz [not null]
+  finished_at timestamptz
+  indexes {
+    (run_id, operation_key, attempt_number) [unique]
+    (run_id, kind)
+  }
+}
+Ref: agent_call_budgets.run_id - agent_runs.id [delete: cascade]
+Ref: agent_call_attempts.run_id > agent_call_budgets.run_id [delete: cascade]

@@ -1,14 +1,132 @@
 # Plan — Stateful AI Chat & Guided PC Build
 
 - Ngày lập: 2026-10-06.
-- Revision thiết kế: 12 — hoàn thiện P0 contracts; giữ nguyên kiến trúc revision 8.
-- Trạng thái: IN PROGRESS — P0 contracts và P1 deterministic core hoàn tất; P2/B1 native persistence gate bị chặn bởi ISSUE-077.
+- Revision thiết kế: 18 — approved canonical requirement pipeline + versioned compiler/satisfaction verifier; optimizer giữ nguyên, root vẫn experiment.
+- Trạng thái: IN PROGRESS; execution tạm dừng theo yêu cầu owner ngày 2026-10-09 để review. P0/P1 hoàn tất; ISSUE-091 RESOLVED; root native experiment owner báo pass, production initializer chưa có.
 - Phạm vi: AI service, contract catalog/identity, gateway và frontend chat.
 - Liên quan: UC-AI-001, UC-AI-003; PC-builder extension ngoài 68 UC chính thức.
 - Tracker: [`USECASE_IMPLEMENTATION.md`](../../USECASE_IMPLEMENTATION.md),
   ISSUE-073, ISSUE-074 và ISSUE-076.
 
+Thiết kế chi tiết để review: [Stateful ReAct + Tools](stateful-react-tools-design.md).
+Hiện trạng source, evidence và điểm còn thiếu: [Implementation status](stateful-implementation-status.md).
+V1 chỉ dùng LangGraph + PostgreSQL/checkpointer; chưa thêm Mem0/pgvector hoặc
+memory xuyên conversation. Tool schemas/dispatcher và internal bounded loop đã
+có source; 4 tool tests pass, graph gate chưa verified (ISSUE-100). Chưa có live
+provider/runtime wiring. P2 đã có opt-in lifecycle/readiness/auth/create/get;
+native foundation/lock gate đã pass theo owner, phase vẫn chưa hoàn tất.
+Review P3 đã chốt: tool_results là execution ledger duy nhất, messages là
+projection từ validated results; resolve allowed_tools theo trusted state/principal
+mỗi vòng và recheck trước execution. AnswerCandidateV1 cùng typed claims/evidence
+phải vượt deterministic grounding gate trước publish. Chi tiết và core acceptance
+ở sections 4.1, 6.1, 6.5 và 10 của thiết kế ReAct; đây chưa phải code đã triển khai.
+P4-A là prerequisite P3-B: lifecycle-owned executor lấy durable PENDING runs,
+SSE chỉ subscribe; DB reserve từng external attempt trước outbound, không dùng
+checkpoint counters làm budget authority. Unknown attempts vẫn consumed; hard cap
+là dispatched attempts, không phải provider billing/token guarantee. V1 chỉ có
+search_catalog/get_product_details/compare_products/build_pc; trusted context giữ
+constraints_revision, một build_pc xử lý tạo mới/điều chỉnh, không intent gate cứng.
+Provider multi-call response bị reject/repair toàn bộ trước commit transcript.
+Chi tiết sections 5.1, 6.4, 7.1 của thiết kế ReAct; ISSUE-094/095 tracking implementation.
+P3-A phải resolve natural-language part mentions qua canonical catalog trước atomic
+merge; ambiguous/not-found → giữ pending draft và clarify, không model-generated UUID.
+P3-B có result-completion gate ngoài grounding: advice không thay optimizer build,
+compare đủ required subjects, saved-build explanation dùng đúng historical snapshot.
+Typed factual output server-rendered; không claim deterministic truth cho unrestricted
+LLM prose hay factuality eval. P4 thử initial accepted root bằng native PostgreSQL:
+candidate này chưa thay invariant P0 revision-zero/no-ref; ISSUE-092 vẫn mở tới khi
+native test và coordinated contract updates pass. Multi-turn state-size/context/GC
+protection gates ở ReAct sections 4.4, 6.6, 7.2/7.3; ISSUE-096/097/098 còn TODO.
+ReAct sections 4.5/4.6 phân biệt hard capability, soft preference và exact identity
+trong canonical requirement model chung. P3-A/P3-B cần typed normalization/compiler,
+pre-pruning hard filter, deterministic soft scorer và final coverage validation.
+Current schemas chưa có requirement-centric state/compiler: ISSUE-099; không thêm
+field theo từng ví dụ hoặc reuse brand/PINNED để giả support. Unsupported/ambiguous requirements phải
+được phản hồi/clarify, không silently ignored hoặc relaxed thành build success.
+
 ## 1. Mục tiêu và hiện trạng
+
+### Hướng đã chốt cho đồ án: requirement-centric build pipeline
+
+```text
+User message
+     ↓
+LLM → Requirement Draft
+     ↓
+Reference / Unit Resolver
+     ↓
+Atomic Requirement Merge
+     ↓
+Canonical Requirement State
+     ↓
+Requirement Compiler (versioned)
+     ↓
+Optimizer Input
+     ↓
+Existing Deterministic Optimizer
+     ↓
+Satisfaction Verifier
+     ↓
+Grounded Explanation
+```
+
+Pipeline này là đường nghiệp vụ bắt buộc của build_pc, không thay toàn bộ bounded
+ReAct: agent vẫn chọn các read tools và gọi build_pc khi prerequisites đủ. Draft,
+resolution và merge là pre-agent stages; compiler/optimizer/verifier là build
+application pipeline. Không merge lại patch chỉ vì agent gọi build_pc nhiều lần.
+Graph checkpoint các stage; application tiếp tục sở hữu auth/accepted head/publish.
+
+CanonicalRequirementStateV1 là nguồn chuẩn nhu cầu, gồm goals, requirements,
+available_resources, resolved_bindings và unresolved. Mỗi requirement có stable ID,
+subject, predicate, typed value, HARD/SOFT và source evidence. Subject/predicate/value
+phải có allowlist + combinations hợp lệ, không arbitrary expressions/code.
+Đã có tài sản không tự đồng nghĩa bắt buộc sử dụng; pin là hard identity requirement.
+Resolution/FPS mô tả workload goal, không phải performance guarantee. Các fields
+owned_parts/preferred_gpu_brand/target_resolution là compiled optimizer projections,
+không tiếp tục dùng làm canonical conversation requirement model.
+
+Compiler versioned trả input + mapping report bao phủ từng requirement: APPLIED,
+NEEDS_CLARIFICATION, UNSUPPORTED hoặc CONFLICT, kèm strength và target bindings.
+Ambiguous reference/unit → clarification; unsupported/conflict → phản hồi rõ và
+giữ yêu cầu, không silent drop hoặc tự relax để build được. Schema tổng quát không
+hứa optimizer giải được mọi yêu cầu. Only fully supported/resolved hard requirements
+được phép đi optimizer; unmet supported soft preference được disclose.
+
+Verifier đối chiếu result với **canonical state**, không chỉ compiled input, kiểm
+tra hard satisfaction, soft outcomes, mapping coverage và canonical evidence. Sai
+compiler mapping không được che bởi verifier chỉ đọc projection. Không tự sửa
+constraints để biến result thành pass. INFEASIBLE chỉ từ valid supported optimizer
+execution; unsupported không phải no-solution. Grounded explanation nhận validated
+satisfaction report; task-completion/lineage/CAS gates vẫn phải pass trước publish.
+
+Phạm vi đồ án: typed requirement contracts + static semantic capability registry,
+compiler hữu hạn, existing optimizer, satisfaction report. Không expression DSL,
+plugin framework, rule engine hoặc optimizer mới. Chỉ thêm deterministic scorer/
+capability mapping khi yêu cầu có support thực sự; mỗi stage lưu schema/compiler/
+policy versions và hashes cho invalidation/replay.
+
+Triển khai P3 theo thứ tự, không thêm phase cấp cao:
+
+1. P3-A1: canonical state/draft/patch schema, stable identities, sparse SET/CLEAR,
+   source evidence; resolve units/references, atomic merge và pending clarification.
+2. P3-A2: versioned compiler + full coverage report; map tập capabilities có support,
+   unsupported/conflict rõ; adapters cho optimizer hiện tại, không duplicate truth.
+3. P3-B1: existing optimizer + independent satisfaction verifier; grounded presenter
+   và completion gate. P4-A managed executor/call budgets vẫn là prerequisite runtime.
+4. P3-B2/P4-B: wire LangGraph checkpoints, stage marker reuse, native resume/replay;
+   version migration và root recovery gates phải pass trước claim recovery hoàn chỉnh.
+
+Core tests: equivalent paraphrases normalize cùng semantics; units/operators còn
+mơ hồ thì clarify; owned resource không tự pin; hard/soft/identity khác semantics;
+atomic rejection; compiler mapping có đủ mọi requirement; inject compiler sai/drop
+requirement thì verifier reject; independent expected build outcomes; multi-turn
+CLEAR/replace invalidate hashes; unsupported không thành success; explanation chỉ
+đọc verified evidence. Không cần live LLM/UI exhaustive tests để chứng minh core.
+
+Design approval không thay runtime ngay: hiện ConsultationConstraintsV1/TurnPatchV1
+vẫn là legacy source contracts. P3 phải version/migrate chúng cùng accepted-state
+reader/schema docs và tests; không tự reinterpret checkpoint cũ bằng model mới.
+P0/P1 completion là historical baseline, không bằng chứng model mới đã implement.
 
 Khách có thể tiếp tục một cuộc tư vấn sau nhiều lượt chat, reload trang hoặc
 restart AI service mà không mất ngân sách, yêu cầu, linh kiện đã chọn và build
@@ -150,10 +268,10 @@ Ngoài scope:
 | --- | --- | --- | --- |
 | P0 — Contract baseline | B0 | Login-only, BUILD_PC/FULL_SETUP, patch/ref schemas, retention, public DTO/API/provenance và AI DB schema contract | COMPLETED — contract-only; runtime thuộc P2–P5 |
 | P1 — Deterministic conversation core | B2 core | Typed unknown state; atomic absent/SET/CLEAR merge; provenance/locks; owned/pinned conflicts; completion/hash invalidation và total-budget arithmetic | COMPLETED — pure core slice, chưa wiring chat |
-| P2 — Durable foundation | B1 | AI DB metadata, async ownership/JWT, native accepted-head gate trên exact pinned stack/PostgreSQL | BLOCKED — ISSUE-077 |
-| P3 — Grounded build flow | B2 extraction + B3 | Canonical catalog/parts, accessory budget contract, optimizer/provenance và explanation nodes | TODO |
-| P4 — Run recovery/publication | B4 | Execution-stop admission, idempotency, fencing, native lineage validation và CAS finalize | TODO |
-| P5 — Customer delivery | B5 | HTTP/SSE mapping, reload/history/state và FE | TODO |
+| P2 — Durable foundation | B1 | AI DB metadata, lifecycle/readiness, ownership/JWT, exact accepted reads + native gate | IN PROGRESS — create/get có; native foundation owner báo pass, ISSUE-091 resolved; runtime integration còn thiếu |
+| P3 — Requirement-centric grounded build | B2 extraction + B3 | Draft/resolver/atomic canonical state, versioned compiler, existing optimizer, satisfaction verifier + explanation | IN PROGRESS — pipeline/typed tools có; ReAct graph source chưa verified; providers, soft/FULL_SETUP/runtime còn thiếu |
+| P4 — Run recovery/publication | B4 | Execution-stop admission, idempotency, fencing, native lineage validation và CAS finalize | IN PROGRESS — guards/executor/attempt ledger có; root experiment pass; initializer/coordinator/lineage/CAS còn thiếu |
+| P5 — Customer delivery | B5 | HTTP/SSE mapping, reload/history/state và FE | IN PROGRESS — current-build projection only; HTTP/history/SSE/FE pending |
 | P6 — Core acceptance audit | B6 | Multi-turn, optimizer, no-loss recovery, race/publication/ownership scenarios | TODO |
 
 P1 core thuần có thể triển khai độc lập khi P2 bị chặn; không wiring stateful
@@ -174,6 +292,69 @@ P1 evidence (2026-10-07, root `ai-service/`):
 
 ### 3.2. Test strategy — owner-approved core-first
 
+Review checkpoint 2026-10-09: owner báo native foundation và initial-root experiment
+pass; 4 typed-tool tests pass trong agent. Internal ReAct graph mới chưa verified:
+lượt test bị dừng khi owner yêu cầu pause, chưa full/static rerun cho slice mới.
+279-test evidence bên dưới là baseline trước ReAct additions, không phải current
+full-suite claim. Xem status document để phân biệt proof/slice/remaining work.
+
+P3 requirement core (2026-10-08): `requirements/` implements typed source-bound
+draft/reference resolution, atomic sparse merge, versioned hard-requirement
+compiler, real optimizer invocation and independent satisfaction/completion gate.
+Unknown metadata clarifies; unsupported predicates/preferences are not discarded.
+Available resources become free only through an explicit selected owned binding.
+The verifier checks canonical identities, financial snapshots, all core slots and
+native compatibility/power, including CPU-grounded synthetic GPU/stock cooler.
+`requirement_build.py` is internal-only: an explain failure resumes its own native
+graph checkpoint without rerunning the committed optimize node (in-memory saver
+test, not PostgreSQL/restart evidence). State size/candidate-count guards reject
+before external extraction or merge. LLM prose is not promoted to verified facts.
+This slice does not complete P3: live extraction/catalog adapters, soft scoring,
+FULL_SETUP requirements, bounded ReAct, versioned accepted-state migration and
+P4 admission/budget/publication are still required before HTTP enablement.
+
+Source quantity normalization now matches amounts/units to exact message spans:
+nominal TB becomes GB, GiB/TiB remain distinct, competing units/quantities or
+ambiguous separators clarify. It cannot prove arbitrary HARD/SOFT/owned/CLEAR
+intent; extraction/confirmation validation remains ISSUE-093, not a Pydantic
+correctness guarantee. Canonical IDs and patch operations are globally unique.
+
+Latest source evidence: 279 core/unit tests passed (7.37s); Ruff all source/tests/
+integration/migrations, mypy 119 source files, offline uv lock check (142 packages)
+and diff checks pass. Native PostgreSQL application/reservation/recovery remains
+pending; tests failed before queries on connection availability, not a schema pass.
+
+P2 dependency recheck (2026-10-08): owner regenerated lock/synced dependencies;
+greenlet is installed and offline lock check passes (142 packages). Agent cannot
+reach PostgreSQL; native migration/adapter/lifecycle gates requested from owner.
+
+P4-A source slice (2026-10-08): managed TaskGroup supervisor is independent of
+HTTP/SSE, limits active tasks and drains registered child tasks before ACK. A
+claim-commit/shutdown race is tested: no graph starts after admission closes and
+the committed execution is drained/acknowledged. Timeout returns not-drained,
+never fake stop evidence. Typed execution outcomes retain known retry categories
+through TaskGroup exception wrapping; unknown/mixed errors default terminal.
+Catalog loader receives canonical accumulated state as well as current draft so
+follow-up retrieval can preserve prior pins/resources/filters (pin test verified).
+Durable outbound reservation boundary and PostgreSQL
+ledger count RESERVED/UNKNOWN across generations, reject stale/cancelled/expired
+execution and commit before external dispatch. Alembic 0002 adds budgets/attempts;
+V1 remains frozen. Core tests and offline DDL pass; native reservation race/reopen
+test is pending reachable DB. The durable admission/finalize coordinator, provider
+retry instrumentation and composition-root wiring remain required. Neither helper
+alone authorizes shared-thread takeover or enables stateful HTTP/SSE.
+
+P3/P5 core continuation (2026-10-08): `build_stages.py` coordinates the existing
+application service and grounded explanation context; marker reuse hashes catalog,
+actual policy settings, versions and explicit non-secret generation configuration.
+Only typed `NoFeasibleBuildError` maps to completed INFEASIBLE. Explain failure/empty
+answer does not erase completed optimize output. Captured recommendation metadata
+feeds explanation and allowlisted presenter; synthetic IDs are not catalog SKUs.
+Seven focused stage scenarios use the real optimizer and JSON state round-trip;
+this is not a native checkpoint/restart or provider integration claim. Historical
+FULL_SETUP projection lacks its original accessory snapshot (ISSUE-087). Durable
+publication and customer runtime remain unfinished; phase statuses stay partial.
+
 - Tập trung tests vào outcome nghiệp vụ: multi-turn giữ yêu cầu, CLEAR về unknown,
   atomic rejection, source/lock, owned/pinned và spending, completion/hash/reuse,
   optimizer invariants, stale execution/accepted head và publication races.
@@ -192,7 +373,7 @@ P1 evidence (2026-10-07, root `ai-service/`):
 | Batch | Status | Feature | Điều kiện nghiệm thu |
 | --- | --- | --- | --- |
 | B0 | COMPLETED | Spec, API/state contracts, ownership | Typed contracts/rejection tests và API/DDL spec; không claim auth/persistence/runtime |
-| B1 | BLOCKED (ISSUE-077) | DB metadata + LangGraph checkpointer + auth | Restart không mất state; ownership đúng; pinned-version test chứng minh lượt mới bắt đầu từ accepted head dù thread có orphan/stale checkpoints |
+| B1 | IN PROGRESS | DB metadata + LangGraph checkpointer + auth | Accepted-head native gate owner đã pass; còn verify migration/ownership trên PostgreSQL và runtime wiring |
 | B2 | IN PROGRESS | Extraction và state patch/merge | P1 merge core verified; extraction/runtime integration còn TODO |
 | B3 | TODO | Catalog mapping + graph build-PC | Build dùng SKU thật, đúng budget và constraints được hỗ trợ |
 | B4 | TODO | Runs + native checkpoint recovery/reconciliation | Retry không trùng message; resume từ checkpoint; không publish stale run |
@@ -318,9 +499,22 @@ stateful runtime, không tự fallback sang latest hoặc seed state sang thread
 
 #### 5.3.1. Native accepted-head gate
 
-Root `ai-service/pyproject.toml` và resolver-generated lock đã có LangGraph/model
-integrations và pass local regression, nhưng chưa có Postgres checkpointer/driver.
-Chưa có version/API invocation cho durable accepted-head đã được kiểm chứng.
+Input-boundary nuance (locked LangGraph 1.2.14): the `source=input` checkpoint
+is saved before START applies the new run input to state channels. It may retain
+accepted values including the prior run ID/publication. Verify its server-stamped
+run/base/input-hash context, native START input and direct parent to accepted;
+subsequent loop checkpoints must contain the new run state. Do not weaken sibling/
+orphan rejection or identify lineage using values.run_id alone (ISSUE-090).
+Owner đã báo corrected gate gốc pass trên PostgreSQL ngày 2026-10-08. Ngày
+2026-10-09, owner báo migration + bootstrap + toàn bộ integration_tests pass,
+bao gồm production adapter, application scoped constraints/lifecycle và call
+reservation race/reopen. Đây là owner-reported evidence, không phải agent tự chạy;
+không bao gồm initial-root recovery hay coordinator publish.
+
+Root lock đã pin LangGraph 1.2.14, checkpoint 4.2.0, postgres saver 3.1.2. Owner
+native gate chọn explicit accepted checkpoint + new input + server metadata,
+durability=sync. Owner đã refresh lock/sync asyncio/PyJWT/greenlet; offline lock
+check pass. Native rerun đã pass theo owner; ISSUE-091 RESOLVED. Không hand-edit lock.
 B1 phải pin exact versions của toàn bộ persistence stack trong
 manifest và lock, ghi Python/driver versions cùng lệnh chạy vào test evidence.
 Không chọn version chỉ bằng ví dụ docs hoặc coi lock check là integration test.
@@ -485,16 +679,19 @@ từ phỏng đoán LLM. Support hardware ref ngoài catalog cần requirement/p
   catalog và requested objective. Owned map sang OwnedComponent hiện có; bổ sung
   typed pinned_parts vào constraints và validate hard pins trước pruning. Không
   giả lập pinned bằng OwnedComponent vì output owned_categories sẽ sai semantics.
-- Current source có OwnedComponent nhưng chưa có pinned_parts trong
-  PCBuildConstraints. B2/B3 cập nhật schema, optimizer/recommendation mapping,
-  guided-selection spec và tests cùng nhau trước khi coi contract implemented.
+- PCBuildConstraints đã có typed pinned_parts; optimizer giữ hard pins trước
+  Pareto pruning và không thêm iGPU/stock cooler để thay pin. P3 preparation
+  resolve refs từ active backend snapshots, kiểm tra category/stock và chuyển
+  owned thành spending 0. Paid pin không bị giả lập bằng OwnedComponent.
   BUILD_PC mặc định chỉ case PC; FULL_SETUP thêm bốn loại phụ kiện nêu ở mục 2,
   mỗi loại tối đa một cái. Không áp tỷ lệ chia budget hay minimum tiền tự đặt;
   budget phụ kiện chưa rõ thì clarify trước khi optimize. Clear/unknown ở chat
   boundary không được biến thành budget 20 triệu/gaming mặc định.
   P0 schema/merge đã siết owned exclude=false và scope/accessory refs, với core
-  rejection tests. Library optimizer pinned/accessory wiring vẫn thuộc P3;
-  không coi policy DTO là runtime đã có.
+  rejection tests. P3 chuẩn bị core budget từ giá phụ kiện resolved, không chia
+  tỷ lệ tự động. Thiếu budget cho RECOMMEND thì hỏi lại; chưa có grounded selector
+  runtime/ranking policy (ISSUE-085). Nodes/extraction/provenance capture còn TODO;
+  không coi pure preparation là durable runtime đã có.
 
 ### 6.3. Completion markers và invalidation
 
@@ -896,9 +1093,10 @@ external gateway route assistant và BFF phải thống nhất, không thêm pre
   Dùng allowlisted public DTO mapper; private graph channels không phải security
   boundary. Model text deltas và LangGraph progress được map thành SSE chuẩn.
 - `COMPLETED` chỉ phát sau transaction commit thành công.
-- Chốt disconnect/cancel: bản đầu không auto gửi lại message hoặc giữ background
-  run vô hạn; khi request dừng phải finalize/cancel hoặc đi qua recovery eligibility
-  và stop-evidence gate, không recover chỉ vì lease timeout.
+- HTTP submit tạo durable PENDING run; managed executor claim/execution độc lập
+  với request/SSE lifecycle. SSE chỉ subscribe persisted progress, disconnect
+  không implicit cancel hoặc auto gửi lại message. Explicit cancel/shutdown phải
+  join/drain và stop-evidence gate; bounded run deadline không reset khi reconnect.
 - Không hứa replay từng token. Reconnect fetch run status/kết quả đã commit.
 
 ### 9.3. Frontend

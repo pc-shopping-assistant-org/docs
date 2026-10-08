@@ -2,13 +2,20 @@
 
 Status: COMPLETED — P0 contract baseline, 2026-10-07; runtime remains pending.
 Architecture remains plan revision 8;
-revision 12 adds verified typed contracts and API/DB specifications to approved
+revision 18 approves canonical requirement state → versioned compiler → existing optimizer → satisfaction verifier, alongside prior review gates and approved
 V1 budget/retention policies and phased work.
 Scope: UC-AI-001/003 and the approved PC-builder extension.
+
+Review pause 2026-10-09: see [implementation status](stateful-implementation-status.md).
+Owner reported native foundation and initial-root experiment PASS. Root production
+initialization/CAS and the P0 revision-zero contract below remain unchanged.
 
 This document describes the new contracts, NOT live HTTP endpoints or durable
 state already running. Existing chat requests/responses remain unchanged.
 Source: `ai-service/src/ai_service/capabilities/assistant/stateful_contracts.py`.
+The approved requirement-centric model is a P3 extension, not the implemented P0
+baseline. New state/draft/merge schemas and legacy checkpoint migration must be
+versioned and tested before runtime replacement; no completion status changes here.
 
 ## Acceptance before implementation
 
@@ -20,12 +27,12 @@ Source: `ai-service/src/ai_service/capabilities/assistant/stateful_contracts.py`
 | B0-C04 | Turn requires conversation ID, request ID, non-negative integer expected revision and non-blank message                             | Unit tests; request hash/idempotency transaction belongs to B4                                |
 | B0-C05 | Internal accepted ref has exact thread/checkpoint/namespace; revision zero has no accepted ref                                      | Unit tests; native lineage validation and CAS publication are NOT implemented by this DTO     |
 | B0-C06 | Retryable vs terminal run failures are distinct; typed stop evidence requires identity/generation/UTC time/drained writes/proof ref | Unit tests; parsing evidence does NOT prove process death or release a thread                 |
-| B0-C07 | Owner comes from verified RS256 access JWT, not user body/header/UUID                                                               | Identity contract inspected; verification and async owner-scoped store remain B1              |
+| B0-C07 | Owner comes from verified RS256 access JWT, not user body/header/UUID                                                               | Auth/owner tests pass; native foundation owner PASS, ISSUE-091 resolved; live JWKS not verified |
 | B0-C08 | Login-only; BUILD_PC/FULL_SETUP; one accessory/type; owned free, pinned paid; approved retention/internal replay                     | Policy DTO/merge tests pass; ISSUE-079/080/081 resolved; cleanup/runtime pending                 |
 | B0-C09 | Public DTO allowlist, correlated SSE envelope, owned spending and publication revision                                            | public_contracts.py + core tests; route/journal/publish remains P2–P5                         |
 | B0-C10 | Versioned optimizer provenance, canonical hash, explicit input/config/results and synthetic evidence                               | provenance.py + real optimizer snapshot/restore/hash rejection; replay adapter remains P3/P4 |
-| B1-G01 | Native new turn starts from accepted A despite latest orphan B                                                                      | Candidate PostgreSQL integration test written, NOT passed; ISSUE-077                          |
-| B1-G02 | First turn, reducers, old publication reset, terminal/pending orphan and pool reopen preserve lineage                               | Same candidate gate; process restart, app DB CAS/finalization and recovery remain required    |
+| B1-G01 | Native new turn starts from accepted A despite latest orphan B                                                                      | Original gate and production adapter extension owner-reported PASS 2026-10-09                  |
+| B1-G02 | First turn, reducers, old publication reset, terminal/pending orphan and pool reopen preserve lineage                               | Original gate owner PASS; app DB CAS/finalization and execution recovery remain required       |
 
 ## Patch wire contract
 
@@ -128,21 +135,21 @@ The gate intentionally does not skip when its DSN/dependencies are missing.
 Default unit discovery is `tests/`; the B1 integration command is a separate,
 mandatory acceptance gate, not replaced by a green unit suite.
 
-Current candidate: native new input with explicit accepted checkpoint config.
-This is an experiment, NOT the selected production adapter. It checks accepted
+Selected semantics: native new input with explicit accepted checkpoint config.
+The owner reported the original corrected native gate passing. It checks accepted
 state vs terminal/pending orphan, invocation counts, marker reset and native
 ancestor chain after closing/reopening the saver. No application head is selected
 from latest, copied values or a new execution thread.
 
-Graph/model dependencies have a valid resolver-generated lock. No durable
-invocation API/persistence stack is approved until this native gate passes.
-If the candidate fails, investigate native semantics and test
-the update-state/fork alternative from plan 5.3; do not weaken assertions.
+Update 2026-10-09 (owner-reported): migration, saver bootstrap and the full
+`integration_tests` directory passed after the dotenv fix. This covers the
+production adapter extension, native owner/scoped-constraint persistence,
+resource reopen and call-reservation race/reopen gates. ISSUE-091 is resolved;
+the agent cannot independently reach local PostgreSQL in this sandbox. Initial
+root recovery, run admission/finalization and live JWT/JWKS/provider verification
+are not covered. Earlier pending gate entries above are superseded by this evidence.
 
-B1 is blocked by unavailable PyPI DNS/cache for absent saver/driver/ORM packages
-and no reachable test PostgreSQL; installed graph/model packages are not blocked.
-Docker socket access is also denied in this environment. No AI DB migrations,
-bootstrap, ownership routes or deployment wiring are claimed complete.
+Detailed next-step review: [ReAct and tool architecture](stateful-react-tools-design.md).
 
 ## P1 deterministic core evidence (2026-10-07)
 

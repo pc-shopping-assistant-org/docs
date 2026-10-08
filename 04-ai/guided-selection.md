@@ -11,6 +11,16 @@ pinned stays paid. See [API/state contracts](../05-api/stateful-chat-v1.md).
 LangGraph orchestrates direct model nodes; deterministic optimizer remains a
 library until P3 integration. The sequence below describes the target workflow.
 
+P3 core preparation now resolves bound parts from canonical active variant snapshots.
+Hard `pinned_parts` remain paid, bypass Pareto pruning, obey budget/compatibility
+and cannot be replaced by iGPU/stock cooler. Owned spending remains zero without
+changing reference price. Resolved accessory spending is deducted from FULL_SETUP
+budget; unclear recommendation budget returns clarification. Catalog selection,
+LLM extraction/explanation and durable orchestration remain unfinished.
+No feasible configuration raises typed `NoFeasibleBuildError` with an empty
+OptimizationResult and diagnostics; graph nodes must not treat every ValueError
+as a successful INFEASIBLE outcome.
+
 ## 1. Luồng Xử lý Đầu-Cuối (End-to-End Execution Pipeline)
 
 Quy trình Guided Selection chuyển hóa nhu cầu tự nhiên của khách hàng thành cấu hình PC tối ưu toán học qua 8 bước tuần tự:
