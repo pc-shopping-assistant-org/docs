@@ -4,6 +4,13 @@ Tài liệu này mô tả chi tiết quy trình nghiệp vụ và thuật toán 
 
 ---
 
+Stateful V1 contract baseline (P0, not live chat wiring): BUILD_PC defaults to
+case PC only; FULL_SETUP adds monitor/mouse/keyboard/headset, one/type, no implicit
+budget split. Ask when accessory budget is unclear. Owned always spends zero;
+pinned stays paid. See [API/state contracts](../05-api/stateful-chat-v1.md).
+LangGraph orchestrates direct model nodes; deterministic optimizer remains a
+library until P3 integration. The sequence below describes the target workflow.
+
 ## 1. Luồng Xử lý Đầu-Cuối (End-to-End Execution Pipeline)
 
 Quy trình Guided Selection chuyển hóa nhu cầu tự nhiên của khách hàng thành cấu hình PC tối ưu toán học qua 8 bước tuần tự:
@@ -12,7 +19,7 @@ Quy trình Guided Selection chuyển hóa nhu cầu tự nhiên của khách hà
 sequenceDiagram
     autonumber
     actor User as Khách hàng
-    participant Agent as LLM Agent (PydanticAI)
+    participant Agent as LangGraph / Direct LLM Nodes
     participant Core as Deterministic Optimizer Core
     participant Catalog as Backend Store Catalog
     participant Explainer as Grounding Explainer
@@ -67,7 +74,7 @@ Mô hình ngôn ngữ nhận diện các thông tin chính từ cuộc hội tho
 - **Fail-Safe trên Dữ liệu Thiếu:** Thiếu bất kỳ thông số so sánh nào $\to$ `dominates()` trả về `False`.
 
 ### Bước 4: Khóa Linh kiện Sở hữu & Sắp xếp Toàn cục Bảo vệ Nghiệm 0 VNĐ
-- **Linh kiện có sẵn (`owned_parts`):** Khóa cứng slot tương ứng vào duy nhất linh kiện của khách hàng. Nếu `exclude_from_budget=True`, hạch toán chi phí thực chi bằng 0 VNĐ.
+- **Linh kiện có sẵn (`owned_parts`):** Khóa cứng slot tương ứng vào duy nhất linh kiện của khách hàng. Stateful V1 luôn hạch toán chi phí thực chi bằng 0 VNĐ; pinned là khoản mua và vẫn tính tiền.
 - **Sắp xếp Giá Toàn cục (Global Price Sort Invariant):**
   - Sau khi nạp phương án synthetic (iGPU hoặc Stock Cooler 0 VNĐ), danh sách ứng viên được sắp xếp lại theo:
     $$\text{key} = (\text{spending\_price}, \text{stable\_id})$$

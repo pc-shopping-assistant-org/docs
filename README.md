@@ -12,6 +12,11 @@ Tài liệu của dự án được chia theo câu hỏi cần trả lời:
 - `07-research/`: paper và related work.
 - `08-thesis/`: outline và nội dung phục vụ luận văn.
 
+Plan triển khai stateful chat, graph tư vấn và checkpoints:
+[Stateful AI Chat & Guided PC Build](04-ai/stateful-chat-implementation-plan.md)
+(P0 contracts/P1 core COMPLETED, P2/B1 gate BLOCKED; LangGraph + Pydantic + model adapters/PostgreSQL checkpointer).
+Baseline/acceptance: [Stateful chat contracts](04-ai/stateful-chat-contracts.md).
+
 ## Source of truth
 
 - Luật nghiệp vụ nằm trong `01-business/business-rules.md`.

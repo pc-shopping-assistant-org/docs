@@ -2,6 +2,11 @@
 
 Hệ thống cung cấp **23 công cụ chuyên sâu** cho AI Agent, được tổ chức theo chuẩn **Clean Architecture (Ports & Adapters)** tại các vertical slices trong `capabilities/`.
 
+Implementation boundary: these are library toolkits, not tools registered in live
+chat. Stateful P0 [contracts](../05-api/stateful-chat-v1.md) are verified; grounded
+catalog/accessory/pinned adapters and runtime dispatch remain P3 work. V1 owned
+is free, pinned paid; FULL_SETUP accessories do not use implicit budget ratios.
+
 ---
 
 ## Bảng tra cứu nhanh các Tool
