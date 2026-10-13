@@ -1,11 +1,10 @@
 # AI stateful V1 application schema — P0 contract
 
-Status: Alembic through 0002 and native foundation gates owner-reported PASS
-2026-10-09 (ISSUE-091 resolved). Production root initializer is not implemented;
-revision-zero/no-head constraint below is unchanged. Database `ai_db` belongs to
+Status: Alembic through 0003; agent verified create/root/reopen on local PostgreSQL
+2026-10-09. Database `ai_db` belongs to
 root `ai-service`; ecommerce V1/Flyway/DBML are not its migration source.
 P2 implements async SQLAlchemy/Alembic migration and pinned saver bootstrap.
-Current head is `0002_call_attempts`; immutable V1 is not edited. Startup requires
+Current head is `0003_initial_root`; immutable V1/V2 are not edited. Startup requires
 this exact application release revision and reads tables without creating them.
 DBML: `ai-stateful.dbml`; generated constraint reference: `ai-stateful-constraints.sql`.
 Apply via `alembic upgrade head`, then `python -m ai_service.bootstrap_stateful`.
@@ -25,7 +24,11 @@ No FK to another service's account table: account_id is verified JWT identity.
 | active_run_id | uuid NULL; execution slot, not inferred from run status |
 | created_at, updated_at | timestamptz NOT NULL |
 
-CHECK `(revision = 0) = (accepted_checkpoint_id IS NULL)`. Namespace is the empty
+CHECK `revision = 0 OR accepted_checkpoint_id IS NOT NULL`. Revision zero may have
+an accepted initial root. Public readiness derives from the accepted ref:
+NULL → INITIALIZING, present → READY. Creation locks the owned conversation row,
+awaits native root persistence, then CAS attaches the exact ref without increasing
+revision. Existing populated rows are not automatically migrated. Namespace is the empty
 root namespace; thread identity derives from id, never latest. Native saver refs
 are opaque values: no SQL FK into framework internals or manual checkpoint writes.
 Index `(account_id, updated_at DESC, id DESC)` for owner lists.
@@ -132,3 +135,49 @@ expires, and stop/drain active writes before purge. User deletion removes every
 related application/framework/event/snapshot record. Internal-only replay cannot
 publish. Cleanup clock/attempt defaults and batch-size configuration are adapter
 details to document and verify in P2/P4; no expiration job is claimed here.
+
+## Optimizer provenance snapshot contract
+
+OptimizerExecutionSnapshotV1 được lưu immutable cùng completion checkpoint;
+không chỉ lưu hash hoặc selected SKU. Payload bắt buộc:
+
+Đây là application DTO versioned, extra="forbid"; identity dùng UUID và revision
+integer non-negative, timestamps UTC, monetary fields integer VND non-negative.
+Normalized input tái sử dụng typed ComponentSpec/PCBuildConstraints đã validate,
+không dùng dict[str, Any] làm contract optimizer. Policy maps dùng typed enum
+profile/objective và finite numeric values; serialized ordering/hash được chốt
+bằng golden fixtures. P0 DTO có trong provenance.py; core stage capture đã có một phần source/tests.
+Complete persisted snapshot/artifacts và replay adapter vẫn cần native/runtime gates.
+
+| Field | Nội dung |
+| --- | --- |
+| identity | schema_version=1, conversation_id, run_id, base_revision, constraints_revision |
+| constraints_snapshot | Merged values + source/lock/evidence, resolved owned/pinned, explicit budget scope/units, requested objective |
+| catalog_snapshot | Canonical rows/fields dùng resolve/normalize: variant/SKU, visibility/stock/price, attributes/benchmark evidence, retrieved_at, backend revision nếu backend cung cấp |
+| normalized_input | Toàn bộ ordered normalized candidates/ComponentSpec và effective spending mapping thực sự đưa vào optimizer; không chỉ final parts |
+| synthetic_sources | iGPU/stock-cooler identity/kind, parent variant/evidence; không tạo commerce SKU giả |
+| versions | graph/state/DTO, normalization/compatibility/optimizer/pruning/scoring/recommendation versions, engine code commit/artifact digest, Python/dependency lock digest |
+| policy_snapshot | Resolved weights/tables/thresholds, tie-break/order rules, search limits/config, config hash, seed nếu có randomness |
+| hashes | catalog_snapshot_hash, normalized_input_hash, optimization_input_hash, optimization_result_hash, recommendation_result_hash |
+| results | Typed optimization outcome/result, recommendation decision/score breakdown/evidence; INFEASIBLE tách khỏi successful build |
+
+Snapshot đủ để chạy optimizer offline mà không lấy catalog/policy hiện tại.
+Nếu dùng immutable blob ref thay inline JSON, ref kèm digest và được giữ cùng
+retention/lineage; missing blob/hash mismatch làm replay fail rõ ràng. Trước mắt
+ưu tiên inline validated payload có size limit, không thêm storage platform.
+
+Hash format V1: SHA-256 của application-canonical UTF-8 JSON: sorted object keys,
+compact separators, enum/UUID thành string, UTC timestamps, finite numbers;
+reject NaN/Infinity. Giữ array order nếu ảnh hưởng optimizer; set-like collections
+normalize/sort trước hash. Có hash-format version và golden serialization tests.
+optimization_input_hash bao gồm actual normalized input và effective algorithm/
+policy config; audit run ID/retrieval timestamp đứng riêng, không đổi semantic
+input hash chỉ vì được ghi nhận ở lượt khác. Snapshot/result hashes kiểm tra
+integrity; không thay thế payload và versions/config thực tế.
+
+Explanation provenance lưu trong checkpoint: input hash, prompt template/version,
+provider/model/config, evidence/result refs, validated output và output hash.
+Không lưu secrets/chain-of-thought. Text cũ đọc từ output đã lưu; LLM replay có
+thể khác câu chữ. Chỉ claim optimizer reproducibility sau replay test đúng code/
+config/environment. New build vẫn revalidate live visibility/stock/price; snapshot
+lịch sử không trở thành dữ liệu catalog hiện tại.

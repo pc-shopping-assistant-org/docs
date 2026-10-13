@@ -1,5 +1,10 @@
 # ADR-003 — Dùng PydanticAI cho model boundary
 
+Status: SUPERSEDED bởi [ADR-005 — Stateful bounded ReAct](ADR-005-stateful-react.md).
+Nội dung dưới đây là quyết định lịch sử, không phải kiến trúc hoặc provider APIs
+hiện hành. Giữ để trace rationale/migration; canonical design dùng LangGraph +
+Pydantic + direct LangChain model adapters.
+
 ## Context
 
 AI service cần một lớp model có output được validate, có thể thay provider sau

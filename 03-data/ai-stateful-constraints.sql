@@ -1,4 +1,4 @@
--- Reference DDL for Alembic 0001_stateful + 0002_call_attempts. Apply via Alembic,
+-- Reference DDL for Alembic 0001_stateful through 0003_initial_root. Apply via Alembic,
 -- not by running this documentation file. Native saver tables are separate.
 BEGIN;
 
@@ -129,4 +129,9 @@ CREATE TABLE agent_call_attempts (
 );
 CREATE INDEX ix_call_attempt_run_kind ON agent_call_attempts (run_id, kind);
 UPDATE alembic_version SET version_num='0002_call_attempts' WHERE version_num='0001_stateful';
+-- Running upgrade 0002_call_attempts -> 0003_initial_root
+ALTER TABLE conversations DROP CONSTRAINT ck_conversations_accepted_head;
+ALTER TABLE conversations ADD CONSTRAINT ck_conversations_accepted_root_head
+    CHECK (revision = 0 OR accepted_checkpoint_id IS NOT NULL);
+UPDATE alembic_version SET version_num='0003_initial_root' WHERE version_num='0002_call_attempts';
 COMMIT;

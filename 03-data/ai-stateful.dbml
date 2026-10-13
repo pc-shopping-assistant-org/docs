@@ -4,7 +4,7 @@ Table conversations {
   account_id uuid [not null]
   title varchar(200)
   revision bigint [not null]
-  accepted_checkpoint_id text
+  accepted_checkpoint_id text [note: '0003: revision zero may hold initial root; revision > 0 requires a ref. Readiness derives from ref presence.']
   active_run_id uuid
   created_at timestamptz [not null]
   updated_at timestamptz [not null]

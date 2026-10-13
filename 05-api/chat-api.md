@@ -2,8 +2,9 @@
 
 Base path: `/api/v1`
 
-Stateful extension contract: [Stateful chat V1](stateful-chat-v1.md). Its models
-are verified under P0; routes/persistence are not live and do not replace this API yet.
+Stateful extension: [Stateful chat V1](stateful-chat-v1.md). Opt-in authenticated
+conversation create/get foundation exists; full run execution/history/SSE delivery
+is not enabled and does not replace this request-scoped API yet.
 
 | Endpoint | Use case | Success message key |
 | --- | --- | --- |

@@ -5,7 +5,7 @@
 Production Compose is defined at
 `infra/compose/prod/compose-file/compose.yaml` and currently runs:
 
-- `ai-service`, the FastAPI/PydanticAI image pulled from GHCR;
+- `ai-service`, the FastAPI/Pydantic/LangGraph image pulled from GHCR;
 - PostgreSQL for ecommerce data and persistent carts/orders;
 - Qdrant as the private vector store for retrieval.
 

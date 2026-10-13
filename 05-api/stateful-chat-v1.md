@@ -2,8 +2,12 @@
 
 Status: contract implemented/verified. P2 opt-in POST conversation and GET-by-ID
 are implemented with auth/owner checks and lifecycle wiring; owner reported native
-foundation gates PASS on 2026-10-09 (ISSUE-091 resolved). New ReAct source is internal,
-not wired to these routes. Other routes below remain planned, not implemented.
+foundation gates PASS on 2026-10-09 (ISSUE-091 resolved). Submit/get run handlers
+use a managed runtime. AI_STATEFUL_BUILD_ENABLED selects guided build;
+AI_STATEFUL_REACT_ENABLED selects the native ReAct graph; they are mutually exclusive.
+default resources have no run executor and return 503 before admission.
+Message history is implemented against the application
+DB. Other routes below remain planned, not implemented.
 Scope: UC-AI-001/003 and guided PC build. Existing `/chat`, `/chat/stream`, search,
 compare and evaluate remain unchanged until P5 migration. No PydanticAI runtime.
 
@@ -15,12 +19,141 @@ owner's conversation/run: 404 `AI_CONVERSATION_NOT_FOUND` (do not reveal ownersh
 Owner, checkpoint selector and execution evidence are never request fields.
 
 P2 enablement: AI_STATEFUL_ENABLED=true with database/JWKS config. Disabled by
-default, the two foundation routes are absent from OpenAPI. Enabled startup
-requires applied Alembic 0002_call_attempts and separately bootstrapped saver tables;
+default, stateful routes are absent from OpenAPI. Enabled startup
+requires applied Alembic 0003_initial_root and separately bootstrapped saver tables;
 missing migration/config fails startup, never silently falls back to RAM.
 Published GET uses exact accepted checkpoint channels consultation/public_build,
 not graph latest; corrupt or missing accepted state is an error, not an empty state.
-List/messages/runs/cancel/events/delete require the later P4/P5 vertical slices.
+List/cancel/events/delete require the later P4/P5 vertical slices.
+Message history reads persisted application rows, not checkpoint channels.
+Cursor is an opaque persisted message UUID; the server resolves its sequence only
+inside the owned conversation. Invalid/foreign cursor: 400 VALIDATION_ERROR with
+errors.field=cursor. Limit is 1..100, default 20; results sort by sequence ascending.
+Empty history returns items=[], next_cursor=null. Failed-run user messages remain
+in history; assistant messages exist only after atomic publish.
+Submit/get run use StatefulRunService → coordinator; successful admission wakes
+the managed executor only after DB commit. Path/body mismatch returns 422.
+Without configured run resources both endpoints return 503, never leave PENDING work.
+
+### SKU clarification continuation
+
+GET conversation adds nullable `clarification` from the **accepted** checkpoint:
+`pending_message_id`, `constraints_revision`, and `items[{item_index, reason,
+options[{variant_id, sku, name}]}]`. Internal draft/source/checkpoint data is not exposed.
+The pending requirements remain wholly unmerged until all ambiguities resolve.
+
+POST run accepts optional `clarification_reply`:
+
+```json
+{
+  "pending_message_id": "<original request_id>",
+  "selections": [{"item_index": 2, "variant_id": "<offered variant UUID>"}]
+}
+```
+
+Keep normal `conversation_id`, new `request_id`, current conversation
+`expected_revision`, and `message` in the request. The application verifies source,
+canonical constraints revision, offered options and fresh catalog identity before
+atomic merge. The choice is included in request idempotency and checkpoint input hashes.
+Absent/null reply does not clear the pending draft; duplicate selections are invalid.
+Without a typed reply, guided runtime interprets `message` against the accepted
+options using a budgeted structured ChoiceDraft. Ordinals refer to the displayed
+option order, not item_index. Application validates source spans, offered IDs,
+revision and fresh catalog through the same path as a typed reply. Empty choices
+keep the question/options pending; an invalid choice does not merge requirements.
+The choose node checkpoints before catalog resolution, so native resume after a
+catalog failure does not repeat a completed model choice. Unit amendment and
+abandon/replace-pending operations remain P3 work. Source matching checks data
+binding, not a deterministic guarantee that the model understood user intent.
+
+### Product/task clarification continuation
+
+GET conversation adds nullable `task_clarification` from the accepted checkpoint:
+`pending_message_id`, `constraints_revision` and
+`items[{task_index, subject_index, mention, reason, options[{product_id, name}]}]`.
+These are product IDs for comparison, not SKU/variant IDs.
+
+POST run accepts a separate optional `task_clarification_reply`:
+
+```json
+{
+  "pending_message_id": "<original request_id>",
+  "constraints_revision": 1,
+  "selections": [{"task_index": 0, "subject_index": 0, "product_id": "<offered product UUID>"}]
+}
+```
+
+Use the normal new request_id/current conversation expected_revision. Only one
+reply kind is allowed. Application checks source/revision, offered candidates and
+fresh canonical matches. Original tasks and already-merged requirements survive
+native checkpoint reopen; unique/selected product bindings never switch silently.
+Removed selections ask again as SELECTED_PRODUCT_UNAVAILABLE. Absent reply retains
+the pending task. Empty options are not selectable.
+Public options are rechecked against the internal artifact at read/publication.
+The model receives the original task plus resolved completion requirements; a
+choice message cannot downgrade comparison into a generic answer.
+
+Pending comparison mentions may also be corrected through the normal `message`.
+With no typed/extracted product choice, a budgeted `TaskAmendment` binds exact
+new-message evidence to an existing `(task_index, subject_index)`. Original task
+kind/span and budget stay unchanged; only the edited subject loses its previous
+product binding. Canonical lookup uses the corrected mention. A still-ambiguous
+correction returns updated options and supports the same typed/free-text choice.
+The amendment is checkpointed before lookup and survives saver reopen/resume.
+No model-supplied product ID or synthetic concatenated source message is accepted.
+
+Without a typed reply, the runtime reserves MODEL and extracts `TaskChoiceDraft`
+against accepted options. Each proposed product choice needs exact source evidence.
+Application checks its span and offered IDs through the typed path, then performs
+fresh catalog lookup. An empty choice retains pending; changing unresolved
+mentions is handled by the amendment path, not treated as a product selection. The
+`choose_task` node checkpoints before lookup, so native resume after a catalog
+failure does not repeat a committed choice call. Source matching is not a guarantee
+of model intent accuracy; live provider/evals remain separate gates.
+
+### Quantity unit clarification
+
+An explicit integer without a unit is an extraction-only `UNRESOLVED_QUANTITY`.
+GET `clarification.items` adds nullable `quantity_amount` and `unit_options`;
+`QUANTITY_UNIT_REQUIRED` retains the whole original draft, including budget/pins.
+
+POST run accepts optional `unit_clarification_reply`:
+
+```json
+{
+  "pending_message_id": "<original request_id>",
+  "constraints_revision": 0,
+  "selections": [{"item_index": 2, "unit": "GB", "start": 0, "end": 2, "quote": "GB"}]
+}
+```
+
+Offsets refer to the current `message`, not the frozen original message.
+Source/revision/item and exact unit text are checked before atomic merge.
+Server normalization handles `triệu` → VND and TB → 1000 GB; no default unit.
+Canonical evidence retains the original quantity plus the confirming source.
+Absent supporting evidence preserves existing snapshot hashes.
+SKU and unit replies may coexist; neither can accompany a task/product reply.
+Without a typed reply, `choose_unit` reserves MODEL and validates its typed choice
+through the same path. Its checkpoint is reused after downstream failure.
+Changing an amount is not a unit-only confirmation; it uses pending-item amendment.
+
+### Pending requirement amendment
+
+With no typed SKU/unit reply and no extracted choice, a pending requirement turn
+may amend/drop specific unmerged items through a budgeted structured model call.
+No new HTTP mutation payload is required: the follow-up is the normal `message`.
+
+- Replacements keep item identity/subject/predicate and use new-message evidence.
+- Discards remove only explicitly selected unmerged items, not canonical state.
+- Unmentioned items, original task and their source messages remain unchanged.
+- Changed items invalidate old SKU choices/unit confirmations and resolve afresh.
+- Merge remains atomic; a remaining ambiguity withholds the entire draft.
+- The amendment node checkpoints before catalog IO; native resume reuses it.
+
+This covers amount/SKU edits and item removal within a pending requirement draft.
+Comparison-subject correction is described above; replacing/discarding the whole
+draft remains open. Source binding does not prove model intent accuracy; live evals
+remain a gate.
 
 Every HTTP response and SSE data frame is `{data, message, errors}`. Success
 errors is `[]`; error data is null, static message/code and field/details in
@@ -59,15 +192,50 @@ The subscriber is independent of execution. Submit commits a durable PENDING
 run; a lifecycle-owned managed executor claims it. No detached request task or
 SSE-triggered graph execution. Explicit cancellation does not release the shared
 thread until verified executor stop/drain. Internal P4-A supervisor/attempt ledger
-source is implemented; durable admission/publication coordinator and P2 lifespan
-wiring remain unfinished.
+source and SQL admission/publication coordinator are implemented and integration-tested.
+Production executor lifespan/provider wiring exists; native runtime verification
+uses model/auth/catalog fixtures, not live providers.
 Persisting/deduplicating events and reconnect behavior belong to P4/P5.
+
+## Planned revision — initial accepted root/readiness
+
+Implemented main path (0003): ConversationView có readiness INITIALIZING/READY.
+POST create chờ root được persist + CAS rồi trả 201 AI_CONVERSATION_CREATED,
+revision=0. GET dùng exact accepted ref; checkpoint refs không public.
+202/DELETING/background reconciliation bên dưới vẫn là planned, chưa enable.
+
+Initial-root contract trong [context spec](../04-ai/context-management.md#initial-accepted-root--target-extension)
+đã được triển khai cho main create/get path; các recovery gates dưới đây còn deferred.
+
+- Target ConversationView thêm readiness `INITIALIZING | READY | DELETING`.
+  READY luôn có exact accepted checkpoint; revision-zero READY chỉ có validated
+  initial root. Checkpoint refs/initialization identities vẫn private.
+- Target POST create: 201 + `AI_CONVERSATION_CREATED` khi READY; 202 +
+  `AI_CONVERSATION_INITIALIZING` khi initializer chưa xong. Cả hai giữ envelope
+  chuẩn và versioned ConversationView; FE poll owner-scoped GET, không tạo lại
+  conversation mỗi lần poll. Đây là static key đề xuất, chưa có trong runtime.
+- New run khi INITIALIZING: planned 409 `AI_CONVERSATION_NOT_READY`; DELETING
+  không nhận new run. Owner GET initializing trả readiness và chưa có accepted
+  public build; không lấy latest checkpoint hoặc giả accepted empty state.
+- Initializer cũng phải exclusive claim/stop/drain/fence. Root không gọi LLM/tool,
+  không thêm message hoặc tăng turn revision. Crash-before-CAS reconcile exact
+  initialization provenance/lineage; stale/debug/latest không thành root.
+- FAILED_TERMINAL của R1 không xóa root: lượt mới chỉ sau verified execution stop,
+  dùng exact accepted root. Legacy populated thread cần explicit migration/recovery,
+  không implicit copy values, reset thread hoặc purge history.
+
+Root create/readiness acceptance gồm owner authorization, concurrent initializer,
+crash-before/after-CAS, restart và orphan R1 → R2. Chỉ sau các gates này mới đổi
+route table/Swagger/generated reference/feature-local FE models sang revision mới.
 
 ## State, patch and setup
 
-Canonical schemas live in `stateful_contracts.py`, `conversation_core.py` and
-`public_contracts.py`. Model extraction returns TurnPatchV1; it is NOT an
-unrestricted client mutation API. Trusted application assigns source/confirmation.
+Baseline schemas live in `stateful_contracts.py`, `conversation_core.py` and
+`public_contracts.py`. Baseline extraction contract TurnPatchV1 is NOT an
+unrestricted client mutation API. Requirement-centric target adds versioned
+draft/task/resolution/merge contracts from requirements/ ([canonical-state contract](../04-ai/context-management.md#canonical-state-migration-and-task-authority--target-extension)),
+with legacy consultation only a compiled/public projection, not another writable
+source of truth. Trusted application validates source/confirmation/completion.
 
 - BUILD_PC is the approved default: only case PC/core spending. FULL_SETUP adds
   monitor/mouse/keyboard/headset, at most one per type. Core remains eight slots;
