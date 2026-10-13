@@ -2,7 +2,8 @@
 
 Cập nhật 2026-10-13. Core architecture first; internal flexible graph đã có,
 runtime V2 đã có opt-in; default vẫn V1.
-P0/P1 completed, P2–P6 in progress. Không quy phase count thành % chức năng.
+P0/P1 và P6-01 core audit completed; P2–P6 overall remain in progress for documented
+remaining features/integrations. Không quy phase count thành % chức năng.
 
 Track hiện tại: P2 minimum + P3-F01–F04/core tools + P4 + minimum submit/poll/history
 → P6-01 core audit. P5 expansion/SSE/frontend/retention, FULL_SETUP/soft scorer,
@@ -19,14 +20,49 @@ project/production-ready. Không đổi các status/evidence cũ chỉ từ repr
 | P2    | IN PROGRESS | Alembic 0003, saver/JWT/owner reads; root concurrency, internal crash reconciliation/CAS and legacy fail-closed verified | Live identity integration; automatic/asynchronous initialization and legacy migration deferred |
 | P3    | IN PROGRESS | Requirements → optimizer/verifier; six tools; flat ReAct; saved-build explanation; typed/free-text choices, pending edits and REPLACE/DISCARD | Semantic admission/completion gates; live provider/catalog; deferred older selectors, source expansion, soft/FULL_SETUP, state migration |
 | P4    | IN PROGRESS | Managed executor + SQL admission/idempotency/claim; exact lineage/CAS; stopped native recovery, cursor reconciliation and retry cleanup | Hard process-death authority; multi-retry/version-migration gates; no heartbeat-only takeover |
-| P5    | IN PROGRESS | Public DTO/SSE contract; create/get/history/submit/get run; accepted clarification options                                                    | List/cancel/delete/events, persisted SSE reconnect và frontend                                                       |
-| P6    | IN PROGRESS | [Core audit](core-audit.md); ISSUE-112 fixed; 100-turn storage gate verified | Root/version/recovery evidence review; internal replay backlog |
+| P5    | IN PROGRESS | Public DTO/SSE contract; create/list/get/history/submit/get/cancel run; owner-bound cursors and cancellation/drain verified | Delete/events, persisted SSE reconnect và frontend |
+| P6    | IN PROGRESS | [P6-01 core audit COMPLETED](core-audit.md); conflict/cancel/root reopen gates verified | P6-02 replay/full-feature audit backlog; no full-project completion |
 
 ## 2. Verification evidence
 
-Latest gate (2026-10-13): **719 core + 87 PostgreSQL pass**, Ruff/mypy168,
+Latest gate (2026-10-13): **725 core + 100 PostgreSQL pass**, Ruff/mypy168,
 offline lock/diff checks pass. V2 opt-in selects HTTP/body/view/factory/coordinator
 together; missing wire version rejects 422. V1 remains default and passes regression.
+
+P5 list slice RED→GREEN: service lacked list(), GET collection returned405. Added
+owner-authorized cursor lookup, existing SQL keyset ordering/lookahead and bounded
+public projection. PostgreSQL gates cover tie-break/paging/foreign cursors; HTTP
+gates cover auth/envelope/limits/OpenAPI and saved V2 flexible answer serialization.
+No schema migration or default-version switch; other P5 routes remain unfinished.
+P5 cancel slice RED→GREEN: missing local signal method/HTTP404, now owner-scoped
+POST202. Durable cancel commits before signalling; pending/no-claim cancels directly;
+running child drain retains busy slot until ACK. PostgreSQL covers local signal and
+missed-signal heartbeat fallback; real optimizer/native publication race covers
+cancel after validation/before CAS (no assistant/head publish). HTTP V1/V2 covers
+auth, uniform404, static envelope and repeat. No user-supplied stop evidence.
+
+Added confirmation → explicit requirement edit regression: accepted H0 is immutable,
+working H1 (RAM16) then H2 (RAM32) have distinct content hashes, and preparation
+replays both authorities in order. Missing edit receipt rejects. Managed PostgreSQL
+fresh/recovery cases now confirm a 30m proposal, explicitly edit to 25m, run the real
+optimizer and publish via native lineage/stop/CAS. Accepted head stays unchanged
+while execution is held; final run advances conversation revision once, and duplicate
+submission adds no messages. ISSUE-113 fixed two dynamic-registration continuation
+guards: bootstrap from accepted tasks and compare task identity independently of
+the requirements revision. A registered continuation regression also rejects a
+forged product/task binding while allowing the legitimate requirement revision.
+Managed cancellation after both edits drains the executor, publishes no new head
+or assistant message, retains the accepted pending snapshot and releases only after
+stop ACK. Model/catalog remain fixtures; this is internal executor cancellation,
+not the deferred public cancel API. Publication-race fixture commits a competing
+revision after native validation/before locked CAS: finalize returns
+PUBLICATION_CONFLICT, preserves accepted head/assistant history and competing
+revision, and keeps the slot busy when ACK persistence fails. Combined root gate
+now passes: actual first V2 run errors after tool commit, persists stop ACK/releases,
+then closes/reopens saver. New coordinator/executor publishes R2 from accepted root
+without orphan evidence. Duplicate submission adds no messages. Migration current
+reports `0003_initial_root (head)`. P6-01 closes for selected fixture-backed core;
+live provider/catalog/identity, feature/operational extensions remain unfinished.
 Core audit found/fixed ISSUE-112: a read before requirement merge wrongly blocked
 publication even after fresh evidence. Graph and publisher now share current-run/
 context projection; raw old ledger remains unchanged. RED→GREEN checks 8m historical
@@ -428,7 +464,7 @@ or thread. NativeReactModel has unit/SDK binding proof; no live model verificati
 | Execution        | Guided/ReAct lifespan/API wiring verified with SQL + provider fixtures; version validator and recovery/takeover deferred                                              |
 | Attempts         | Mỗi backend/provider outbound được reserve; SDK retries không bypass                                                                                                  |
 | CPU/state bounds | Awaited thread-pool dispatch/drain implemented; process isolation nếu cần và complete runtime/deadline/100-turn verification còn thiếu                                |
-| Delivery         | Submit/get run and history with managed composition done; list/cancel/delete/events/SSE reconnect/FE remain                                                           |
+| Delivery         | Submit/get/cancel run, conversation list and history done; delete/events/SSE reconnect/FE remain |
 
 Current answer DTO chưa có toàn bộ target grounded-claim extension.
 Public catalog/build facts lấy typed evidence. Web-only dùng exact excerpts;

@@ -137,7 +137,13 @@ RUNNING + verified process stop → RECOVERING → RUNNING
 | INFEASIBLE | Domain result của completed optimization, không technical failure |
 
 Unexpected bug mặc định terminal và ghi issue.
-Cancel request chưa là CANCELLED cho tới verified stop/drain.
+Với execution đã claim, cancel request chưa là CANCELLED cho tới verified stop/drain.
+P5 public cancel persists cancel_requested before local signal. A PENDING run with
+no execution identity may be cancelled under the exclusive claim lock without ACK;
+it never started. Claimed runs retain the slot until stop/drain ACK. Missed local
+signal is handled by owning heartbeat; no worker takeover follows from cancellation.
+Cancellation observed at locked finalize suppresses publish and completes CANCELLED
+only after the executor's validated stop evidence. Terminal repeat is a no-op.
 Retryable run muốn nhường conversation phải resume xong hoặc controlled cancel/discard.
 Không revive cancelled/terminal hoặc run có base đã bị accepted revision mới thay thế.
 

@@ -6,8 +6,8 @@ foundation gates PASS on 2026-10-09 (ISSUE-091 resolved). Submit/get run handler
 use a managed runtime. AI_STATEFUL_BUILD_ENABLED selects guided build;
 AI_STATEFUL_REACT_ENABLED selects the native ReAct graph; they are mutually exclusive.
 default resources have no run executor and return 503 before admission.
-Message history is implemented against the application
-DB. Other routes below remain planned, not implemented.
+Message history and owner-scoped conversation listing are implemented against the
+application DB. Owner-scoped cancel is implemented; events/delete remain planned.
 Scope: UC-AI-001/003 and guided PC build. Existing `/chat`, `/chat/stream`, search,
 compare and evaluate remain unchanged until P5 migration. No PydanticAI runtime.
 
@@ -24,7 +24,21 @@ requires applied Alembic 0003_initial_root and separately bootstrapped saver tab
 missing migration/config fails startup, never silently falls back to RAM.
 Published GET uses exact accepted checkpoint channels consultation/public_build,
 not graph latest; corrupt or missing accepted state is an error, not an empty state.
-List/cancel/events/delete require the later P4/P5 vertical slices.
+Conversation list uses persisted conversation UUID cursors, resolved only for the
+authenticated owner. Invalid/missing/foreign cursor: 400 VALIDATION_ERROR,
+errors.field=cursor. Limit1–100/default20; updated_at DESC then id DESC; last page
+has next_cursor=null. It is a live listing, not a snapshot: updates between requests
+can move conversations in the order. V2 selection returns PageV1[ConversationViewV2],
+including the accepted flexible projection; never internal checkpoint/owner fields.
+POST cancel returns202 AI_RUN_CANCEL_REQUESTED with the current RunViewV1; it is
+not a stop receipt. Transaction locks conversation/run, validates owner and commits
+cancel_requested before signalling the owning local executor. Claimed executions
+remain busy until child/checkpoint writes drain and stop ACK persists. A missed
+local signal is picked up by the owning worker heartbeat; no lease-only takeover.
+If finalize races with durable cancel, cancellation suppresses assistant/head publish.
+Pending runs whose execution_id is null under the same claim lock may cancel/release
+immediately: no execution has been claimed. Terminal/repeated cancel is idempotent
+and does not alter accepted state. Events/delete remain later P5 slices.
 Message history reads persisted application rows, not checkpoint channels.
 Cursor is an opaque persisted message UUID; the server resolves its sequence only
 inside the owned conversation. Invalid/foreign cursor: 400 VALIDATION_ERROR with

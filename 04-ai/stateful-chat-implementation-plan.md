@@ -65,7 +65,8 @@ Giữ flow/P4; không thêm framework hoặc mở rộng mutation authority.
 | P5 | B5 | APIs/events/SSE/frontend, retention/delete |
 | P6 | B6 | Cross-phase core audit và internal replay |
 
-P0/P1 completed baseline; P2–P6 in progress; P6 core audit started.
+P0/P1 completed baseline; P6-01 core audit completed for selected architecture.
+P2–P6 overall remain in progress for documented remaining features/integrations.
 Chi tiết source và verification chỉ ở status, không lặp test counts trong plan.
 
 **Ưu tiên thực hiện: core architecture**, không chờ toàn bộ feature delivery.
@@ -137,7 +138,7 @@ foundation, thêm runtime agent, DSL hoặc tự mở commerce mutation scope.
 | P5-02 | Feature backlog: persisted event journal + SSE reconnect | P5-01 | Disconnect không cancel; completion sau CAS; authorized offsets; không chặn core verification qua polling |
 | P5-03 | Feature backlog: req/res/models/mappers và stateful frontend | P5-02 | Account/cache/history/reload/build/clarification UX có browser gates riêng; chưa cần UI để đóng core architecture |
 | P5-04 | Feature backlog: stop/drain deletion và retention jobs | P4-B03 + P5-02 | Giữ 90/7-day policy; protected lineage/evidence; không enable delete/retention khi chưa test, không chặn dev core milestone |
-| P6-01 | Core acceptance audit: scripted model + real optimizer/PostgreSQL/API | P2 minimum + P3 core + P4 + minimum API | Flexible normal/negative flows, native reopen/resume, hashes/confirmation/scope proof/stop/CAS; full/static/lock/migration gates; không phụ thuộc P5 feature backlog |
+| P6-01 | COMPLETED: core acceptance audit, scripted model + real optimizer/PostgreSQL/API | P2 minimum + P3 core + P4 + minimum API | [Audit evidence](core-audit.md): normal/negative flows, native reopen/resume, hashes/confirmation/scoped proof/stop/CAS and core/static/lock/migration gates. No live/full-feature claim |
 | P6-02 | Feature backlog: snapshot-only deterministic replay và full requirement audit | P6-01 | Replay không live fallback/publish; full audit vẫn tính deferred features, không gọi core completion là toàn project xong |
 
 P3-A03 progress: persisted typed/free-text SKU and comparison product choices are
@@ -201,16 +202,18 @@ reload/reconnect flow. Source docs edit không tự resume implementation hoặc
 
 | Issues | Việc còn thiếu |
 | --- | --- |
-| ISSUE-092 | Main root/readiness/CAS implemented; reconciliation/legacy deferred |
-| ISSUE-093/097 | Extraction authority, pending confirmation và completion |
+| ISSUE-092 | Synchronous root/concurrency/crash-retry/CAS verified; automatic reconciliation/asynchronous creation/legacy migration deferred |
+| ISSUE-093/097 | Explicit-user and immutable confirmation runtime verified with fixture models; semantic quality/live provider evaluation remains |
 | ISSUE-096/099 | Canonical metadata, supported requirements, soft/FULL_SETUP |
 | ISSUE-085/087 | Accessory selection policy và historical setup snapshot |
-| ISSUE-094/095 | SQL main path done; production executor/provider wiring, version validation; recovery deferred |
-| ISSUE-098 | State bounds, event journal, retention/delete/replay |
-| ISSUE-100 | Full verification và native provider/runtime adapters |
+| ISSUE-094/095 | Managed executor, version rejection and two-attempt ACK recovery verified; hard-death reconciliation/multi-retry/migration remain |
+| ISSUE-098 | 100-turn state/native storage verified; event journal, retention/delete/replay deferred |
+| ISSUE-100 | Opt-in V2 factory/API/native publication verified; live provider/catalog/identity smoke and deferred features remain |
 
-Next: P3-F01 contracts → F02 flexible graph → F03 outcomes/repair → F04 native gates.
-Current SQL admission → managed graph → atomic publish đã verified với PostgreSQL
-và fixture catalog; không dùng evidence này để claim flexible flow đã implemented.
-P2 main initializer đã verified; không mở rộng rare recovery trước main chat flow.
-Không thay phase completion chỉ vì contract hoặc native experiment đã pass.
+Current: flexible V2 contracts/graph/outcomes/factory and managed PostgreSQL publish
+are implemented, including confirmation → explicit edit → actual optimizer → CAS
+and stopped native recovery. ISSUE-113 fixes pending continuation with dynamic task
+registration; task semantics remain bound to accepted state despite requirement edits.
+Next: finish required core acceptance evidence, then implement deferred features under
+their own gates. Default remains V1; V2 is opt-in. Fixture models/catalog do not prove
+live integrations, semantic accuracy or whole-project completion.
