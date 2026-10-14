@@ -620,11 +620,23 @@ compiler, optimizer, verifier và typed presenter.
 Catalog descriptions là untrusted data, không instructions.
 Each outbound request qua [durable reservation](context-management.md#durable-call-budget).
 
+V2 read-only turns không preload hardware snapshot. Chỉ tải/freeze candidates khi
+BUILD hoặc resolve requirement cần catalog; recovery giữ snapshot đã checkpoint.
+Hardware mapping vẫn là cấu hình runtime bắt buộc, không phải mỗi lượt đều gọi snapshot.
+
 Call ledger giữ name/version, ID, args hash, revision, catalog/policy hash, typed
 outcome/evidence, execution identity và timestamps. Cache reuse cần inputs/versions/
 evidence khớp; không dùng SUCCEEDED attempt thay durable graph result.
 
 ## 7. Grounding và completion
+
+### Consultation explanation — implemented
+
+Giá/spec/build facts vẫn do server render từ typed evidence. Candidate có thể thêm
+`explanation: {text, evidence_refs}`: refs phải thuộc kết quả đã chọn trong canonical
+ledger. Phần này được ghi nhãn nhận định tư vấn, không phải benchmark.
+Kiểm tra refs chỉ chứng minh nguồn liên kết, không chứng minh mọi câu prose đúng;
+semantic/factuality eval là quality gate riêng. Model không được tự tạo FPS/spec/giá.
 
 ### Answer contract — target extension
 

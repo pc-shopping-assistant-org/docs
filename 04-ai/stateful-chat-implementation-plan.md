@@ -1,6 +1,6 @@
 # Plan — Stateful AI Chat & Guided PC Build
 
-Revision 27 · 2026-10-12 · Core architecture first; feature delivery is a separate backlog.
+Revision 28 · 2026-10-13 · Core first; V2 caller/basic SSE delivered, remaining features stay backlog.
 Scope: UC-AI-001/003 và PC-builder extension; AI, catalog/identity boundary, gateway, frontend.
 Tiến độ/evidence: [status](stateful-implementation-status.md).
 Requirement-by-requirement core audit: [audit](core-audit.md).
@@ -72,6 +72,12 @@ Chi tiết source và verification chỉ ở status, không lặp test counts tr
 **Ưu tiên thực hiện: core architecture**, không chờ toàn bộ feature delivery.
 Giữ IDs P0–P6 để trace công việc cũ, không tạo thêm phase/counter tiến độ.
 
+Ưu tiên hiện tại (2026-10-13): hoàn thiện hành trình tư vấn nhiều lượt trước P5.
+Build gaming → làm rõ → build → giải thích → chỉnh requirements → build lại.
+Ba việc core: bounded published dialogue context; grounded reasons/tradeoffs;
+optimizer catalog loading tại capability boundary. Không thêm framework hay biến
+edge case thành workflow. Fixtures và live model/catalog có evidence riêng.
+
 | Track | Phạm vi |
 | --- | --- |
 | Core architecture — làm trước | Minimum P2 persistence/auth/owner boundary; P3-F01–F04, typed tools/optimizer/verifier; P4 execution/attempts/recovery/publication; API submit/poll/history tối thiểu; P6-01 core audit |
@@ -135,8 +141,8 @@ foundation, thêm runtime agent, DSL hoặc tự mở commerce mutation scope.
 | P4-B02 | Native ancestry/input-boundary/version validator | P4-B01 | Same-thread sibling/debug/orphan/missing ancestor/pending task reject; accepted root/current run lineage đúng |
 | P4-B03 | Fenced atomic accepted head/revision/message/run/result publication | P4-B02 | Hai finalizer publish một lần; same result retry reuse; crash-before/after-commit không duplicate/recompute |
 | P5-01 | Feature backlog: list/cancel và API UX mở rộng | P4-B03 | Submit/poll/history + ownership/idempotency/exact accepted reads là core gate; list/cancel expansion có acceptance riêng. Internal cancellation/stop safety vẫn thuộc P4 |
-| P5-02 | Feature backlog: persisted event journal + SSE reconnect | P5-01 | Disconnect không cancel; completion sau CAS; authorized offsets; không chặn core verification qua polling |
-| P5-03 | Feature backlog: req/res/models/mappers và stateful frontend | P5-02 | Account/cache/history/reload/build/clarification UX có browser gates riêng; chưa cần UI để đóng core architecture |
+| P5-02 | IMPLEMENTED: persisted journal + basic SSE | P5-01 | Owner-authorized subscribe; completion sau CAS; disconnect không cancel. Owner bỏ reconnect/Last-Event-ID khỏi scope ngày 2026-10-13 |
+| P5-03 | IN PROGRESS: V2 caller + owned req/res/models/mappers | P5-02 | Chat/attachments/immutable confirmation và browser fixture gate đã có. List/history/reload và live integration vẫn backlog |
 | P5-04 | Feature backlog: stop/drain deletion và retention jobs | P4-B03 + P5-02 | Giữ 90/7-day policy; protected lineage/evidence; không enable delete/retention khi chưa test, không chặn dev core milestone |
 | P6-01 | COMPLETED: core acceptance audit, scripted model + real optimizer/PostgreSQL/API | P2 minimum + P3 core + P4 + minimum API | [Audit evidence](core-audit.md): normal/negative flows, native reopen/resume, hashes/confirmation/scoped proof/stop/CAS and core/static/lock/migration gates. No live/full-feature claim |
 | P6-02 | Feature backlog: snapshot-only deterministic replay và full requirement audit | P6-01 | Replay không live fallback/publish; full audit vẫn tính deferred features, không gọi core completion là toàn project xong |

@@ -1,12 +1,12 @@
 # Stateful AI — implementation status
 
-Cập nhật 2026-10-13. Core architecture first; internal flexible graph đã có,
+Cập nhật 2026-10-14. Core architecture first; internal flexible graph đã có,
 runtime V2 đã có opt-in; default vẫn V1.
 P0/P1 và P6-01 core audit completed; P2–P6 overall remain in progress for documented
 remaining features/integrations. Không quy phase count thành % chức năng.
 
 Track hiện tại: P2 minimum + P3-F01–F04/core tools + P4 + minimum submit/poll/history
-→ P6-01 core audit. P5 expansion/SSE/frontend/retention, FULL_SETUP/soft scorer,
+→ P6-01 core audit. Basic SSE/V2 caller delivered; remaining P5 UX/retention, FULL_SETUP/soft scorer,
 benchmark-source expansion/older selectors và replay chuyển feature backlog.
 Deferred không có nghĩa completed hoặc bị bỏ requirements; core done không là full
 project/production-ready. Không đổi các status/evidence cũ chỉ từ reprioritization.
@@ -20,20 +20,52 @@ project/production-ready. Không đổi các status/evidence cũ chỉ từ repr
 | P2    | IN PROGRESS | Alembic 0003, saver/JWT/owner reads; root concurrency, internal crash reconciliation/CAS and legacy fail-closed verified | Live identity integration; automatic/asynchronous initialization and legacy migration deferred |
 | P3    | IN PROGRESS | Requirements → optimizer/verifier; six tools; flat ReAct; saved-build explanation; typed/free-text choices, pending edits and REPLACE/DISCARD | Semantic admission/completion gates; live provider/catalog; deferred older selectors, source expansion, soft/FULL_SETUP, state migration |
 | P4    | IN PROGRESS | Managed executor + SQL admission/idempotency/claim; exact lineage/CAS; stopped native recovery, cursor reconciliation and retry cleanup | Hard process-death authority; multi-retry/version-migration gates; no heartbeat-only takeover |
-| P5    | IN PROGRESS | Public DTO/SSE contract; create/list/get/history/submit/get/cancel run; owner-bound cursors and cancellation/drain verified | Delete/events, persisted SSE reconnect và frontend |
+| P5    | IN PROGRESS | Create/list/get/history/submit/get/cancel; persisted journal/basic SSE; frontend V2 chat/attachments/confirmation | Delete/retention, FE list/history/reload và live integration; reconnect ngoài scope |
 | P6    | IN PROGRESS | [P6-01 core audit COMPLETED](core-audit.md); conflict/cancel/root reopen gates verified | P6-02 replay/full-feature audit backlog; no full-project completion |
 
 ## 2. Verification evidence
 
-Latest gate (2026-10-13): **725 core + 100 PostgreSQL pass**, Ruff/mypy168,
+Latest gate (2026-10-13): **729 core + 105 PostgreSQL pass**, Ruff/mypy175,
 offline lock/diff checks pass. V2 opt-in selects HTTP/body/view/factory/coordinator
 together; missing wire version rejects 422. V1 remains default and passes regression.
+
+Frontend post-merge gate2026-10-14:135 tests, typecheck/lint/OpenAPI check pass.
+Browser earlier mocked API đi qua 2 lượt, hiển thị thay đổi trước immutable
+confirmation, chỉ V2/1 SSE mỗi lượt, không page error. Không phải live model/catalog.
+`yarn build --webpack` pass cả TypeScript/66 static pages sau merge remote. Đã bỏ root redirect page
+trùng proxy; giữ locale root layout (ISSUE-120 resolved). Production HTTP checks:
+`/ -> /vi`307, vi/en200 và đúng html lang. Default Turbopack vẫn lỗi worker port
+trong môi trường này (ISSUE-122); không đổi build script/CI hay suppress error.
+
+Backend delivery gate:148 catalog/common-lib tests +compose config pass. Upstream
+query-filter integration repaired after compiler RED. JDK release25 mode fails;
+gate dùng CLI `release=`/`source=25`/`target=25`, không đổi pom/skip tests. Full reactor
+và default Java build chưa verify (ISSUE-124). AI published6a16569, backend e7ae822
+pins matching submodule; không pin local-only commit (ISSUE-083 resolved).
+
+Core slice: owner-scoped published history 4 turns/12k chars, freeze khi recovery;
+task registration và agent cùng nhận context. Hardware snapshot tải ở build/resolve,
+không ở read-only turns. Canonical facts + evidence-linked qualitative explanation
+được publish; selected product tasks/source binding và public cards đã có native gate.
+FE/BE dùng named limits và existing event/status enums; wire shapes không đổi.
 
 P5 list slice RED→GREEN: service lacked list(), GET collection returned405. Added
 owner-authorized cursor lookup, existing SQL keyset ordering/lookahead and bounded
 public projection. PostgreSQL gates cover tie-break/paging/foreign cursors; HTTP
 gates cover auth/envelope/limits/OpenAPI and saved V2 flexible answer serialization.
 No schema migration or default-version switch; other P5 routes remain unfinished.
+Event journal foundation now verified:0004/0005 migration, typed public envelopes,
+serialized per-run sequences/dedup, concurrent same-key replay, changed payload
+rejection, rollback/reopen and owner/cursor checks. ISSUE-115 CHECK NULL regression
+fixed with a forward constraint migration; no data reset. Local DB at0005 head.
+Lifecycle emission now verified via managed SQL/native tests: admission START,
+validated DELTA/COMPLETED atomically with publish; V2 result retains flexible state,
+build and revision. Pending/running cancel ERROR only at safe release; retry cleanup
+emits terminal ERROR, transient retry emits none. Failed terminal-event insert rolls
+back assistant/head and both final events; conflicting publish leaves only START.
+HTTP SSE now subscribes/tails committed events, owner-authorized and independent
+of execution. No Last-Event-ID/reconnect/automatic retry. DELTA is final validated
+text, not provider tokens. No migration beyond0005 for this slice.
 P5 cancel slice RED→GREEN: missing local signal method/HTTP404, now owner-scoped
 POST202. Durable cancel commits before signalling; pending/no-claim cancels directly;
 running child drain retains busy slot until ACK. PostgreSQL covers local signal and
@@ -61,7 +93,8 @@ revision, and keeps the slot busy when ACK persistence fails. Combined root gate
 now passes: actual first V2 run errors after tool commit, persists stop ACK/releases,
 then closes/reopens saver. New coordinator/executor publishes R2 from accepted root
 without orphan evidence. Duplicate submission adds no messages. Migration current
-reports `0003_initial_root (head)`. P6-01 closes for selected fixture-backed core;
+was `0003_initial_root` at that gate; current head is `0005_event_payload`.
+P6-01 closes for selected fixture-backed core;
 live provider/catalog/identity, feature/operational extensions remain unfinished.
 Core audit found/fixed ISSUE-112: a read before requirement merge wrongly blocked
 publication even after fresh evidence. Graph and publisher now share current-run/
@@ -287,11 +320,11 @@ scan now dispatches one call; summary-shaped data fails rather than yielding a f
 empty catalog. No default Java build claim: this environment lacks ct.sym and used
 source/target 25 CLI overrides. No deployed-backend or SQL query-count proof.
 
-Latest checks (2026-10-13): 620 core and 50 PostgreSQL integration tests pass;
+Earlier intermediate gate (superseded by section2): 620 core and 50 PostgreSQL integration tests pass;
 Ruff, mypy 159 source files and offline lock check pass. Native suite includes V2
 read/proposal/search/reference/unit/version-head/preparation and internal managed
 read/waiting/build/confirmation/saved-explanation CAS gates. Selected application
-factory/HTTP remains V1.
+factory/HTTP remained V1 at that gate; current V2 is opt-in.
 No live LLM/catalog claim.
 
 Curated dimensions: one ASUS GPU techspec template, reduced real DOM fixture and
@@ -458,27 +491,24 @@ or thread. NativeReactModel has unit/SDK binding proof; no live model verificati
 
 | Gate             | Còn thiếu                                                                                                                                                             |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Root             | Main initializer/readiness/CAS done; deferred crash reconciliation/legacy; ISSUE-092                                                                                  |
-| Completion       | Whole-draft replacement and arbitrary historical selectors; pending requirement/subject edits, typed/free-text choices and accepted saved explanation are implemented |
+| Root             | Synchronous initialization/concurrency/reconciliation verified; automatic reconciliation/legacy migration deferred; ISSUE-092 |
+| Completion       | REPLACE/DISCARD and pending edits implemented; arbitrary historical selectors and live semantic quality remain |
 | Build policy     | Soft scorer/FULL_SETUP; objective hint non-null hiện rejected                                                                                                         |
-| Execution        | Guided/ReAct lifespan/API wiring verified with SQL + provider fixtures; version validator and recovery/takeover deferred                                              |
+| Execution        | V2 stopped recovery/version/lineage/CAS verified; process-death authority and multi-retry expansion remain |
 | Attempts         | Mỗi backend/provider outbound được reserve; SDK retries không bypass                                                                                                  |
-| CPU/state bounds | Awaited thread-pool dispatch/drain implemented; process isolation nếu cần và complete runtime/deadline/100-turn verification còn thiếu                                |
-| Delivery         | Submit/get/cancel run, conversation list and history done; delete/events/SSE reconnect/FE remain |
+| CPU/state bounds | Dispatch/drain and100-turn native storage gate verified; capacity/load/retention not proven |
+| Delivery         | Basic SSE and FE V2 caller done; list/history/reload UI, delete/retention remain; reconnect outside scope |
 
 Current answer DTO chưa có toàn bộ target grounded-claim extension.
 Public catalog/build facts lấy typed evidence. Web-only dùng exact excerpts;
-không còn publish unrestricted LLM prose, nhưng curated web facts vẫn chưa có.
+Curated physical facts exist; Tom's model/conflict handling needs ISSUE-121 repair.
+Labelled evidence-linked qualitative prose is not deterministic factuality proof.
 Source defaults/operational limits chưa là measured capacity. ISSUE-100 vẫn mở
 cho full verification/native adapters; focused graph test đã có evidence ở trên.
 
 ## 5. Next slice
 
-Whole-draft replacement and curated web facts theo
-[plan](stateful-chat-implementation-plan.md#34-delivery-checklist-còn-lại--thứ-tự-triển-khai).
-Mỗi slice ghi kết quả focused/full/static/native gates vào file này và tracker.
-
-Managed ReAct composition now uses the native provider/catalog adapters. Next:
-whole-draft replacement, older-run selectors, curated facts and delivery.
-Live taxonomy/provider credentials still required;
-hardware mapping is never inferred from model output.
+Live identity/catalog/model gate khi owner cấu hình; không tự ghi credentials.
+ISSUE-122 default bundler environment và ISSUE-121 parser còn mở. Remaining UX,
+retention/replay/source expansion theo [plan](stateful-chat-implementation-plan.md).
+Không dùng fixture/native tests để tuyên bố live integration hoặc full completion.

@@ -17,6 +17,15 @@ DB: [schema](../03-data/ai-stateful-schema.md). Transport: [HTTP/SSE](../05-api/
 
 V1 không memory xuyên conversation. RAM history của legacy chat không phải durable memory.
 
+## Published dialogue window — implemented
+
+V2 task registration và agent nhận tối đa 4 cặp user/assistant đã publish, tổng
+12.000 ký tự. SQL lọc owner, conversation và accepted revision; loại current,
+failed, debug/replay runs. Chỉ giữ cặp đầy đủ, bỏ cặp cũ/quá dài, không cắt nửa câu.
+Window được freeze trong execution context; recovery dùng lại đúng window đó.
+History hỗ trợ hiểu follow-up, không cấp quyền sửa requirements hay chứng minh
+giá/stock hiện tại. Chưa có memory xuyên conversation.
+
 ## Canonical-state migration and task authority — target extension
 
 Canonical requirements và resolution/merge/compiler ở [agent spec](agent-tools.md#4-state-và-trust-boundary).

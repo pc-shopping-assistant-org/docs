@@ -34,7 +34,8 @@ close/reopen → second run from accepted root. Newer failed checkpoint is ignor
 R2 publishes once, without orphan evidence. Selected version policy rejects legacy
 bases after PostgreSQL reopen; migration/heartbeat takeover remain unsupported.
 
-Final evidence: 721 core / 94 PostgreSQL tests; Ruff/mypy168, offline lock/diff pass.
-Local application DB: `0003_initial_root (head)`. All listed selected-policy gates
+At core closure: 721 core / 94 PostgreSQL tests; Ruff/mypy168, offline lock/diff pass.
+At that gate DB was `0003_initial_root`; current migrations/evidence are in status.
+All listed selected-policy gates
 are verified; feature/live/operational expansions above remain open under their own
 criteria, not silently marked complete.
