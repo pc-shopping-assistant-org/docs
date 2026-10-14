@@ -1,8 +1,9 @@
-# PC build optimizer — algorithm and invariants
+# PC optimizer
 
-Scope: deterministic core dưới ai-service/src/ai_service/capabilities/pc_builder/.
-Gộp nội dung thuật toán từ ai-service/SOLUTION.md; architecture/state/tool protocol
-được mô tả riêng, không tạo một agent/optimizer khác.
+Optimizer chọn cấu hình từ canonical candidates trong budget và modeled compatibility.
+Đây là deterministic core, không LLM agent và không network/DB client.
+Source: [pc_builder](../../ai-service/src/ai_service/capabilities/pc_builder/).
+Theo một user flow ở [Build consultation](guided-selection.md).
 
 ## 1. Mathematical model
 
@@ -35,7 +36,7 @@ không có nghiệm mới trả typed no-feasible-build outcome.
 
 Available resource không tự khóa slot. Explicit selected binding mới compile
 thành owned_parts. Engine không tự suy ý định hay tự bỏ requirement.
-[Requirement/verification contract](agent-tools.md#4-state-và-trust-boundary).
+[Requirement/verification contract](requirements.md).
 
 ## 3. Search and pruning
 
@@ -90,9 +91,11 @@ BALANCED, UPGRADE_FRIENDLY. ScoreBreakdown gồm raw_value, normalized_score,
 weight và contribution. Metric có positive weight nhưng thiếu evidence làm build
 invalid, không gán điểm trung bình ngầm.
 
-Phân biệt performance_per_cost và budget_saving; upgrade dimensions gồm
-platform_longevity, ram_slots và psu_headroom. Numeric weights/normalization ở
-[optimization policy](knowledge/03-optimization-policies.md), không copy vào flow.
+Scoring dimensions hiện gồm `cost_efficiency` và các upgrade metrics
+`platform_longevity`, `ram_slots`, `psu_headroom`. Không có `budget_saving` riêng.
+Weights/normalization và công thức baseline ở
+[optimization policy](knowledge/03-optimization-policies.md); cập nhật policy
+version khi đổi chúng.
 
 OptimizationResult trả ranked builds theo objective; recommendation policy ở
 application chọn objective, không nhét recommended_build mặc định vào core.

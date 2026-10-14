@@ -1,122 +1,94 @@
-# P0 — Frozen contract baseline
+# State contract reference
 
-Baseline 2026-10-07, source: `capabilities/assistant/stateful_contracts.py`.
-Đây là contract legacy P0, không phải canonical requirement model mới.
-Target/migration: [agent](agent-tools.md), [context](context-management.md).
-Verification: [status](stateful-implementation-status.md).
+Canonical requirement contracts and legacy consultation/patch contracts coexist in source.
+They are not two writable sources of truth or interchangeable HTTP request schemas.
 
-## 1. Patch
+## Current requirement contracts
 
-TurnPatchV1 có schema_version=1; extra=forbid, typed discriminated SET/CLEAR.
-Serialization dùng to_payload()/exclude_unset=True, không chèn null bằng default dump.
-parse_turn_patch reject duplicate JSON keys và non-finite numbers trước Pydantic;
-dict đã mất duplicate keys không chứng minh raw JSON hợp lệ.
+Source: [requirements/contracts.py](../../ai-service/src/ai_service/capabilities/assistant/requirements/contracts.py).
 
-| Input | Semantics |
+| Model | Fields / invariant |
 | --- | --- |
-| Absent field/group/slot hoặc empty group | No-op |
-| SET với typed value | Thay toàn bộ field/binding |
-| CLEAR không value | Unknown constraint hoặc gỡ binding |
-| null, SET thiếu/null value, CLEAR có value | Reject |
+| Requirement | Stable id, subject, predicate, EQ/GTE/LTE, typed value, HARD/SOFT, bound evidence |
+| QuantityValue | Strict nonnegative integer amount + canonical unit |
+| TextValue | Nonblank text |
+| ReferenceValue | Canonical variant UUID |
+| Resource | Canonical available variant + source evidence |
+| Binding | Existing requirement ID → variant ID + evidence refs |
+| CanonicalRequirementState | goals/requirements/resources/bindings/unresolved; unique matching identities |
+| RequirementPatch | Explicit SET/CLEAR lists by stable identity; no duplicate/conflicting operations |
 
-Không nhận arbitrary paths, owner/run/checkpoint, phase/marker/source/lock metadata.
-Validate patch **và final state** trước một atomic update.
-SET/CLEAR locked USER field cần explicit instruction/confirmation; SYSTEM lock không tự mở.
-Application cấp provenance sau source validation; extraction schema không tự cấp authority.
-Lưu patch/evidence để không mất CLEAR intent.
+Every CLEAR needs bound evidence. Value/source/identity/authority validation precedes
+atomic merge. Requirements hash excludes compatibility revision but includes content/
+semantics/stable IDs/evidence. [Requirement concepts](requirements.md) define meaning.
 
-| Constraint key | Type/bounds |
+Public V2 turn commands are in [HTTP V2](../05-api/stateful-chat-v2.md);
+canonical patch is internal application contract, not arbitrary client mutation API.
+
+## Legacy P0 patch
+
+Source: [stateful_contracts.py](../../ai-service/src/ai_service/capabilities/assistant/stateful_contracts.py).
+TurnPatchV1 schema_version1 uses discriminated SET/CLEAR and sparse groups.
+Serialization preserves absent fields; raw parsing rejects duplicate JSON keys and
+non-finite numbers. A parsed dict cannot prove raw duplicate-key safety.
+
+| Input | Meaning |
 | --- | --- |
-| target_budget_vnd | Strict integer VND >=0; không implicit minimum/default budget |
-| use_case / target_resolution | Canonical enums |
-| target_fps | Domain range 30–1000 |
-| preferred_gpu_brand / preferred_cpu_brand / form_factor_preference | Strict nonblank string; canonical resolution riêng |
+| Absent field/group/slot, empty group | No-op |
+| SET with typed value | Replace field/binding |
+| CLEAR without value | Unknown constraint/remove binding |
+| Null, malformed SET/CLEAR | Reject |
 
-Không coercion string/boolean thành budget. CLEAR budget/use case cần clarification,
-không kích hoạt PCBuildConstraints defaults.
-Provider wire schema phải map explicit về contract; null không thành absent/CLEAR.
-Exact method/strict options thuộc [model strategy](model-strategy.md).
+No arbitrary paths, owner/checkpoint or authority metadata. Validate patch and resulting
+state atomically. User/system locks cannot be opened by model inference.
 
-```json
-{
-  "schema_version": 1,
-  "constraints": {
-    "target_budget_vnd": {"op": "SET", "value": 25000000},
-    "preferred_gpu_brand": {"op": "CLEAR"}
-  }
-}
-```
+### Legacy constraint fields
 
-## 2. Owned/pinned refs
-
-Core slots: CPU, MAINBOARD, RAM, GPU, PSU, CASE, COOLER, STORAGE; tối đa một binding/slot.
-owned_parts/pinned_parts là sparse enum maps: SET thay binding, CLEAR gỡ, absent giữ nguyên.
-Không owned/pinned overlap; chuyển loại bằng CLEAR+SET trong cùng atomic patch.
-
-| DTO | Fields/invariant |
+| Key | Type |
 | --- | --- |
-| PinnedPartRefV1 | variant_id UUID; category map key khớp catalog; paid |
-| OwnedPartRefV1 | variant_id UUID; strict exclude_from_budget=true; spending=0 |
-| ResolvedPartBindingV1 | category/kind, variant_id/SKU, ComponentSpec snapshot, catalog_price/spending_price, exclude flag, source/evidence |
+| target_budget_vnd | Strict integer VND>=0; no implicit budget |
+| use_case/target_resolution | Canonical enum |
+| target_fps | Domain range30–1000, not benchmark promise |
+| preferred_gpu_brand/preferred_cpu_brand/form_factor_preference | Nonblank text; mapping/resolution separate |
 
-Không nhận client price/stock/specs hoặc exclude=false/integer boolean cho owned.
-Variant khác product ID/tên; purchased row thiếu canonical ID reject.
-Resolver verify identity/category/visibility/stock; outside-catalog unknown hỏi lại,
-không đoán ComponentSpec. Pin inactive/out-of-stock không substitute im lặng.
+CLEAR required budget/workload asks clarification, not optimizer defaults.
+Provider wire schema maps explicitly; null does not become absent/CLEAR.
 
-Giữ ComponentSpec.price làm giá tham chiếu, spending riêng.
-OptimizerInputV1 gồm validated constraints, normalized catalog và objective.
-Owned map OwnedComponent; pinned map hard pins giữ trước pruning, không giả owned
-hoặc synthetic iGPU/stock cooler để thay pin.
+### Legacy owned/pinned bindings
 
-## 3. Request, identity và checkpoint
+Core slots: CPU/MAINBOARD/RAM/GPU/PSU/CASE/COOLER/STORAGE, one selected binding/slot.
+Sparse SET replaces, CLEAR removes, absent preserves. No owned/pinned overlap.
 
-TurnRequestV1: conversation_id UUID, request_id, strict nonnegative expected_revision,
-nonblank message. Payload hash/idempotency transaction thuộc application.
+Pinned variant spends reference price. Owned has strict exclude_from_budget=true and
+spending0; price/specs/stock are canonical snapshots, never client-supplied.
+Resolved binding keeps category/kind, SKU/spec snapshot, reference/spending and evidence.
 
-Identity: RS256 với configured JWKS/issuer, audience pc-shopping-api, required time claims.
-Token type=access; refresh rejected. accountId là owner UUID; sub là email.
-Account phải ACTIVE. Owner lookup trước mọi state/message/run/checkpoint access.
-UUID không credential; client không cấp owner hoặc checkpoint selector.
+Pins survive pruning and cannot silently substitute iGPU/stock cooler.
+Available resource requires explicit selected binding to become optimizer owned.
 
-Checkpoint ref nội bộ giữ exact thread/checkpoint/namespace.
-Frozen P0 baseline: revision=0 không accepted ref. Extension 0003 hiện cho phép
-accepted initial root ở revision=0; public ConversationView có readiness.
-[Initial-root target](context-management.md#initial-accepted-root--target-extension)
-thay invariant này chỉ qua versioned migration.
-Parsing stop evidence không chứng minh process death hoặc release thread.
+## Identity and native refs
 
-## 4. V1 business policies
+RS256 access JWT with configured JWKS/issuer/audience/time claims, accountId owner,
+access type and ACTIVE status. UUID/sub alone is not permission.
+Client cannot choose thread/checkpoint or stop evidence.
 
-- Login-only; guest ngoài V1.
-- BUILD_PC: core only. FULL_SETUP: core + monitor/mouse/keyboard/headset, tối đa một/type.
-- Owned spending=0; pinned paid. Không implicit 80/20; budget/phụ kiện unclear thì hỏi.
-- Eight-slot optimizer không tự optimize accessories; trừ resolved accessory spending
-  trước core cap, không silently giảm FULL_SETUP thành core.
-- Retention 90 ngày; orphan/debug 7 ngày nếu unprotected. User delete purge related
-  messages/runs/checkpoints/provenance sau stop/drain.
-- Debug/replay internal-only, không publish assistant result hoặc accepted head.
+Internal CheckpointRef has exact thread/namespace/checkpoint. READY revision0 may have
+validated initial root (extension0003); populated legacy no-head requires explicit policy,
+not blind adoption. [State/recovery](context-management.md#initial-accepted-root).
 
-Cleanup/job/recovery implementation không được suy ra từ policy DTO.
+## Public snapshots
 
-## 5. Baseline acceptance IDs
+Public consultation/build/answer allowlist facts/bindings/spending and stale/historical
+status. No internal stage markers, raw provenance, worker/proof/lease or native refs.
+Integrated choices have no fake commerce SKU; history does not refresh prices.
 
-| ID | Contract/rejection |
-| --- | --- |
-| B0-C01 | Sparse absent/SET/CLEAR/null và atomic merge |
-| B0-C02 | Allowlisted keys/slots; client không sửa authority fields |
-| B0-C03 | Owned/pinned strict refs và final-state conflict |
-| B0-C04 | Required turn IDs/revision/message; payload mismatch |
-| B0-C05 | Exact internal ref; published revisions require ref; revision-zero initial root |
-| B0-C06 | Retryable/terminal khác nhau; typed stop proof identity/generation/UTC/drain |
-| B0-C07 | Verified identity JWT + owner scope |
-| B0-C08 | Login/budget/accessory/retention/replay policies |
-| B0-C09 | Public allowlist, correlated SSE, spending/revision |
-| B0-C10 | Versioned immutable optimizer provenance/config/result/hash |
-| B1-G01 | New turn từ accepted A khi latest là orphan B |
-| B1-G02 | First turn/reducers/marker reset/pending orphan/reopen/lineage |
+BUILD_PC/FULL_SETUP, consent and unsupported semantics live in [requirements](requirements.md).
+Deletion/retention/debug policy does not imply a running cleanup/replay adapter.
 
-Public DTO/SSE: [API](../05-api/stateful-chat-v1.md).
-Tables/provenance: [DB](../03-data/ai-stateful-schema.md).
-Native gate command/env: [README](../../ai-service/README.md).
-Contract-only acceptance không chứng minh complete live runtime.
+## Version compatibility
+
+HTTP V1 fields are not V2 aliases. Native bases and pending artifacts require supported
+graph/schema versions; incompatible shapes migrate or fail clearly, not reinterpret defaults.
+Hash integrity does not prove semantic truth or source authenticity.
+
+**Related:** [HTTP reference](../05-api/stateful-chat-v2.md) · [Database](../03-data/ai-stateful-schema.md).

@@ -1,35 +1,38 @@
-# Documentation
+# Project documentation
 
-## Đọc AI service
+## AI service
 
-| Cần biết | Tài liệu |
+Start at [AI service documentation](04-ai/README.md).
+
+The manual follows **Overview → First steps → Fundamentals → Guides → Reference**.
+It describes the current Stateful ReAct V2 architecture; delivery logs are separate.
+
+- [Architecture](02-architecture/ai-architecture.md): components, responsibilities and one chat lifecycle.
+- [First steps](04-ai/getting-started.md): local setup and first request.
+- [Guides](04-ai/README.md#guides): build, compare, research and extend.
+- [Reference](04-ai/README.md#reference): HTTP/tool/data/policy contracts.
+- [Delivery](04-ai/README.md#project-delivery): roadmap, evidence and history.
+
+## Ecommerce and project specification
+
+| Folder | Purpose |
 | --- | --- |
-| Bài toán/phạm vi | [AI problem](04-ai/ai-problem-definition.md) |
-| Components và boundaries | [Architecture](02-architecture/ai-architecture.md) |
-| Quyết định kiến trúc | [ADR-005](02-architecture/decisions/ADR-005-stateful-react.md) |
-| Requirements, ReAct, grounding | [Agent/tools](04-ai/agent-tools.md) |
-| State, execution, recovery | [Context](04-ai/context-management.md) |
-| API và tool schemas | [HTTP/SSE V1](05-api/stateful-chat-v1.md), [V2 internal request](05-api/stateful-chat-v2.md), [tools](05-api/tool-contracts.md) |
-| Persistence/provenance | [AI database](03-data/ai-stateful-schema.md) |
-| Thuật toán và policy | [Optimizer](04-ai/pc-build-optimizer.md), [hardware](04-ai/hardware-knowledge.md) |
-| Delivery và evidence | [Plan](04-ai/stateful-chat-implementation-plan.md), [status](04-ai/stateful-implementation-status.md) |
-| Setup/run/test | [ai-service README](../ai-service/README.md) |
+| 01-overview | Scope, requirements and glossary |
+| 01-business | Business rules, use cases and workflows |
+| 02-architecture | System boundaries and architecture decisions |
+| 03-data | Database models, constraints and canonical data contracts |
+| 05-api | Transport and integration contracts |
+| 06-evaluation | Test/evaluation criteria and experiment evidence |
+| 07-research / 08-thesis | References and thesis materials |
 
-## Nguồn chuẩn
+## Documentation conventions
 
-| Folder | Nội dung |
-| --- | --- |
-| 01-overview / 01-business | Scope, glossary, business rules/use cases |
-| 02-architecture | Boundaries và ADR |
-| 03-data / 05-api | Schema/invariants và transport contracts |
-| 04-ai | Agent, state, retrieval, optimizer/policies |
-| 06-evaluation / 07-research / 08-thesis | Evidence, references và luận văn |
-
-## Quy tắc viết
-
-- Spec chỉ giữ quyết định hiệu lực, contract, invariant, flow và ví dụ cần thiết.
-- Một rule ở một chỗ; nơi khác dẫn link, không copy.
-- ADR giữ rationale/lịch sử; plan giữ dependency/gates; status/tracker giữ progress/evidence.
-- Chốt decision thì sửa spec và affected API/data contracts, không append review log.
-- Code/spec lệch thì ghi issue; design không phải bằng chứng runtime đã chạy.
-- Source README chỉ setup/module navigation. Clone docs cạnh ai-service để relative links resolve.
+- One page answers one question; concepts explain, guides teach, references define.
+- Use examples/flows before implementation details; link source only when it helps locate a change.
+- One rule has one canonical owner; other pages link, not duplicate formulas/contracts.
+- Describe implemented behavior and label unsupported/planned features explicitly.
+- Keep test counts, issue/slice history and delivery status out of concept pages.
+- ADRs retain rationale; roadmap retains gates; status/tracker retain evidence.
+- Code/spec conflicts must be recorded, not silently resolved.
+- Keep existing public paths where possible; verify local links/anchors after restructuring.
+- Source READMEs provide entry points; clone docs beside ai-service for workspace-relative links.

@@ -1,6 +1,7 @@
-# Stateful turn V2
+# Stateful HTTP V2 reference
 
-Status: opt-in HTTP/runtime implemented. Default remains [V1](stateful-chat-v1.md).
+Frontend dùng V2-only. Server chọn V2 explicit; Settings default vẫn stateful-off/V1.
+Shared endpoints/auth/pagination/SSE ở [HTTP reference](stateful-chat-v1.md).
 Select `AI_STATEFUL_REACT_ENABLED=true` and `AI_STATEFUL_REACT_VERSION=v2`
 with the documented stateful DB/auth/provider/catalog configuration. This selects
 V2 request, public view, graph and publication together; no automatic migration
@@ -9,9 +10,8 @@ of conversations with accepted V1 execution checkpoints.
 Frontend assistant chat uses V2 exclusively, including product attachments and
 proposal confirmation. It requires configured V2; there is no legacy fallback.
 
-Actual lifespan/API/executor/SQL/native saver passes two catalog turns. Managed
-confirm/build/saved-explanation also passes with the real optimizer. Model,
-catalog and HTTP auth in these gates are fixtures, not live deployment evidence.
+Examples/tutorial: [First steps](../04-ai/getting-started.md).
+Verification nằm trong [status](../04-ai/stateful-implementation-status.md), không phải API contract.
 
 ## Request
 

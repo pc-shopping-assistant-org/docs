@@ -1,40 +1,52 @@
-# RAG boundary
+# Catalog retrieval
 
-Report định hướng embedding và vector retrieval (Qdrant). Repository hiện có
-HTTP Qdrant/embedding adapters và một catalog indexer; local baseline vẫn dùng
-backend catalog search làm fallback khi vector configuration chưa đầy đủ.
+Catalog service là nguồn chuẩn cho product/variant/price/stock/visibility.
+Keyword/vector search chỉ tìm candidates; stale payload không được override backend facts.
 
-Khi triển khai RAG thật, pipeline cần tách:
+## V2 canonical tools
 
-1. đồng bộ product/specification document từ backend;
-2. tạo embedding và lưu kèm product/variant ID;
-3. truy vấn vector với filter trạng thái sản phẩm;
-4. đưa các record đã truy xuất vào prompt model;
-5. giữ product IDs và canonical prices trong response.
+`search_catalog`, `get_product_details` và `compare_products` dùng
+BackendProductCatalog qua application port.
 
-Provider embedding, chunking, freshness, score threshold và Qdrant lifecycle
-phải được chốt trước khi đóng ISSUE-019.
+Product summary có price range; range không là exact variant price.
+Missing detail/spec ghi unknown. Inactive/deleted products không vào model evidence.
+Names cần canonical resolution, không top-k uniqueness proof.
 
-## Retrieval seam in the service
+## Hardware snapshots
 
-`AssistantService` nhận một `CatalogRetriever` protocol. Baseline inject
-`BackendCatalogRetriever`, adapter này gọi `GET /products` của backend để giữ
-catalog backend làm source of truth. Khi bật Qdrant, `QdrantCatalogIndexer`
-đồng bộ product payload + embedding vào collection và
-`QdrantCatalogRetriever` trả payload đã index (hoặc hydrate product detail theo
-ID). Search, chat và consult đều đi qua seam; `shopping_graph` chạy trước seam
-để normalize query và giữ intent planning deterministic.
+Build/requirement resolution dùng BackendRequirementCatalog và versioned taxonomy mapping.
+Adapter quét bounded cursor pages của [snapshot API](../05-api/catalog-snapshot.md),
+không N+1 product-detail calls.
 
-Index local/ops bằng command idempotent `uv run ai-index-catalog`. Command đọc
-toàn bộ catalog qua cursor pages (mỗi request tối đa 100 record), tạo embedding
-và upsert vào collection. Cursor lặp có guard chống cursor lỗi/lặp; freshness,
-xoá record không còn ACTIVE và lịch chạy đồng bộ vẫn cần policy vận hành riêng.
+Overflow/budget/schema error phải fail rõ; không coi truncated candidates là exhaustive
+catalog rồi báo global INFEASIBLE. ACTIVE stock0 có thể phục vụ owned validation;
+compiler quyết định purchasable stock.
 
-Trong fallback adapter, hệ thống thử cả cụm truy vấn trước; nếu không có hit,
-nó tách một số từ khóa có nghĩa, gọi lại catalog endpoint và loại bản ghi trùng.
-Đây chỉ là lexical expansion có giới hạn để local flow hữu ích hơn, không phải
-embedding retrieval.
+Read-only V2 turns không preload hardware snapshot. Native recovery giữ snapshot đã
+checkpoint để không refetch committed optimizer inputs.
 
-Đây là boundary có thể cấu hình bằng dependency injection. Khi chưa có
-index/provider, backend keyword retrieval vẫn là fallback grounded và
-ISSUE-019 vẫn mở.
+## Optional vector seam
+
+Request-scoped AssistantService có CatalogRetriever seam: backend lexical,
+hybrid/Qdrant adapters và catalog indexer. Đây là configurable retrieval capability,
+không có nghĩa V2 tools tự dùng vector DB hoặc durable memory đã chuyển sang Qdrant.
+
+Embedding provider/chunking/freshness/threshold/index lifecycle cần policy riêng.
+Chưa có vector configuration thì lexical baseline là explicit mode, không semantic search proof.
+
+## Index catalog
+
+Chỉ sau khi collection và embedding configuration đã sẵn sàng:
+
+```bash
+uv run ai-index-catalog
+```
+
+Command đọc cursor pages và upsert embeddings/payloads. Index ACTIVE only và
+backend-revalidate visibility khi retrieval; hash embeddings chỉ development.
+Deletion/freshness/scheduling policy không được suy từ một lần index thành công.
+
+Source: [indexer](../../ai-service/src/ai_service/index_catalog.py),
+[retrievers](../../ai-service/src/ai_service/services/).
+
+**Next:** [Configuration](configuration.md) · [Web research](web-research.md).

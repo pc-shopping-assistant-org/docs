@@ -1,45 +1,45 @@
-# Hardware compatibility
+# Physical compatibility reference
 
-Chỉ kiểm tra các rule đã model hóa, không chứng nhận toàn bộ khả năng lắp ráp.
-Metadata lấy từ catalog canonical; không suy specs thiếu từ tên sản phẩm.
+Các checks này bao phủ modeled metadata, không chứng nhận mọi khả năng lắp ráp.
+Nguồn: [compatibility.py](../../../ai-service/src/ai_service/capabilities/pc_builder/compatibility.py).
+Catalog thiếu data không được suy specs từ tên.
 
-## Rules
+## Modeled checks
 
-| Rule | PASS | Thiếu dữ liệu |
+| Pair | Required condition | Missing data |
 | --- | --- | --- |
-| CPU ↔ mainboard | Socket chuẩn hóa trùng nhau | UNKNOWN |
-| RAM ↔ mainboard | ram_type chuẩn hóa trùng nhau | UNKNOWN |
-| Mainboard ↔ case | Form factor nằm trong supported_form_factors của case | UNKNOWN |
-| GPU ↔ case | gpu_length_mm ≤ max_gpu_length_mm; bỏ qua iGPU | UNKNOWN |
-| Cooler ↔ case | cooler_height_mm ≤ max_cooler_height_mm | UNKNOWN |
-| Cooler ↔ CPU | CPU socket nằm trong supported_sockets | UNKNOWN |
+| CPU/mainboard | Normalized socket matches | UNKNOWN |
+| RAM/mainboard | Normalized RAM generation matches | UNKNOWN |
+| Mainboard/case | Explicit supported_form_factors contains board form factor | UNKNOWN |
+| Discrete GPU/case | GPU length <= case clearance | UNKNOWN |
+| Cooler/case | Cooler height <= case clearance | UNKNOWN |
+| Cooler/CPU | CPU socket supported by cooler | See gap below |
 
-Có dữ liệu nhưng không thỏa rule → INCOMPATIBLE. UNKNOWN không được coi là PASS.
-Chuẩn hóa: trim, uppercase, bỏ dấu cách và dấu gạch nối; ví dụ am-5 → AM5.
-Không suy case hỗ trợ Micro-ATX chỉ vì đã khai báo ATX.
-Danh sách hỗ trợ thiếu/rỗng hoặc chứa giá trị trắng → UNKNOWN; không fallback rank.
+Có known data nhưng không thỏa rule → INCOMPATIBLE. UNKNOWN không là PASS.
+Normalization trim/uppercase và bỏ space/hyphen; không suy Micro-ATX support chỉ vì
+case khai báo ATX. Empty/blank support list không fallback form-factor rank.
 
-## iGPU và stock cooler
+## Integrated choices
 
-Chỉ tạo phương án tích hợp khi đủ metadata từ CPU:
+Synthetic iGPU/stock cooler chỉ là internal choices grounded vào parent CPU,
+không fake commerce SKU và không thay selected owned/pinned parts.
 
-| Option | Metadata bắt buộc | Giá mua thêm |
+| Choice | Required evidence | Additional spending |
 | --- | --- | --- |
-| iGPU | has_integrated_graphics=true; integrated_graphics_score và integrated_graphics_power_watts có giá trị | 0 VND |
-| Stock cooler | includes_stock_cooler=true; stock_cooler_height_mm, stock_cooler_tdp_watts và stock_cooler_score có giá trị | 0 VND |
+| iGPU | Capability, graphics score và power metadata | 0 VND |
+| Stock cooler | Included cooler, height/score và thermal metadata | 0 VND; see gap below |
 
-UUIDv5 dùng namespace cố định, seed stable_component_id(cpu) + :igpu hoặc :stock_cooler.
-Đây là internal synthetic identity, không phải SKU catalog; không thay owned/pinned part.
+Identity derive từ stable parent CPU identity; public output phải label integrated,
+không tạo purchased variant ID.
 
-## Giới hạn
+## Known coverage limits
 
-Chưa kiểm tra BIOS/chipset, RAM DIMM/SO-DIMM và radiator.
-Số khe RAM thuộc scoring nâng cấp, không phải compatibility.
-PSU sizing theo [engineering policy](02-engineering-policies.md).
+Chưa model BIOS/chipset, DIMM/SO-DIMM hoặc radiator fit.
+RAM-slot count là scoring, không compatibility proof.
+Power capacity theo [engineering reference](02-engineering-policies.md).
 
-## Lệch implementation
+Existing implementation gaps phải giữ rõ: cooler socket còn fallback `cooler.socket`
+khi thiếu supported_sockets; stock cooler còn cho phép thiếu TDP. Không mô tả desired
+strictness như enforcement đã có.
 
-- Cooler socket: code còn chấp nhận fallback cooler.socket khi thiếu supported_sockets.
-- Stock cooler: code còn cho phép thiếu TDP.
-
-Các lệch trên cần xử lý trong code; tài liệu này không khẳng định đã enforce.
+**Related:** [Optimizer](../pc-build-optimizer.md) · [Hardware rules](../hardware-knowledge.md).

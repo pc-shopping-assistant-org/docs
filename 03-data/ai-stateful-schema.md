@@ -1,9 +1,9 @@
-# AI stateful V1 application schema — P0 contract
+# AI persistence reference
 
-Status: Alembic through0005; agent verified event journal and full PostgreSQL gates
-2026-10-13. Database `ai_db` belongs to
-root `ai-service`; ecommerce V1/Flyway/DBML are not its migration source.
-P2 implements async SQLAlchemy/Alembic migration and pinned saver bootstrap.
+Database `ai_db` belongs to root `ai-service`; ecommerce Flyway/DBML are not its
+migration source. Application SQLAlchemy/Alembic and native LangGraph saver have
+separate ownership. Concepts: [state/recovery](../04-ai/context-management.md).
+Setup: [First steps](../04-ai/getting-started.md). Verification: [status](../04-ai/stateful-implementation-status.md).
 Current head is `0005_event_payload`; historical migrations are not edited. Startup requires
 this exact application release revision and reads tables without creating them.
 DBML: `ai-stateful.dbml`; generated constraint reference: `ai-stateful-constraints.sql`.
@@ -23,8 +23,8 @@ sequence; same key/payload returns original event, changed payload rejects.
 Envelope identity/type/sequence matches row; missing JSON fields reject via
 COALESCE(false). Event inserts share caller transaction, so rollback emits nothing.
 Cursor is persisted event UUID scoped to owned run. No FK into LangGraph tables.
-Journal adapter and transactional lifecycle emission are implemented; HTTP SSE
-delivery/reconnect is not yet implemented. V2 completion payload retains public
+Journal/lifecycle emission and basic HTTP SSE are implemented; public reconnect
+is outside selected scope. V2 completion payload retains public
 flexible state. Event-write failure rolls back assistant/head/event changes together.
 
 ## conversations
@@ -56,7 +56,7 @@ Index `(account_id, updated_at DESC, id DESC)` for owner lists.
 | conversation_id | uuid NOT NULL FK conversations.id ON DELETE CASCADE |
 | request_id | uuid NOT NULL; UNIQUE(conversation_id, request_id) |
 | request_hash | varchar(64) NOT NULL, lowercase SHA-256 shape CHECK |
-| request_payload | jsonb NOT NULL object; validated TurnRequestV1 |
+| request_payload | jsonb NOT NULL object; validated selected TurnRequestV1/V2 |
 | kind | varchar NOT NULL CHECK CHAT/DEBUG/REPLAY |
 | status | varchar NOT NULL, enum values from RunStatus |
 | base_revision | bigint NOT NULL CHECK >= 0 |
@@ -125,11 +125,8 @@ evidence permits settling them UNKNOWN. This settlement neither grants takeover
 nor frees the thread. New generation/reopen does not reset caps. No raw prompts,
 credentials or duplicate tool results are stored here.
 
-AttemptBoundary and PostgreSQL ledger source are implemented; pure admission and
-dispatch tests/offline DDL pass. Owner reported the native concurrent-reservation/
-reopen gate passing in the full integration run on 2026-10-09 (ISSUE-091 resolved).
-Provider/backend adapters must disable
-or instrument hidden retries before any runtime attempt-cap guarantee. Usage and
+AttemptBoundary and PostgreSQL ledger are implemented. Provider/backend adapters
+must disable or instrument hidden retries for attempt-cap accounting. Usage and
 provider request metadata are deliberately not recorded yet; UNKNOWN is never a
 zero-cost claim. This is not a provider billing cap or exactly-once guarantee.
 
@@ -139,10 +136,9 @@ Application conversation deletion must explicitly purge saver data for the
 stable thread after execution stop/drain; application cascades cannot reach it.
 P2 native gate verifies refs/lineage/reopen before selecting the durable adapter.
 
-P5 adds a persisted run-event journal for reconnect, scoped `(run_id,sequence)`
-uniqueness, retention and deletion. It must not overload checkpoint pending writes
-or user message history. This delivery table is not required for P2's three-table
-foundation; its migration is part of P5 acceptance, not an already existing table.
+Run-event journal is the existing application delivery table with scoped sequence/
+dedup uniqueness. It does not overload native pending writes or message history.
+Public reconnect is not enabled; retention/delete remain unimplemented jobs.
 
 Retention: chat/runs/checkpoints 90 days; true orphan/debug checkpoints 7 days.
 P2/P4 cleanup must preserve accepted/recoverable lineage until parent conversation

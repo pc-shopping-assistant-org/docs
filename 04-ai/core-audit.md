@@ -1,6 +1,7 @@
 # Stateful AI — core audit
 
-Status: **COMPLETED — P6-01 core architecture**, 2026-10-13. Scope: plan §3.6,
+Status: **COMPLETED — selected core-code milestone**, re-audited 2026-10-14.
+Scope: [core definition of done](stateful-chat-implementation-plan.md#definition-of-done),
 selected V2/stop-ACK/two-attempt policy. Feature backlog remains unfinished;
 this is not whole-project or production completion.
 
@@ -17,16 +18,19 @@ this is not whole-project or production completion.
 | Publication race after multiple edits | Fixture competing revision committed after native validation, before locked finalize | Verified PUBLICATION_CONFLICT: no assistant result/head overwrite; competing revision preserved and slot stays busy when ACK persistence fails. Injected own-row conflict, not cross-service writer proof |
 | Optimizer completion and scoped failure | Real optimizer/search-report tests; managed build/multi-task tests | Verified supplied-candidate scope, not global catalog infeasibility |
 | Mixed outcomes and bounded repair | Managed multi-task, missing-fact native and targeted-repair tests | Verified fixture tools/model; no generated benchmark proof |
+| Unified V2 attachments → ordinary follow-up | Actual lifespan/API/executor/SQL/saver regression | One conversation, revision2/four messages, prior published pair in context; identity/model/catalog are fixtures |
+| Basic SSE + bounded dialogue | Run event subscription/API/native tests; extractor and provider context tests | SSE observes committed events only; no reconnect/cancel ownership. History4 pairs/12k chars, frozen on recovery; not current facts or consent |
+| Curated source binding and conflicts | Tom's parser RED6 failures → GREEN; reader/tool/finalizer regression | Explicit header/column binding; same-model conflicts clear numbers, remain UNRESOLVED. Missing binding falls back to CONTENT_ONLY; no site truth or compatibility guarantee |
 | 100-turn state/native storage bounds | PostgreSQL 100-turn/6KB-payload regression + reopen; same-run/pending/recovery suite | Verified fixture: state highwater 23159 bytes, native payload 9311305 bytes; ancestors preserved. Retention/GC remains P5 backlog |
 | Version compatibility/recovery expansion | Unsupported-base guards and selected two-attempt recovery | Selected policy verified; legacy migration/process-death authority open |
 
 Live provider/catalog/identity smoke is separate from fixture-backed core evidence.
-P5 APIs/SSE/frontend/retention/delete, FULL_SETUP/soft scoring, source expansion and
+Remaining P5 list/history/reload UI, retention/delete, FULL_SETUP/soft scoring, source expansion and
 internal replay keep their own acceptance criteria in the feature backlog.
 
 Commands/results live in [implementation status](stateful-implementation-status.md).
-This audit stays open until each required gate is verified or an explicit permitted
-deferral is recorded; unresolved required gates do not count as completion.
+Selected required gates are verified. Reopen this milestone only for a failed
+required gate; approved feature/live/operational deferrals do not become completed.
 
 Final root gate: [managed V2 regression](../../ai-service/integration_tests/test_failed_first_turn_postgres.py)
 proves tool commit → terminal first-run failure → persisted stop ACK/release → saver
@@ -34,8 +38,7 @@ close/reopen → second run from accepted root. Newer failed checkpoint is ignor
 R2 publishes once, without orphan evidence. Selected version policy rejects legacy
 bases after PostgreSQL reopen; migration/heartbeat takeover remain unsupported.
 
-At core closure: 721 core / 94 PostgreSQL tests; Ruff/mypy168, offline lock/diff pass.
-At that gate DB was `0003_initial_root`; current migrations/evidence are in status.
+Current commands/counts are in implementation status; app migration is0005_event_payload.
 All listed selected-policy gates
 are verified; feature/live/operational expansions above remain open under their own
 criteria, not silently marked complete.

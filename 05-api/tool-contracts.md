@@ -1,9 +1,10 @@
-# ReAct V1 — tool contracts
+# Tool and action reference
 
 Internal models: `ai-service/src/ai_service/capabilities/assistant/react/contracts.py`.
 Sáu tools đã nối vào managed runtime khi bật `AI_STATEFUL_REACT_ENABLED`.
 Policy/protocol: [agent](../04-ai/agent-tools.md).
-Public transport: [HTTP/SSE](stateful-chat-v1.md).
+ToolResult schema version1 vẫn được dùng trong V2 action/runtime, không có nghĩa HTTP V1.
+Public transport: [HTTP V2](stateful-chat-v2.md), [shared SSE](stateful-chat-v1.md#sse-contract).
 
 ## Args và payloads
 
@@ -64,12 +65,14 @@ ToolResult là internal observation. HTTP/SSE vẫn dùng {data, message, errors
 
 ## Answer extension
 
-Current AnswerCandidate: text/evidence_refs/build_ref/clarification_fields/web_excerpts.
+Current AnswerCandidate includes text/evidence_refs/build_ref/clarification_fields/
+web_excerpts and evidence-linked qualitative explanation; exact fields are in source.
 WebExcerpt: selected evidence_ref và exact quote 1..2000 chars; tối đa 8 excerpts.
 Web-only không publish unrestricted text: server render matching quotes và nguồn,
 đánh dấu chưa xác thực facts. Nội dung quote không tự thỏa mãn BUILD/COMPARE.
-Target GroundedClaim, targeted clarification và historical saved-build completion
-cần thêm source/tests; contract ở [grounding](../04-ai/agent-tools.md#7-grounding-và-completion).
+Target full GroundedClaim extension còn backlog. Targeted clarification và accepted
+saved-build completion đã có; không nhầm schema extension với capability thiếu.
+Semantics ở [grounding](../04-ai/agent-tools.md#grounding-and-completion).
 
 Library helpers không tự thành ReAct tools. V1 không expose cart/checkout/payment
 mutations chỉ vì đã có helper. Thiếu canonical adapter thì fail closed, không sample facts.
@@ -113,11 +116,12 @@ with no fact refs. Internal `FlexibleAnswer(schema_version=2)` has outcome/reaso
 response status, original task_outcomes, evidence refs and optional build_ref.
 Empty search/unavailable source can end a turn while tasks remain UNRESOLVED;
 typed result refs, not model prose, justify the server-rendered response.
-Selected V1 HTTP projection is unchanged; V2 transport mapping still needs its gate.
+V1 compatibility projection unchanged; V2 transport/publication mapping implemented.
 Internal search answers include validated search_evidence and SCOPED_EXHAUSTION /
 INCOMPLETE_SEARCH reason. Proven scoped absence completes only requested BUILD;
 incomplete search leaves tasks unresolved. Server re-derives report before rendering;
-legacy no-result labels cannot supply proof. No managed V2 HTTP/publication claim.
+legacy no-result labels cannot supply proof. Managed V2 publication is implemented;
+this metadata does not replace its grounding/lineage/stop/CAS validation.
 
 Internal reference_reply reuses ClarificationReplyV1 (source message + offered item/
 variant IDs), but pending artifact is owner/content/publication-bound PendingResolution
@@ -126,7 +130,7 @@ No public V1 request change or implicit migration from unscoped pending drafts.
 Internal unit_reply reuses UnitClarificationReplyV1; number comes from the frozen
 draft and unit from an exact span in the current full user message. It resolves the
 draft into a separately confirmed proposal, not a merge. Do not combine reference/
-unit/confirmation commands in this internal V2 contract; public mapping remains open.
+unit/confirmation commands; public mapping is in the V2 HTTP reference.
 ToolRecord origin_run_id is application provenance, not a tool argument. Current
 facts require current-run origin; history is not re-labelled. PreparedAnswerPublication
 V2 contains validated snapshot/answer but is not a CAS instruction or public endpoint.
@@ -136,9 +140,9 @@ remain unchanged and become stale. PreparedWaitingPublication validates one new 
 continued pending artifact/question against stored commands; status WAITING_INPUT,
 snapshot preserved, task outcomes UNRESOLVED. It is internal, not public API or CAS
 authority. Exact accepted confirmation also binds changed waiting state; asking the
-next question does not complete the original task. Native confirm→clarify gate uses
-fixture heads, not SQL publication. Coordinator CAS and selected V2 API remain open.
+next question does not complete the original task. Coordinator CAS and selected V2
+API are implemented; verification records stay in the status page.
 
-V1 runtime/HTTP/envelope remain unchanged. F01 transport/version mapping,
-F02 policy/graph and F03 optimizer/final validation must complete before enabling V2;
-do not reinterpret legacy INFEASIBLE as certified or old revision as content hash.
+V1 compatibility/envelope remain unchanged. V2 requires explicit runtime selection
+and supported saved-state versions; do not reinterpret legacy INFEASIBLE as certified
+or old revision as content hash.

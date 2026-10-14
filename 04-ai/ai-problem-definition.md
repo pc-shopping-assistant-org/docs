@@ -1,48 +1,51 @@
-# AI problem definition
+# Introduction
+
+AI service là backend tư vấn của gearPC. Người dùng không cần biết tên SKU:
+họ có thể hỏi theo nhu cầu, so sánh sản phẩm hoặc yêu cầu một cấu hình PC.
+
+Ví dụ:
+
+> “Build PC 25 triệu để chơi game, RAM ít nhất 32GB. Tôi đã có nguồn.”
+
+Service cần hiểu yêu cầu, tìm đúng sản phẩm trong catalog, kiểm tra ngân sách và
+tương thích, rồi giải thích lựa chọn. Lượt sau user có thể sửa một yêu cầu mà
+không phải nhập lại toàn bộ cấu hình.
+
+## Design philosophy
+
+**LLM quyết định cần làm gì tiếp; application quyết định điều gì được chấp nhận.**
+
+- Agent có thể tìm kiếm, đọc dữ liệu, hỏi lại hoặc đề xuất thay đổi.
+- Requirements được resolve và merge bằng application rules, không tin trực tiếp model output.
+- Optimizer tính cấu hình từ candidates thật; model không tự dựng giá/spec/compatibility.
+- State được lưu trước/sau các bước để phục hồi và tiếp tục hội thoại.
+- Câu trả lời phải có evidence và đáp ứng task đã đăng ký.
+
+Pydantic kiểm tra hình dạng dữ liệu. Nó không chứng minh model hiểu đúng user hoặc
+mọi khẳng định trong prose đều đúng.
+
+## Capabilities
+
+| Người dùng cần | Cách xử lý |
+| --- | --- |
+| Tìm/hiểu sản phẩm | Catalog search/detail + grounded answer |
+| So sánh | Canonical evidence của 2–5 products |
+| Build/điều chỉnh PC | Requirements → deterministic optimizer → verifier |
+| Hỏi về cấu hình đã tạo | Accepted build snapshot; không lấy giá mới thay lịch sử |
+| Tra cứu web | Search → read → exact excerpts hoặc structured facts |
+| Chưa rõ yêu cầu/sản phẩm | Clarification và continuation ở lượt sau |
+
+Build PC mặc định là case PC. Full setup thêm màn hình/chuột/phím/tai nghe,
+tối đa một mỗi loại; tự động chọn phụ kiện/soft scoring còn backlog, không phải
+capability hoàn chỉnh. Không tự chia ngân sách 80/20.
 
 ## Scope
 
-Trợ lý giúp khách tìm, so sánh, hiểu sản phẩm và xây dựng cấu hình PC từ catalog
-thật qua hội thoại nhiều lượt. Ngôn ngữ đầu vào có thể mô tả capacity, budget,
-workload, preference hoặc exact SKU; không thiết kế state theo từng mẫu câu.
+Stateful chat yêu cầu login. Memory nằm trong một conversation, không xuyên phiên/
+conversation bằng Mem0. Agent chưa expose cart/order/payment mutation.
 
-V1 login-only, BUILD_PC mặc định chỉ case PC; FULL_SETUP thêm màn hình/chuột/phím/
-tai nghe, tối đa một loại một cái. Owned không tính purchase spending; pinned vẫn
-tính tiền. Không tự chia ngân sách core/phụ kiện. Ambiguous/unsupported yêu cầu
-phải được phản hồi, không silently drop hoặc relax.
+Compatibility checks chỉ bao phủ rules/metadata đã model, không là chứng nhận
+mọi tổ hợp phần cứng. Không tạo FPS benchmark từ workload/profile hay scoring.
+Model/provider/catalog thật có verification riêng; core fixtures không thay thế nó.
 
-## Bài toán
-
-- User intent/reference/unit có thể mơ hồ; typed extraction không tự chứng minh intent.
-- Product khác variant; model không được đoán UUID/giá/stock/specs.
-- Tổ hợp linh kiện phải thỏa ngân sách, capability và modeled compatibility.
-- Soft preferences ảnh hưởng ranking, không tự biến thành hard pin.
-- Multi-turn phải giữ accepted state, history và previous build qua reload/restart.
-- Failure/retry không duplicate publication hoặc mở concurrent execution trên thread.
-
-## Giải pháp
-
-LLM tạo requirement draft và chọn bounded read/build tools. Deterministic services
-resolve references/units, merge canonical requirements, compile thành optimizer
-input và independently verify kết quả. LLM không ráp build hay quyết định ownership.
-
-```text
-Draft → Resolver → Atomic Merge → Canonical State → Compiler
-→ Deterministic Optimizer → Satisfaction Verifier → Grounded Explanation
-```
-
-Optimizer core được model hóa thành Multiple-Choice Knapsack với pairwise
-compatibility constraints và MAUT scoring. Formulation/algorithm nằm một nơi tại
-[PC build optimizer](pc-build-optimizer.md), không lặp lại trong overview.
-
-## Giới hạn và đánh giá
-
-COMPATIBLE chỉ áp dụng checks/metadata đã model, không certification tất cả hardware.
-Performance goals/FPS không phải benchmark guarantee; thiếu evidence không bịa số.
-Không claim latency hay “100% correctness” từ test counts. Core acceptance gồm
-paraphrase/unit/merge coverage, fault-injected compiler, valid/infeasible builds,
-accepted-vs-orphan recovery, stop/fencing/publication races và ownership.
-
-[Architecture](../02-architecture/ai-architecture.md) ·
-[Tools](agent-tools.md) · [State/recovery](context-management.md) ·
-[Evidence](stateful-implementation-status.md)
+**Next:** [Architecture](../02-architecture/ai-architecture.md) → [First steps](getting-started.md).

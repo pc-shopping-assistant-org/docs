@@ -1,88 +1,110 @@
-# AI service architecture
+# Architecture
 
-Thiết kế V1 · 2026-10-12. Flexible action flow đã chốt, migration chưa implemented.
-Runtime/evidence: [status](../04-ai/stateful-implementation-status.md).
-Quyết định: [ADR-005](decisions/ADR-005-stateful-react.md).
+AI service nằm giữa frontend, catalog và model provider. Nó giữ hội thoại, điều phối
+tools và trả kết quả đã kiểm tra — không thay backend ecommerce hoặc optimizer.
 
-## 1. Stack và scope
-
-| Thành phần | Vai trò |
-| --- | --- |
-| FastAPI | HTTP/SSE |
-| Pydantic | Typed contracts/validation |
-| LangGraph | Một bounded ReAct graph; native execution/checkpoints |
-| LangChain OpenAI/Gemini adapters | Model calls, không agent runtime thứ hai |
-| SQLAlchemy/Alembic | Application metadata/migrations |
-| AsyncPostgresSaver | Native checkpoint persistence trong PostgreSQL |
-
-V1 login-only, một conversation = một stable thread với nhiều runs.
-Không PydanticAI, cross-conversation memory/Mem0, multi-agent hoặc commerce mutation tools.
-Legacy request-scoped chat không phải durable ReAct; stateful foundation đang opt-in.
-
-## 2. Flow
+## System view
 
 ```text
-POST turn → auth/ownership → durable submit → managed executor
-  → load accepted context + register requested tasks
-  → bounded agent/action loop:
-      read tool → observe → agent
-      requirement proposal → resolve/validate/confirm → atomic working merge → agent
-      clarification → persist pending → finalize WAITING_INPUT
-  → grounding + task completion → terminal checkpoint
-  → stop proof + native lineage + fenced CAS
-  → accepted head / message / result
-
-GET SSE → authorized persisted-event subscription
+Frontend
+   │ HTTP / SSE
+   ▼
+AI service ────► Catalog service   sản phẩm, SKU, giá, tồn kho
+   │       └──► OpenAI / Gemini    hiểu yêu cầu, chọn action, diễn giải
+   │       └──► Web sources        tài liệu tham khảo
+   ▼
+PostgreSQL                         history, runs, attempts, checkpoints
 ```
 
-HTTP/SSE disconnect không cancel graph. Application head khác latest checkpoint.
-Native saver giữ execution state; application quyết định checkpoint nào được publish.
-Chi tiết: [agent](../04-ai/agent-tools.md), [execution](../04-ai/context-management.md).
+Identity service cấp access JWT; AI service verify bằng configured JWKS và kiểm tra
+owner trước đọc/chạy conversation. Qdrant là retrieval option, không database lưu state.
 
-## 3. Clean architecture
+## Inside the service
 
-| Layer | Trách nhiệm | Dependency cấm |
-| --- | --- | --- |
-| api | Auth dependency, DTO/SSE mapping | Tạo provider/DB clients, chạy optimizer |
-| application/use_cases | Ownership, submit/read/cancel, admission/finalization | Model/client authority |
-| application/ports | Catalog/model/store/execution contracts | SDK/HTTP implementation |
-| capabilities/assistant/requirements | Pure merge/compiler/verifier rules | Network, DB, model confidence làm authority |
-| capabilities/assistant/react | Tool policy/dispatch, completion/grounding | Publish hoặc sửa trusted requirements |
-| capabilities/pc_builder | Deterministic optimizer | Graph/model/network/DB runtime |
-| infrastructure | Graph/provider/catalog/store/executor adapters | Định nghĩa lại business rules |
+```text
+API → Application → LangGraph agent/action loop
+          │                 │
+          │                 ▼
+          │          Tool policy → Dispatcher → Application services / ports
+          │                                      │
+          │                                      ├─ Catalog / Web / Model adapters
+          │                                      └─ Deterministic PC optimizer
+          ▼
+      Validate + publish → Accepted state/result → HTTP / SSE
+```
 
-Composition: infrastructure/composition.py; resources/lifespan: infrastructure/stateful.py
-và main. Routes không tạo coordinator/resource ownership riêng.
+| Component | Responsibility |
+| --- | --- |
+| API | Auth dependency, DTO mapping và event subscription |
+| Application | Ownership, admission/idempotency, execution authority, publication |
+| LangGraph | Chạy nodes/actions và lưu execution checkpoints |
+| Agent/model | Chọn bước tiếp theo; không cấp quyền merge/publish |
+| Requirements services | Resolve tên/đơn vị, atomic merge, compile và verify |
+| Tools | Đưa typed observations từ services/ports vào canonical ledger |
+| Optimizer | Tính cấu hình trong ngân sách và modeled compatibility |
+| Infrastructure | Bind model/HTTP/SQL/saver/executor implementations |
 
-## 4. Build và tools
+FastAPI, Pydantic, LangGraph, LangChain adapters và PostgreSQL là stack hiện tại.
+Không PydanticAI hoặc agent runtime thứ hai.
 
-Target: read exploration không đòi full requirement resolution trước agent.
-Requirements chỉ thay qua validated proposal branch; accepted state chỉ đổi ở CAS.
-Current runtime vẫn có pre-agent draft/resolve/merge; P3-F01–F04 migrate cùng contracts.
-build_pc compile canonical state → existing optimizer → independent satisfaction verifier.
-Capability, preference, exact pin và available resource có semantics riêng;
-unsupported/conflict không bị bỏ ngầm.
+## Request lifecycle
 
-Sáu tools hiện có: search_catalog, get_product_details, compare_products, build_pc,
-search_web, read_web_page. Action contracts và ownership: [agent](../04-ai/agent-tools.md#5-agent-protocol-và-execution-graph).
-State-aware exposure; dispatcher recheck. Native protocol tối đa một call/response.
-tool_results là canonical outcome; model messages là projection.
+1. API xác thực và admit một run bền vững; HTTP không giữ graph task.
+2. Managed executor load exact accepted state và bounded published history.
+3. Application đăng ký task; agent có thể đọc dữ liệu, đề xuất requirements hoặc hỏi lại.
+4. Tool results vào ledger; agent quan sát và chọn bước tiếp.
+5. Final candidate qua grounding/task-completion validation.
+6. Terminal checkpoint qua stop/drain, lineage và CAS để publish accepted result.
 
-Backend catalog quyết định variant/SKU/price/stock/specs/visibility.
-Vector/keyword results phải revalidate ACTIVE. Description là data, không instruction.
-Facts public render từ typed evidence, không lấy LLM prose làm truth.
+SSE đọc persisted events độc lập. Disconnect không cancel graph. DELTA hiện chứa
+answer đã validate, không stream trực tiếp unvalidated model tokens.
 
-Contracts: [tools](../05-api/tool-contracts.md), [models](../04-ai/model-strategy.md),
-[optimizer](../04-ai/pc-build-optimizer.md).
+## Example: two-turn build
 
-## 5. Persistence và publication
+| Turn | What happens |
+| --- | --- |
+| “Build 25 triệu, RAM ít nhất 32GB” | Draft → resolve → validated merge → compile → optimizer/verifier → result |
+| “Đổi CPU sang Intel, giữ RAM” | Load accepted requirements → sửa phần được yêu cầu → tính lại build |
 
-- Public/new turn dùng exact accepted ref; resume dùng eligible run working ref.
-- Native next/tasks/pending writes/lineage được giữ, không reconstruct bằng copy values.
-- Run status/lease expiry không release thread; stop evidence phải verify/drain.
-- Mỗi outbound attempt reserve durable budget; UNKNOWN consumed. Không hard billing guarantee.
-- Publish kiểm tra run lineage, terminal output, ownership và CAS revision/head.
-- Debug/replay internal-only, không publish.
+Agent có thể search trước khi đủ budget. Nhưng generic advice không hoàn thành BUILD.
+Nếu agent tự đề xuất giảm RAM, application yêu cầu confirmation; không tự đổi user constraint.
 
-Contracts: [state/recovery](../04-ai/context-management.md),
-[DB/provenance](../03-data/ai-stateful-schema.md), [API](../05-api/stateful-chat-v1.md).
+## State ownership
+
+Một conversation có một stable LangGraph thread, nhiều runs và nhiều checkpoints.
+
+- **Accepted state:** dữ liệu đã công bố, được application head trỏ tới.
+- **Working state:** tiến trình của run, nằm trong native checkpoints.
+- **History:** published messages trong application DB; model chỉ nhận bounded window.
+- **Ledger:** canonical tool outcomes; model transcript/public DTO là projections.
+
+Latest checkpoint có thể orphan/debug, không phải accepted head. Working state chỉ
+trở thành accepted khi publication hợp lệ. [State and recovery](../04-ai/context-management.md).
+
+## Code organization
+
+Root package: `ai-service/src/ai_service/`.
+
+| Layer | Entry point |
+| --- | --- |
+| HTTP/SSE | [api/stateful_conversations.py](../../ai-service/src/ai_service/api/stateful_conversations.py), [api/sse.py](../../ai-service/src/ai_service/api/sse.py) |
+| Use cases/ports | [application/](../../ai-service/src/ai_service/application/) |
+| ReAct graph | [infrastructure/graph/flexible.py](../../ai-service/src/ai_service/infrastructure/graph/flexible.py) |
+| Tool/completion rules | [capabilities/assistant/react/](../../ai-service/src/ai_service/capabilities/assistant/react/) |
+| Requirements/compiler/verifier | [capabilities/assistant/requirements/](../../ai-service/src/ai_service/capabilities/assistant/requirements/) |
+| Build service/optimizer | [capabilities/pc_builder/](../../ai-service/src/ai_service/capabilities/pc_builder/) |
+| Wiring/lifecycle | [infrastructure/stateful.py](../../ai-service/src/ai_service/infrastructure/stateful.py), [execution/build_runtime.py](../../ai-service/src/ai_service/infrastructure/execution/build_runtime.py) |
+| Executor/SQL publication | [execution/supervisor.py](../../ai-service/src/ai_service/infrastructure/execution/supervisor.py), [persistence/runs.py](../../ai-service/src/ai_service/infrastructure/persistence/runs.py) |
+
+Business logic phụ thuộc ports, không SDK implementations. API không tạo model/DB
+clients; graph không chứa optimizer rules; optimizer không gọi network/DB/model.
+
+## Availability
+
+Frontend dùng V2-only; server phải [cấu hình V2](../04-ai/configuration.md).
+Source defaults vẫn stateful-off/V1 và giữ compatibility, không fallback của frontend.
+Core đã có fixture/native gates; live services, Full setup/soft scoring, retention,
+history UI và recovery/replay mở rộng được theo dõi riêng trong [status](../04-ai/stateful-implementation-status.md).
+
+**Next:** [First steps](../04-ai/getting-started.md) · [Agent and tools](../04-ai/agent-tools.md).
+Rationale: [ADR-005](decisions/ADR-005-stateful-react.md).

@@ -1,8 +1,8 @@
 # ADR-005 — Stateful bounded ReAct with LangGraph and Pydantic
 
-Status: ACCEPTED — architecture; complete runtime chưa implemented.
-Updated 2026-10-12: flexible action loop supersedes the mandatory requirement prefix;
-implementation remains TODO P3-F01–F04.
+Status: ACCEPTED. Updated 2026-10-14: flexible V2/core runtime implemented;
+live integration và feature backlog vẫn mở. [Evidence](../../04-ai/core-audit.md).
+Flexible action loop supersedes the mandatory requirement prefix trong V2.
 Supersedes: [ADR-003 PydanticAI](ADR-003-pydantic-ai.md).
 Scope: UC-AI-001/003 và guided PC build V1.
 
@@ -56,9 +56,9 @@ Một runtime dễ trace; domain/optimizer không phụ thuộc graph/provider. 
 persistence không thay application transactions hoặc stale-worker control.
 Requires real PostgreSQL gates, bounded state/context và versioned schema/provenance.
 
-Initial accepted root/readiness là target contract còn ISSUE-092, không tự thay
-revision-zero invariant hiện hành. Operational defaults và adapter specifics phải
-verify trước enablement, không coi toàn plan đã được chứng minh bởi ADR.
+Initial accepted root/readiness đã implemented với synchronous initialization và
+native recovery gates. ISSUE-092 còn automatic reconciliation/legacy migration.
+ADR giữ rationale, không thay runtime evidence hoặc tuyên bố toàn plan hoàn tất.
 
 Canonical documents: [architecture](../ai-architecture.md),
 [ReAct](../../04-ai/agent-tools.md), [state](../../04-ai/context-management.md),
