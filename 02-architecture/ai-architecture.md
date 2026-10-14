@@ -82,19 +82,77 @@ flowchart TB
   GRAPH --> ADAPTERS
 ```
 
-| Thành phần | Trách nhiệm | Không sở hữu |
-| --- | --- | --- |
-| API | Xác thực, validate DTO và map envelope `{data, message, errors}` | Vòng đời graph hoặc quyết định nghiệp vụ |
-| Application | Kiểm tra ownership, nhận run, idempotency/revision và publication | Prompt riêng của provider hoặc phép tính optimizer |
-| Requirements | Resolve tham chiếu, merge yêu cầu, compile và verify | Tự thêm điều người dùng chưa yêu cầu |
-| ReAct capability | Định nghĩa action/tool, policy theo state, outcome và quy tắc answer | Ghi DB hoặc tự công bố state |
-| LangGraph | Chạy flow hội thoại có giới hạn và checkpoint state | Nghiệp vụ thương mại hoặc sự thật catalog |
-| Tool dispatcher | Validate và gọi action typed qua service/port | Bỏ qua canonical lookup với ID do model đưa ra |
-| PC build service/optimizer | Tạo, xếp hạng cấu hình từ input và policy | Gọi network, database hay model |
-| Infrastructure | Nối framework, database, HTTP và provider adapters | Sở hữu thêm một bản business rule |
+### API — nhận request và trả response
 
-Capability dùng contract và port. Infrastructure gắn implementation khi startup;
-graph điều phối, còn requirement và optimizer quyết định kết quả nghiệp vụ.
+`api/` xác thực access token, validate DTO và chuyển request sang application use
+case. Run API chỉ nhận yêu cầu bền vững rồi trả `202`; SSE đọc event đã lưu, không
+chạy graph trong HTTP handler.
+
+### Application use cases — điều phối nghiệp vụ ứng dụng
+
+`application/use_cases/` thực hiện các ca sử dụng như tạo conversation, gửi/hủy
+run, đọc trạng thái và lịch sử. Lớp này gọi qua port; nó không phụ thuộc trực tiếp
+vào SDK model, SQL hay API cụ thể của LangGraph.
+
+### Run coordinator — admission và publication
+
+`PostgresRunCoordinator` quản lý idempotency, revision, active run, claim, budget
+và accepted checkpoint. Nó ghi nhận run trước khi executor chạy; khi kết thúc,
+nó kiểm tra stop evidence và lineage rồi CAS accepted head. Đây là authority cho
+trạng thái được công bố.
+
+### Managed executor — sở hữu vòng đời execution
+
+`ManagedExecutor` claim các run đã lưu, chạy graph trong task group có quản lý,
+theo dõi heartbeat, nhận cancel và drain child work. Nó chỉ phát stop ACK sau khi
+execution đã dừng; mất kết nối SSE không ảnh hưởng graph.
+
+### LangGraph — điều phối một lượt ReAct
+
+Graph bắt đầu từ accepted checkpoint của conversation, xử lý lượt mới và chạy
+bounded loop: chuẩn bị context → model chọn action → validate → gọi tool hoặc
+kiểm tra câu trả lời. Checkpoint lưu tiến trình để recovery; graph không tự quyết
+checkpoint nào được publish.
+
+### Requirements — chuyển lời người dùng thành constraint có nghĩa
+
+`capabilities/assistant/requirements/` nhận requirement draft, resolve tên linh
+kiện/đơn vị bằng catalog và merge thành canonical requirement state. Compiler
+chuyển state đó thành optimizer input; verifier đối chiếu kết quả với yêu cầu đã
+được chấp nhận. Model không được âm thầm thêm hoặc nới constraint.
+
+### ReAct capability — chọn hành động trong giới hạn
+
+`capabilities/assistant/react/` định nghĩa action/tool contracts, tool policy theo
+state, execution outcome và answer-completion/grounding checks. Model đề xuất hành
+động; capability kiểm tra điều kiện và giữ tool result trong typed ledger.
+
+### Tool dispatcher — nối action với năng lực hệ thống
+
+`ToolDispatcher` validate tên tool, arguments và context rồi gọi catalog, web
+search/read hoặc PC build service. Kết quả trả về theo schema typed; model không
+được truyền ID tùy ý để thay thế canonical catalog lookup.
+
+### PC build service và optimizer — tính cấu hình xác định
+
+`PCBuildApplicationService` nhận optimizer constraints cùng catalog candidates,
+gọi optimizer và áp recommendation policy. Optimizer xử lý compatibility, pruning
+và scoring mà không gọi network, database hay model; verifier riêng kiểm tra yêu
+cầu được thỏa mãn. “Chưa tìm thấy” không tự động có nghĩa là “không tồn tại”.
+
+### Ports, adapters và composition root — biên I/O
+
+`application/ports/` định nghĩa giao diện cho model, catalog, web, persistence và
+graph runner. `infrastructure/` hiện thực các giao diện đó bằng HTTP clients,
+provider adapters, PostgreSQL/checkpointer và search adapters. Composition root
+ghép implementation khi khởi động; adapter làm I/O, không sở hữu business rules.
+
+### Hai loại persistence — dữ liệu ứng dụng và graph
+
+PostgreSQL application tables là nguồn chuẩn cho owner, run, message, event, budget
+và accepted head. LangGraph saver lưu execution state, lineage và pending writes.
+Hai bên dùng chung PostgreSQL nhưng có write path khác nhau; application không sửa
+trực tiếp bảng nội bộ của checkpointer.
 
 | Công nghệ | Vai trò |
 | --- | --- |
