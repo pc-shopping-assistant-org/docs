@@ -97,3 +97,20 @@ Table agent_call_attempts {
 }
 Ref: agent_call_budgets.run_id - agent_runs.id [delete: cascade]
 Ref: agent_call_attempts.run_id > agent_call_budgets.run_id [delete: cascade]
+
+// Alembic 0004/0005; payload identity CHECKs: ai-stateful-constraints.sql.
+Table agent_run_events {
+  id uuid [pk, not null]
+  conversation_id uuid [not null]
+  run_id uuid [not null]
+  sequence bigint [not null, note: '> 0; per run']
+  dedup_key varchar(200) [not null, note: 'nonblank; changed payload with same key rejects']
+  event_type varchar(20) [not null, note: 'START, DELTA, COMPLETED, ERROR']
+  payload jsonb [not null, note: 'public envelope; type/sequence/run/conversation match row; missing JSON fields reject']
+  created_at timestamptz [not null]
+  indexes {
+    (run_id, sequence) [unique]
+    (run_id, dedup_key) [unique]
+  }
+}
+Ref: agent_run_events.(conversation_id, run_id) > agent_runs.(conversation_id, id) [delete: cascade]

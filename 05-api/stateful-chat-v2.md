@@ -6,6 +6,9 @@ with the documented stateful DB/auth/provider/catalog configuration. This select
 V2 request, public view, graph and publication together; no automatic migration
 of conversations with accepted V1 execution checkpoints.
 
+Frontend assistant chat uses V2 exclusively, including product attachments and
+proposal confirmation. It requires configured V2; there is no legacy fallback.
+
 Actual lifespan/API/executor/SQL/native saver passes two catalog turns. Managed
 confirm/build/saved-explanation also passes with the real optimizer. Model,
 catalog and HTTP auth in these gates are fixtures, not live deployment evidence.
@@ -19,6 +22,7 @@ catalog and HTTP auth in these gates are fixtures, not live deployment evidence.
 | `request_id` | Idempotency key; changed body with same ID conflicts |
 | `expected_revision` | Published conversation revision for CAS/admission |
 | `message` | Nonempty, at most 4,000 characters |
+| `selected_product_ids` | Optional, at most 5 distinct canonical product IDs; 1 means ANSWER, 2–5 means COMPARE |
 | Optional command | At most one of the commands below |
 
 | Command | Required binding |
@@ -103,10 +107,25 @@ answer, task outcomes and the
 pending proposal/clarification options. Proposal confirmation bindings and readable
 changes are included. Owner, native checkpoint references, private working state,
 execution context and ledger are not exposed.
+Completion also includes `products`: selected canonical catalog evidence projected
+to public cards, never synthetic variant-to-product IDs. Attachment task bindings
+are validated against the stored request before publication.
 
 Responses retain `{data, message, errors}` with static message keys. See
 [implementation status](../04-ai/stateful-implementation-status.md) for evidence
 and remaining runtime gates.
+
+## Persisted completion events
+
+Lifecycle emission and basic HTTP SSE delivery are implemented. One admission and
+one stream per turn; disconnect does not cancel execution. No reconnect offset,
+automatic retry or legacy fallback. See [SSE contract](stateful-chat-v1.md#sse-contract).
+START/DELTA/ERROR retain V1 event shapes. COMPLETED for a V2 run has
+`result.schema_version: 2` and the same public `flexible` projection as GET; build,
+answer and published revision come from the validated snapshot, not working state.
+No checkpoint references, receipts or ledger. DELTA currently contains the validated
+final answer, not unvalidated LLM tokens. Cancel uses ERROR with `AI_RUN_CANCELLED`;
+top-level message remains static `AI_CHAT_STREAM_FAILED`.
 
 ## Missing structured facts
 

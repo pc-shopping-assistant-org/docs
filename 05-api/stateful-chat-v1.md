@@ -20,7 +20,7 @@ Owner, checkpoint selector and execution evidence are never request fields.
 
 P2 enablement: AI_STATEFUL_ENABLED=true with database/JWKS config. Disabled by
 default, stateful routes are absent from OpenAPI. Enabled startup
-requires applied Alembic 0003_initial_root and separately bootstrapped saver tables;
+requires applied Alembic 0005_event_payload and separately bootstrapped saver tables;
 missing migration/config fails startup, never silently falls back to RAM.
 Published GET uses exact accepted checkpoint channels consultation/public_build,
 not graph latest; corrupt or missing accepted state is an error, not an empty state.
@@ -185,7 +185,7 @@ errors is `[]`; error data is null, static message/code and field/details in
 | POST `/conversations/{id}/runs` | TurnRequestV1; body conversation_id must equal path id | RunViewV1 / 202 | AI_RUN_ACCEPTED |
 | GET `/conversations/{id}/runs/{run_id}` | owner + conversation-scoped run lookup | RunViewV1 / 200 | AI_RUN_RETRIEVED |
 | POST `/conversations/{id}/runs/{run_id}/cancel` | no execution proof/body | RunViewV1 / 202, cancellation request only | AI_RUN_CANCEL_REQUESTED |
-| GET `/conversations/{id}/runs/{run_id}/events` | optional Last-Event-ID bound to this run | SSE, envelope per event | Existing AI_CHAT_STREAM_* keys |
+| GET `/conversations/{id}/runs/{run_id}/events` | owner + run lookup; no reconnect cursor | SSE, envelope per event | Existing AI_CHAT_STREAM_* keys |
 
 Run submission is idempotent on `(conversation_id, request_id)` with a canonical
 request payload hash. Same key/same body returns the existing run; same key/new
@@ -197,11 +197,11 @@ model/catalog calls. Deletion must stop/drain writes before purging to prevent
 data resurrection; no successful-delete response before purge completion.
 
 Conversation list order is updated_at descending, id as deterministic tie-break;
-message history is sequence ascending, with persisted opaque cursors. Cursors and
-SSE offsets are scoped/validated, not SQL predicates or checkpoint selectors.
-SSE disconnect does not implicitly cancel a run. Reconnect reads persisted events
-after the acknowledged offset, with owner authorization on every connection;
-unknown/expired event history fails explicitly, never resumes from graph latest.
+message history is sequence ascending, with persisted opaque cursors. Cursors are
+owner-scoped, not SQL predicates or checkpoint selectors. Basic SSE reads this
+run's committed events then tails its journal. No public Last-Event-ID, event id,
+reconnect or automatic retry. The internal polling cursor is not a client contract.
+Disconnect does not cancel a run; missing/inconsistent history fails explicitly.
 The subscriber is independent of execution. Submit commits a durable PENDING
 run; a lifecycle-owned managed executor claims it. No detached request task or
 SSE-triggered graph execution. Explicit cancellation does not release the shared
@@ -209,7 +209,15 @@ thread until verified executor stop/drain. Internal P4-A supervisor/attempt ledg
 source and SQL admission/publication coordinator are implemented and integration-tested.
 Production executor lifespan/provider wiring exists; native runtime verification
 uses model/auth/catalog fixtures, not live providers.
-Persisting/deduplicating events and reconnect behavior belong to P4/P5.
+Persisting/deduplicating lifecycle events is implemented: START shares admission's
+transaction; grounded final DELTA + COMPLETED share assistant/head publication.
+Cancel/terminal failure emit ERROR after stop ACK (or locked unclaimed pending
+cancel); stopped-retry cleanup emits terminal ERROR. Retryable failure emits no
+terminal event. Duplicate submission does not re-emit START. Publish conflict or
+event-write failure leaves no answer/COMPLETED events. START identifies durable
+PENDING admission, not a promise that a provider call has begun. ERROR cancellation
+code is AI_RUN_CANCELLED; top-level key is AI_CHAT_STREAM_FAILED. Basic HTTP SSE is
+implemented; DELTA contains final validated text, not live model tokens.
 
 ## Planned revision — initial accepted root/readiness
 
@@ -285,11 +293,11 @@ Owned/pinned overlap and duplicated slot/type are invalid.
 
 StatefulEventV1 is a discriminated START / DELTA / COMPLETED / ERROR union.
 All carry conversation_id, run_id and positive persisted sequence. Nested run
-identity must match the event. DELTA preserves whitespace. `id` is an opaque
-run-scoped persisted event offset; event name is lowercased data.event.
+identity must match the event. DELTA preserves whitespace. Frames contain only
+`event` and `data`; event name is lowercased data.event. No SSE `id` or reconnect.
 
 - START: RunViewV1; `AI_CHAT_STREAM_STARTED`.
-- DELTA: text fragment; `AI_CHAT_STREAM_DELTA`. Tentative text is not accepted state.
+- DELTA: final validated answer; `AI_CHAT_STREAM_DELTA`. No provider-token stream.
 - COMPLETED: TurnResultV1 with published revision, public state and answer/build;
   `AI_CHAT_STREAM_COMPLETED`. A clarification may end with WAITING_INPUT and
   `AI_INPUT_REQUIRED`; this is not a completed build.

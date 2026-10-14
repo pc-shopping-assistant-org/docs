@@ -1,4 +1,4 @@
--- Reference DDL for Alembic 0001_stateful through 0003_initial_root. Apply via Alembic,
+-- Reference DDL for Alembic 0001_stateful through 0005_event_payload. Apply via Alembic,
 -- not by running this documentation file. Native saver tables are separate.
 BEGIN;
 
@@ -134,4 +134,38 @@ ALTER TABLE conversations DROP CONSTRAINT ck_conversations_accepted_head;
 ALTER TABLE conversations ADD CONSTRAINT ck_conversations_accepted_root_head
     CHECK (revision = 0 OR accepted_checkpoint_id IS NOT NULL);
 UPDATE alembic_version SET version_num='0003_initial_root' WHERE version_num='0002_call_attempts';
+-- Running upgrade 0003_initial_root -> 0004_run_events
+CREATE TABLE agent_run_events (
+    id UUID NOT NULL,
+    conversation_id UUID NOT NULL,
+    run_id UUID NOT NULL,
+    sequence BIGINT NOT NULL,
+    dedup_key VARCHAR(200) NOT NULL,
+    event_type VARCHAR(20) NOT NULL,
+    payload JSONB NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT pk_agent_run_events PRIMARY KEY (id),
+    CONSTRAINT fk_agent_run_events_conversation_id FOREIGN KEY(conversation_id, run_id) REFERENCES agent_runs (conversation_id, id) ON DELETE CASCADE,
+    CONSTRAINT uq_agent_run_events_sequence UNIQUE (run_id, sequence),
+    CONSTRAINT uq_agent_run_events_dedup UNIQUE (run_id, dedup_key),
+    CONSTRAINT ck_agent_run_events_sequence CHECK (sequence > 0),
+    CONSTRAINT ck_agent_run_events_dedup_key CHECK (length(btrim(dedup_key)) > 0),
+    CONSTRAINT ck_agent_run_events_event_type CHECK (event_type IN ('START','DELTA','COMPLETED','ERROR')),
+    CONSTRAINT ck_agent_run_events_payload CHECK (jsonb_typeof(payload) = 'object' AND payload->'data'->>'event' = event_type)
+);
+UPDATE alembic_version SET version_num='0004_run_events' WHERE version_num='0003_initial_root';
+-- Running upgrade 0004_run_events -> 0005_event_payload
+ALTER TABLE agent_run_events DROP CONSTRAINT ck_agent_run_events_payload;
+ALTER TABLE agent_run_events ADD CONSTRAINT ck_agent_run_events_payload CHECK (COALESCE(
+    jsonb_typeof(payload) = 'object'
+    AND jsonb_typeof(payload->'data') = 'object'
+    AND jsonb_typeof(payload->'errors') = 'array'
+    AND jsonb_typeof(payload->'message') = 'string'
+    AND payload->'data'->>'event' = event_type
+    AND payload->'data'->>'sequence' = sequence::text
+    AND payload->'data'->>'run_id' = run_id::text
+    AND payload->'data'->>'conversation_id' = conversation_id::text,
+    false
+));
+UPDATE alembic_version SET version_num='0005_event_payload' WHERE version_num='0004_run_events';
 COMMIT;
