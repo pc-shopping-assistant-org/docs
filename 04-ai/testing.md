@@ -63,4 +63,22 @@ handler trả DTO. Sau đó chạy relevant full/static/native gates theo risk.
 Kết quả có date/command/environment ở [status](stateful-implementation-status.md);
 historical counts không phải bằng chứng chạy lại hôm nay.
 
+## GitHub Actions
+
+`ai-service/.github/workflows/build-image.yml` chạy verify trên mọi push, PR,
+merge queue và manual dispatch. Job chạy Ruff/mypy/core tests, tạo PostgreSQL18 tạm,
+chạy Alembic + saver bootstrap rồi native tests; không dùng DB local hoặc model key.
+Image chỉ chạy sau verify theo điều kiện release/PR, không publish từ merge queue.
+
+Frontend workflow dùng Corepack/Yarn đã pin, sinh Next.js types trước typecheck,
+kiểm tra lint/OpenAPI snapshots/tests/build. Không refresh OpenAPI từ live services.
+Required check names: `Verify Python service`, `Verify Next.js application`.
+Chọn chúng trong GitHub branch rules nếu muốn chặn merge; workflow không tự đổi policy.
+Workflow/local verification không được coi là một GitHub run đã thành công.
+
+Kiểm chứng local2026-10-15 trên checkout sạch: AI753 core +102 PostgreSQL18.3,
+Ruff/mypy176; FE135 tests, lint/types/OpenAPI và default Turbopack build66 pages.
+Python3.12.13/Node24.14.0; CI pins Python3.12/Node22. Cả hai workflow pass actionlint.
+Chưa chạy trên GitHub; peer warning Next/ESLint hiện có được ghi tại ISSUE-132.
+
 **Next:** [Add a tool](guides/add-tool.md) · [Extend requirements](guides/extend-requirements.md).
