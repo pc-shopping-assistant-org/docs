@@ -4,7 +4,9 @@ Status: ACCEPTED. Updated 2026-10-14: flexible V2/core runtime implemented;
 live integration và feature backlog vẫn mở. [Evidence](../../04-ai/core-audit.md).
 Flexible action loop supersedes the mandatory requirement prefix trong V2.
 Supersedes: [ADR-003 PydanticAI](ADR-003-pydantic-ai.md).
-Scope: UC-AI-001/003 và guided PC build V1.
+Scope: UC-AI-001/003 và PC build qua V2. Updated 2026-10-15: V2 is the only server
+runtime; V1/guided selection and stateless chat endpoints are retired. Versioned
+shared DTOs/DDL and historical test fixtures are not runtime fallbacks.
 
 ## Context
 
@@ -31,7 +33,7 @@ Generic final advice có thể đúng facts nhưng chưa hoàn thành build requ
 4. Sáu tools: search_catalog, get_product_details, compare_products, build_pc,
    search_web, read_web_page. Bốn action: CALL_TOOL, PROPOSE_REQUIREMENTS,
    ASK_CLARIFICATION, FINAL_ANSWER; model không có mutation authority.
-   State-aware exposure, no hard intent router; một call/response V1.
+   State-aware exposure, no hard intent router; tối đa một tool call mỗi model response.
    tool_results là canonical truth, transcript là projection.
 5. Application sở hữu ownership/idempotency/revision/exclusive admission/call budget/
    completion/publication. LLM không cấp principal, locks, trusted source hay prices.

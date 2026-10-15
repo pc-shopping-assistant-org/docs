@@ -1,12 +1,13 @@
 # Stateful AI — core audit
 
-Status: **COMPLETED — selected core-code milestone**, re-audited 2026-10-14.
+Status: **COMPLETED — selected core-code milestone**, verified through 2026-10-15.
 Scope: [core definition of done](stateful-chat-implementation-plan.md#definition-of-done),
 selected V2/stop-ACK/two-attempt policy. Feature backlog remains unfinished;
 this is not whole-project or production completion.
 
 | Required gate | Current evidence | Audit state |
 | --- | --- | --- |
+| V2-only server startup/API | Missing-dependency startup rejection; V2 OpenAPI/owner/envelope tests; actual managed V2 lifecycle | No enable/version flags or guided/V1 native adapter selection; old /chat routes removed. Shared versioned DTO/DDL and historical storage fixtures are not runtime fallbacks |
 | Owner-scoped submit/poll/history + envelope | Stateful API/auth tests; PostgreSQL lifecycle fixture | Verified with fixture identity/model; live identity integration separate |
 | Idempotency, one active run, stop/drain/CAS | Coordinator, lifecycle and managed publication PostgreSQL tests | Verified selected executor-ACK policy; no heartbeat takeover |
 | Exact accepted head vs orphan, native resume | Accepted-head/reopen, version policy and native resume tests | Verified selected pinned stack |

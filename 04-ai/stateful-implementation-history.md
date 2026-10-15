@@ -4,6 +4,9 @@ Archived from the status page on2026-10-14. Dates, commands and results below ar
 historical evidence, not the current TODO list or live capability specification.
 For current behavior read [documentation](README.md); latest gates are in [status](stateful-implementation-status.md).
 
+As of 2026-10-15 the server is V2-only. Enable flags/V1 mode selections mentioned
+below describe earlier gates, not current setup instructions. Preserve them as history.
+
 ### Historical slice evidence — not the current TODO list
 
 P5 list slice RED→GREEN: service lacked list(), GET collection returned405. Added

@@ -1,36 +1,54 @@
 # Implementation status
 
-Updated2026-10-14. This is delivery evidence, not an architecture tutorial.
+Updated: **2026-10-15**. Current delivery evidence, not an architecture tutorial.
 Start at [AI documentation](README.md).
 
-## Current capability
+## Delivered
 
-Frontend chat/attachments/immutable confirmation uses Stateful ReAct V2.
-Managed graph, typed tools, canonical requirements/compiler/verifier, optimizer,
-accepted-head publication, bounded dialogue and basic SSE are implemented.
+Server and frontend use **Stateful ReAct V2 only**. No runtime enable/version flags,
+guided/V1 native adapter selection or old `/chat` / `/chat/stream` routes.
+Startup requires PostgreSQL, JWKS, catalog mapping and an OpenAI/Gemini provider/key.
+Settings construction and OpenAPI inspection are offline; they do not prove readiness.
 
-Core-code milestone is **COMPLETED** within [core audit](core-audit.md) scope.
-This is not full-project, live-integration or production completion.
-Server Settings remain stateful-off/V1 unless explicitly configured for V2.
+Managed graph, typed tools, canonical requirements/compiler/verifier, deterministic
+optimizer, accepted-head publication, bounded dialogue and basic SSE are implemented.
+The [selected core milestone](core-audit.md) is complete, not full-project or
+production completion. Shared versioned DTOs/DDL and historical graph/storage
+fixtures remain; the server does not select them as legacy execution modes.
 
-## Phases
+## Published code
 
-| Phase | Status | Remaining |
+| Repository | Commit | Delivery |
 | --- | --- | --- |
-| P0 | COMPLETED | Contract baseline |
-| P1 | COMPLETED | Pure merge/marker baseline |
-| P2 | IN PROGRESS | Live identity, automatic/asynchronous initialization, legacy migration |
-| P3 | IN PROGRESS | Live model/catalog/semantic quality; soft/FULL_SETUP, older selectors/source expansion |
-| P4 | IN PROGRESS | Hard process-death authority, expanded retry/version migration |
-| P5 | IN PROGRESS | FE history/reload, delete/retention; basic APIs/SSE already delivered |
-| P6 | IN PROGRESS | P6-01 core audit complete; internal replay/full-feature audit deferred |
+| AI service | `8f9fb89` | Curated GPU dimensions: explicit model-column binding, source locators and conflict handling |
+| AI service | `e3e1bd2` | V2-only startup/API/runtime; includes earlier catalog-admission and capability-port fixes |
+| Backend | `43cd3e7` | Pins AI `e3e1bd2`; Compose supplies DB/JWKS/claims/provider/mapping |
+| AI documentation | `d1cbb9b` | README describes the V2-only setup; code baseline remains `e3e1bd2` |
+| Backend documentation | `c8ffb30` | Updated integration README; gitlink advances to published AI `d1cbb9b` |
 
-## Latest code verification
+Parser/native attachment changes from the previous local worktree are included.
+No AI/backend source or README changes remain uncommitted; the manual is delivered
+from the separate docs repository. Documentation-only pins do not change runtime behavior.
+Workspace-root `USECASE_IMPLEMENTATION.md` is outside a Git repository and stays local.
 
-Verified2026-10-15 on clean AI commit `33bca30`: **747 core +106 native PostgreSQL pass**;
-Ruff, mypy176 files, offline lock, wheel/sdist build and diff checks pass.
-Current workspace:756 core, including nine pre-existing uncommitted parser tests.
-Model/auth/catalog are fixtures.
+## Verified code gates
+
+Recorded on the published code on 2026-10-15:
+
+| Scope | Result |
+| --- | --- |
+| AI core | **753 passed** |
+| Native PostgreSQL | **102 passed** |
+| Ruff / mypy | Pass; 176 source files checked by mypy |
+| Offline lock / wheel / sdist | Pass |
+| Backend Compose config | Pass; no container startup claimed |
+
+These use real optimizer/application logic and native SQL/checkpoints, with external
+model/auth/catalog fixtures. No live identity/catalog/model journey was run.
+Retired V1 mode parameter cases and migrated protocol/lifecycle tests explain the
+count change; historical totals are not current completion percentages.
+
+From `ai-service/`:
 
 ```bash
 uv run --no-sync pytest -q --tb=short
@@ -38,66 +56,32 @@ uv run --no-sync pytest -q integration_tests --tb=short
 uv run --no-sync ruff check src tests integration_tests migrations
 uv run --no-sync mypy src
 uv lock --check --offline
-git diff --check
+uv build --offline
 ```
 
-ISSUE-127 resolved: requirement-owned catalog policy separates user clarification
-and scalar/unit admission from optimizer candidate acquisition. Eight graph tests
-cover first-turn missing goals, merge-before-fetch recovery, canonical references
-and waiting revalidation. A three-turn managed V2/API/SQL/saver test publishes
-clarification → unit question → confirmation with an unavailable hardware backend
-and zero hardware requests. Accepted state/consent/stop/lineage/CAS remain guarded.
-
-ISSUE-128 resolved: web/commerce/build helpers require injected ports. An AST gate
-first reproduced all three infrastructure imports, then passed after caller migration.
-69 focused architecture/helper tests preserve existing outcomes; V2 wiring unchanged.
-
-ISSUE-129 resolved: alternatives use explicitly supplied canonical components with
-IDs; strict price/category/socket/RAM filters replace embedded names/prices. No match
-returns empty; absent catalog fails closed. Output retains source values and stable
-price/ID limit; stock is unknown. Eight new regression cases pass. This helper is
-not exposed in V2 and does not certify full-build compatibility.
-
-Tom’s parser RED6 failures/2 pass → focused9 pass; curated slice35/native runtime5.
-Native attachment→ordinary follow-up retains one conversation and prior published context.
-ISSUE-074/096/097/121 resolved. No live provider key/catalog used.
-
-Frontend committed post-merge gate:135 tests/typecheck/lint/OpenAPI pass; Webpack build66
-pages. Earlier browser mocked API:two turns/confirmation, no page error; not live model.
-Default Turbopack worker-port gate remains ISSUE-122.
-
-Backend recorded148 catalog/common-lib tests +Compose config pass using CLI
-release unset/source25/target25; full/default reactor not verified, ISSUE-124.
-These FE/backend gates were not rerun for documentation edits.
+Prior FE gate:135 tests/typecheck/lint/OpenAPI and Webpack build66 pages; browser used
+mocked API. Prior backend gate:148 catalog/common-lib tests with a local JDK override.
+Neither was rerun for this documentation refresh; ISSUE-122/124 remain open.
+Historical slice evidence: [journal](stateful-implementation-history.md).
 
 ## Documentation verification
 
-ISSUE-125 resolved by the manual rewrite; runtime/config/credentials are unchanged.
-Read-only Node checks pass:149 Markdown pages/374 local links+anchors; all28 AI
-pages reachable from the index;35 selected pages have valid fences/nonempty content,
-3 JSON blocks parse and11 Bash blocks pass bash-n. Docs/AI diff checks pass.
+2026-10-15:34 manual/reference/README pages checked;199 local links/anchors,
+3 JSON blocks and16 shell blocks pass. Eight documented operations and three
+concrete request examples match current OpenAPI/Pydantic; legacy chat routes and
+V1 request schema are absent. No lifespan/network/DB execution or runtime-suite rerun.
 
-Offline `uv run --no-sync python` validated the first-step create/turn examples with
-actual Pydantic contracts and all8 documented HTTP operations against selected V2
-OpenAPI. No lifespan/provider/HTTP/DB connections opened; no full runtime suite rerun.
-Historical slice evidence is preserved in [journal](stateful-implementation-history.md).
-ISSUE-126 resolved: scoring documentation follows the current optimizer as the
-approved baseline; no optimizer behavior changed.
+## Remaining delivery
 
-## Remaining work
+| Phase | Status | Deferred work |
+| --- | --- | --- |
+| P0–P1 | COMPLETED | Contract/pure-state baseline |
+| P2 | IN PROGRESS | Live identity, automatic/asynchronous initialization, legacy migration |
+| P3 | IN PROGRESS | Live model/catalog and semantic quality; FULL_SETUP/soft scoring, older-build selectors, more sources |
+| P4 | IN PROGRESS | Hard process-death authority, expanded retry/version migration |
+| P5 | IN PROGRESS | FE list/history/reload; conversation delete and retention jobs |
+| P6 | IN PROGRESS | P6-01 core audit complete; internal replay/full-feature audit deferred |
 
-Approved backlog/gates: [roadmap](stateful-chat-implementation-plan.md).
-Live identity/catalog/model smoke is separate from native fixture proofs.
-Delete/retention90/7-day policy exists but jobs are not enabled; replay internal-only.
-No SSE reconnect/token streaming requirement added.
-No additional tool was exposed for ISSUE-129. Legacy heuristic helpers remain separate
-from the selected V2 dispatcher; their wider functionality is not a live integration claim.
-
-## Delivery state
-
-Historical published baseline: AI6a16569; backend e7ae822 pins that AI commit; FE45068a8.
-Current delivery: `3e64c67` catalog admission; `33bca30` capability ports/canonical
-alternatives. User authorized this push only. Existing Tom's parser/tests and native
-attachment-fixture edits remain local; backend submodule is unchanged at `6a16569`.
-Docs are in a separate repository. Workspace-root USECASE_IMPLEMENTATION.md is not
-inside a Git repository; its updated tracker remains local.
+Implementation order and acceptance: [roadmap](stateful-chat-implementation-plan.md).
+Retention90/7-day policy is specified, not an enabled job. Replay remains an internal-only
+design, not a delivered replay runner. No automatic SSE reconnect/token streaming added.

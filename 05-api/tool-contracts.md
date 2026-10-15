@@ -1,7 +1,7 @@
 # Tool and action reference
 
 Internal models: `ai-service/src/ai_service/capabilities/assistant/react/contracts.py`.
-Sáu tools đã nối vào managed runtime khi bật `AI_STATEFUL_REACT_ENABLED`.
+Sáu tools được nối vào managed V2 runtime; không còn cờ enable/version.
 Policy/protocol: [agent](../04-ai/agent-tools.md).
 ToolResult schema version1 vẫn được dùng trong V2 action/runtime, không có nghĩa HTTP V1.
 Public transport: [HTTP V2](stateful-chat-v2.md), [shared SSE](stateful-chat-v1.md#sse-contract).
@@ -74,10 +74,10 @@ Target full GroundedClaim extension còn backlog. Targeted clarification và acc
 saved-build completion đã có; không nhầm schema extension với capability thiếu.
 Semantics ở [grounding](../04-ai/agent-tools.md#grounding-and-completion).
 
-Library helpers không tự thành ReAct tools. V1 không expose cart/checkout/payment
+Library helpers không tự thành ReAct tools. V2 không expose cart/checkout/payment
 mutations chỉ vì đã có helper. Thiếu canonical adapter thì fail closed, không sample facts.
 
-## Flexible V2 contracts — opt-in runtime
+## Flexible V2 contracts — server runtime
 
 `react/actions.py`: FlexibleDecision(schema_version=2, action), discriminated by
 CALL_TOOL / PROPOSE_REQUIREMENTS / ASK_CLARIFICATION / FINAL_ANSWER. Requirement
@@ -116,7 +116,7 @@ with no fact refs. Internal `FlexibleAnswer(schema_version=2)` has outcome/reaso
 response status, original task_outcomes, evidence refs and optional build_ref.
 Empty search/unavailable source can end a turn while tasks remain UNRESOLVED;
 typed result refs, not model prose, justify the server-rendered response.
-V1 compatibility projection unchanged; V2 transport/publication mapping implemented.
+Shared persisted contracts giữ version gốc; HTTP/publication của server chỉ dùng V2.
 Internal search answers include validated search_evidence and SCOPED_EXHAUSTION /
 INCOMPLETE_SEARCH reason. Proven scoped absence completes only requested BUILD;
 incomplete search leaves tasks unresolved. Server re-derives report before rendering;
@@ -126,7 +126,7 @@ this metadata does not replace its grounding/lineage/stop/CAS validation.
 Internal reference_reply reuses ClarificationReplyV1 (source message + offered item/
 variant IDs), but pending artifact is owner/content/publication-bound PendingResolution
 V2. Resolving it creates a separately confirmed proposal; it is not a merge command.
-No public V1 request change or implicit migration from unscoped pending drafts.
+Không nhận public V1 request hoặc migrate ngầm unscoped pending drafts.
 Internal unit_reply reuses UnitClarificationReplyV1; number comes from the frozen
 draft and unit from an exact span in the current full user message. It resolves the
 draft into a separately confirmed proposal, not a merge. Do not combine reference/
@@ -143,6 +143,6 @@ authority. Exact accepted confirmation also binds changed waiting state; asking 
 next question does not complete the original task. Coordinator CAS and selected V2
 API are implemented; verification records stay in the status page.
 
-V1 compatibility/envelope remain unchanged. V2 requires explicit runtime selection
-and supported saved-state versions; do not reinterpret legacy INFEASIBLE as certified
+Shared versioned contracts/envelope remain unchanged. The server uses V2 and requires
+supported saved-state versions; do not reinterpret legacy INFEASIBLE as certified
 or old revision as content hash.

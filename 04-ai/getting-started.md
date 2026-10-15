@@ -17,17 +17,9 @@ không thể coi đó là live chat.
 ## 1. Configure dependencies
 
 Từ `ai-service/`, tạo ignored `.env` theo `.env.example` nếu chưa có. Không ghi đè
-file đang chứa credentials. Điền DB/JWT/provider/catalog và chọn runtime:
-
-```dotenv
-AI_STATEFUL_ENABLED=true
-AI_STATEFUL_BUILD_ENABLED=false
-AI_STATEFUL_REACT_ENABLED=true
-AI_STATEFUL_REACT_VERSION=v2
-```
-
-Xem [Configuration](configuration.md) cho các biến bắt buộc. Settings default vẫn
-stateful-off/V1; frontend V2 không tự chuyển sang legacy khi server chưa cấu hình.
+file đang chứa credentials. Điền DB/JWT/provider/catalog theo
+[Configuration](configuration.md). Server luôn chạy V2; không còn cờ bật/chọn
+runtime. Thiếu dependency thì startup thất bại, không chạy legacy fallback.
 
 Bật database dùng chung:
 
@@ -70,7 +62,7 @@ curl -sS -X POST http://localhost:8000/api/v1/conversations \
   -d '{"title":"Tư vấn PC"}'
 ```
 
-Kết quả nằm trong `data`; lấy `id` và `revision` từ response. Conversation mới
+Kết quả nằm trong `data`; lấy `conversation_id` và `revision` từ response. Conversation mới
 READY có initial accepted root và revision 0, chưa có assistant message.
 
 ## 4. Submit a turn

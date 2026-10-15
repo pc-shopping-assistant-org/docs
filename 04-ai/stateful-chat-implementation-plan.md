@@ -1,7 +1,7 @@
 # Stateful AI roadmap
 
-Revision31 · 2026-10-14. Documentation restructuring does not change architecture,
-requirements or phase status. [Architecture](../02-architecture/ai-architecture.md)
+Revision32 · 2026-10-15. V2-only server delivery is complete; approved feature
+backlog and phase statuses below are unchanged. [Architecture](../02-architecture/ai-architecture.md)
 explains runtime; [status](stateful-implementation-status.md) records evidence.
 
 ## Goal
@@ -30,6 +30,11 @@ P2–P6 overall remain IN PROGRESS. Core completion is not a percentage of full 
 
 ## Delivered core
 
+Server/frontend use V2 only. No runtime enable/version flags, V1/guided selection
+or stateless chat endpoints. Startup requires DB/JWKS/model/catalog configuration.
+Published AI `e3e1bd2` includes parser `8f9fb89`; backend `43cd3e7` pins that AI.
+Historical DTOs/DDL/fixture graphs remain versioned, not a supported V1 server mode.
+
 These IDs retain traceability to the original implementation plan:
 
 | IDs | Capability |
@@ -47,6 +52,10 @@ These IDs retain traceability to the original implementation plan:
 “Delivered core” does not close broader live/feature gates under these IDs.
 
 ## Remaining delivery
+
+Explicitly deferred after the 2026-10-15 core delivery. Prioritize a live smoke
+when real dependencies are ready, then user-facing history/reload. Do not reopen
+the selected core milestone merely to add these features.
 
 | ID / priority | Work | Acceptance |
 | --- | --- | --- |

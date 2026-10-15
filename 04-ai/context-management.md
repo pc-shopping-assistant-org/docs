@@ -90,7 +90,7 @@ matching versions/refs và accepted base chưa đổi. Unexpected bug mặc đ�
 Completed/waiting/cancelled không revive cùng run; follow-up là run mới.
 
 Selected V2 tối đa hai execution attempts: retry sau stored owning ACK.
-V1 dùng một. Retry không reset call budget hoặc deadline; request retry chỉ đọc
+Giới hạn một attempt của V1 chỉ còn trong fixture lịch sử. Retry không reset call budget hoặc deadline; request retry chỉ đọc
 run/result cũ, không tự spawn recovery. Third attempt/process-death takeover chưa supported.
 
 Cleanup retryable đã hết limits/cancel chỉ release khi owning ACK hợp lệ.

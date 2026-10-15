@@ -3,10 +3,11 @@
 Bắt đầu bằng startup log, selected runtime và dependency đã cấu hình; không reset
 DB hoặc fallback legacy để che lỗi.
 
-## Stateful routes không xuất hiện
+## Server không start
 
-Kiểm tra `AI_STATEFUL_ENABLED=true` trong Settings thực tế; biến shell override
-`.env`. Restart server sau khi đổi config. Frontend V2 còn cần react enabled/version v2.
+V2 luôn được mount, không còn cờ bật runtime. Đối chiếu lỗi startup với DB/JWKS,
+provider/key và hardware mapping. Settings/OpenAPI không mở network; có schema
+không chứng minh migrations hoặc external dependencies đã sẵn sàng.
 
 ## AI_DATABASE_URL must be configured
 

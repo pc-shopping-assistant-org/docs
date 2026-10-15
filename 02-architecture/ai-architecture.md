@@ -374,8 +374,8 @@ ai_service/
 
 ## Phạm vi hiện tại
 
-Frontend hiện dùng Stateful ReAct V2. Server chỉ bật stateful endpoints khi được
-cấu hình; V1/stateless vẫn là bề mặt tương thích. Product visibility lấy từ
+Server và frontend chỉ chạy Stateful ReAct V2; startup bắt buộc DB/JWKS/model/mapping,
+không còn cờ chọn V1/guided hoặc legacy chat endpoints. Product visibility lấy từ
 backend. Soft-preference scoring, mở rộng web sources, retention jobs, xóa
 conversation, replay và lịch sử customer nâng cao được theo dõi trong
 [implementation status](../04-ai/stateful-implementation-status.md).

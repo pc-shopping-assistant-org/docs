@@ -3,8 +3,8 @@
 AI service giúp khách tìm, hiểu, so sánh sản phẩm và build PC qua hội thoại nhiều lượt.
 Tài liệu này hướng dẫn **hiểu hệ thống, chạy local và phát triển một capability**.
 
-Frontend hiện dùng Stateful ReAct V2. Các ví dụ mới đi theo V2; legacy V1/stateless
-chỉ nằm trong phần compatibility. Khả năng đã có và backlog: [implementation status](stateful-implementation-status.md).
+Server và frontend chỉ chạy Stateful ReAct V2. Các contract snapshot/lịch sử giữ
+version gốc, không là fallback runtime. Khả năng đã có và backlog: [implementation status](stateful-implementation-status.md).
 
 ## Overview
 
@@ -39,7 +39,7 @@ chỉ nằm trong phần compatibility. Khả năng đã có và backlog: [imple
 
 ## Reference
 
-- [HTTP/SSE V2](../05-api/stateful-chat-v2.md); [shared HTTP/V1 compatibility](../05-api/stateful-chat-v1.md).
+- [HTTP/SSE V2](../05-api/stateful-chat-v2.md); [shared HTTP and archived V1](../05-api/stateful-chat-v1.md).
 - [Tool schemas](../05-api/tool-contracts.md); [catalog snapshot](../05-api/catalog-snapshot.md).
 - [Application/native database](../03-data/ai-stateful-schema.md).
 - [Hardware rules and policies](hardware-knowledge.md).

@@ -1,8 +1,10 @@
-# Stateful HTTP and V1 compatibility
+# Shared Stateful HTTP reference and archived V1 contracts
 
 Reference for shared endpoints, authorization, pagination and SSE.
 New frontend callers use [V2 request/public views](stateful-chat-v2.md);
-V1 request fields below are compatibility, not V2 aliases.
+V1 request fields below are historical only, not served endpoints or V2 aliases.
+The current server always uses V2 and rejects old run bodies; shared auth/routes/
+pagination/events still apply. See [V2](stateful-chat-v2.md) for current requests.
 
 ## Authorization and response
 
@@ -22,7 +24,7 @@ Every JSON response and SSE data frame has:
 Success errors=[]; error data=null, static key and field/details in errors.
 Operational health exceptions are documented separately; no success boolean.
 
-Stateful routes require explicit enabled configuration and application/native DB
+Stateful routes require configured V2 dependencies and application/native DB
 readiness. No HTTP migrations, silent RAM fallback or downgrade to stateless chat.
 
 ## Route contracts for P2/P5
@@ -100,7 +102,7 @@ terminal event; duplicate submit does not re-emit START. Stream does not execute
 DELTA is not provider-token streaming. On disconnect poll saved result rather than
 admitting a new run to fetch an answer.
 
-## V1 request compatibility
+## Archived V1 request — not served
 
 TurnRequestV1 has conversation_id/request_id/expected_revision/message.
 No schema_version=2; V1 continuation names are not V2 aliases.
@@ -124,7 +126,7 @@ V1 `unit_clarification_reply` binds original quantity source and selected canoni
 unit/evidence. Missing unit remains pending, not a guessed amount.
 Current V2 uses reference_reply/task_reply/unit_reply in [its contract](stateful-chat-v2.md).
 
-## Planned revision — initial accepted root/readiness
+## Initial accepted root and planned extensions
 
 Initial root and synchronous READY201 already implemented.
 Automatic asynchronous INITIALIZING202 and DELETING/public-delete workflow remain

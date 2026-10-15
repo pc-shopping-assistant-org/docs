@@ -4,18 +4,14 @@ Settings đọc `AI_*` từ ignored `.env`; biến shell có ưu tiên cao hơn.
 Nguồn chuẩn: [Settings](../../ai-service/src/ai_service/config/settings.py) và
 [env example](../../ai-service/.env.example). Không đưa secrets vào tài liệu.
 
-## Choose a runtime
+## Runtime
 
-| Biến | V2 frontend cần |
-| --- | --- |
-| `AI_STATEFUL_ENABLED` | `true` |
-| `AI_STATEFUL_REACT_ENABLED` | `true` |
-| `AI_STATEFUL_REACT_VERSION` | `v2` |
-| `AI_STATEFUL_BUILD_ENABLED` | `false` — không bật cả guided và ReAct |
-
-V1/guided/stateless còn trong source để compatibility. Không dùng chúng làm fallback
-khi V2/provider/DB lỗi; server chọn schema, graph và publication version cùng nhau.
-Accepted V1 execution checkpoints không được upgrade ngầm sang V2.
+Server chỉ chạy Stateful ReAct V2. Các cờ `AI_STATEFUL_ENABLED`,
+`AI_STATEFUL_BUILD_ENABLED`, `AI_STATEFUL_REACT_ENABLED` và `AI_STATEFUL_REACT_VERSION`
+đã bỏ; xóa chúng khỏi env cũ. Startup kiểm tra dependencies trước khi mở tài nguyên.
+`/chat` và `/chat/stream` cũ không còn được serve; dùng conversations/runs/events.
+Không upgrade ngầm accepted V1 execution checkpoints. DTO/snapshot/DDL dùng chung
+vẫn giữ version gốc; các fixture graph lịch sử không được chọn bởi server runtime.
 
 ## Required services
 
@@ -33,8 +29,8 @@ Accepted V1 execution checkpoints không được upgrade ngầm sang V2.
 Default provider model names nằm trong Settings, không phải khuyến nghị benchmark.
 `AI_REQUEST_TIMEOUT_SECONDS` điều khiển HTTP/provider timeout, không phải toàn run deadline.
 
-`AI_PROVIDER=fallback` chỉ dành cho request-scoped deterministic mode; không chạy
-Stateful ReAct. Thiếu provider/key/mapping với execution enabled sẽ fail validation.
+`AI_PROVIDER=fallback` không hợp lệ cho server. Thiếu provider/key/mapping sẽ làm
+startup lỗi; Settings/OpenAPI và các công cụ offline vẫn dựng được không cần network.
 
 ## Hardware mapping
 

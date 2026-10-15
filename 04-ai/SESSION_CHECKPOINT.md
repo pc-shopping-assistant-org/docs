@@ -1,59 +1,35 @@
-# Resume checkpoint — 2026-10-14
+# Resume checkpoint — 2026-10-15
 
-## Đọc trước
+## Read first
 
-Root `AGENTS.md` → [AI documentation](README.md) → [status](stateful-implementation-status.md) →
-[plan](stateful-chat-implementation-plan.md), chỉ phase đang làm.
+Root `AGENTS.md` → [status](stateful-implementation-status.md) →
+[architecture](../02-architecture/ai-architecture.md) → relevant [roadmap](stateful-chat-implementation-plan.md) slice.
 
-## Đã làm
+## Current code
 
-**Selected core-code milestone COMPLETED**, audit2026-10-14 theo plan§3.6.
-Không có nghĩa live/full-project/production complete.
+- Code baseline: AI `e3e1bd2`, including parser `8f9fb89`, is published.
+  README commit `d1cbb9b` changes no runtime code; backend `c8ffb30` pins it.
+- Server/frontend use V2 only; no enable/version flags or stateless chat routes.
+  Missing DB/JWKS/model/mapping fails startup, not a fallback execution.
+- Core audit is complete within its selected scope. Current counts and exact proof
+  boundaries are in status; do not copy old totals from the historical journal.
+- Shared versioned DTOs/DDL and historical fixture graphs remain. Do not rename them
+  as if changing a Python suffix migrated stored state.
+- One conversation/thread, exact accepted head, managed stop ACK, native lineage and
+  CAS still govern publication. SSE observes events; disconnect does not cancel.
+- Hardware catalog loads only for canonical resolution or compile-ready builds.
+  Numerical facts are server-rendered; prose and test fixtures do not prove live quality.
 
-- FE chat/attachments/immutable confirmation dùng V2; không legacy fallback.
-- Basic SSE: 1 admission + 1 subscription/run; no Last-Event-ID/reconnect/retry.
-  Disconnect không cancel executor. DELTA là final validated text, không model tokens.
-- Journal/lifecycle0004–0005: owner-scoped, dedup/sequence; completion atomic cùng CAS.
-- Published context: tối đa4 cặp/12k chars, owner/revision scoped; freeze khi recovery.
-  Task registration và agent cùng nhận history, không dùng nó làm current facts.
-- Hardware snapshot lazy ở build/resolve; read-only không preload.
-- Numerical facts server-rendered; qualitative explanation cần selected evidence refs.
-- Named limits/enum cho FE/BE; wire values và authority boundaries không đổi.
-- Tom’s parser v2: explicit header/column, same-model conflict không publish số đo;
-  missing binding fallback content. Reader→ledger→finalizer regression verified.
+## Deferred, not blockers to the closed core
 
-## Verification
+Live login/catalog/model smoke; FE list/history/reload; delete/retention90/7-day jobs;
+FULL_SETUP/soft scoring and source expansion; hard-death recovery/migration/internal replay.
+Keep phase/issue statuses from the tracker; no whole-plan100% or production claim.
+SSE reconnect and another agent/DSL framework are not implicit next work.
 
-AI gate2026-10-14:738 core +105 native PostgreSQL; Ruff/mypy175/lock/diff pass.
-RED6 parser failures → GREEN9; curated slice35/native runtime5 pass. Native attachment
-→ ordinary follow-up preserves one conversation/history. Fixtures, không live LLM/catalog.
-FE post-merge gate2026-10-14:135 tests/typecheck/lint/API check; Webpack build66 pages pass.
-Browser mocked API: 2 turns + proposal confirmation, no page error; không live LLM.
-ISSUE-120 fixed: bỏ root redirect page
-trùng proxy; giữ locale root layout. HTTP root307→vi, vi/en200 đúng html lang.
-Default Turbopack worker port lỗi vẫn ISSUE-122; build script/CI unchanged.
-Backend:148 catalog/common-lib tests +compose pass; CLI release unset/source25/target25
-do local JDK default release25 lỗi (ISSUE-124), không sửa pom hoặc claim full reactor.
+## Working agreement
 
-## Làm tiếp
-
-1. Live identity/catalog/model gate khi owner cấu hình; hiện chỉ source/fixtures.
-2. ISSUE-121/074/096/097 resolved; audit refreshed old tracker wording.
-   ISSUE-122: kiểm chứng default bundler tại môi trường có quyền process/socket.
-   ISSUE-124: full Java25 toolchain/default compile gate.
-3. FE list/history/reload, delete/retention/replay và nguồn benchmark là backlog.
-   Không claim toàn bộ P2–P6 hoặc production hoàn tất.
-4. ISSUE-125 resolved: documentation manual overview/first steps/concepts/guides/reference;
-   historical slice evidence tách khỏi status. ISSUE-126 resolved theo quyết định lấy
-   scoring hiện tại của optimizer làm baseline; chỉ đồng bộ docs, không đổi code.
-   Links/coverage/examples/OpenAPI checks pass; không runtime test rerun. Inspect
-   tracker để lấy trạng thái mới nhất.
-
-## Worktree
-
-AI6a16569 và backend e7ae822 đã push; backend pin đúng published AI. FE45068a8
-giữ cả remote member changes và local V2 delivery; docs commit cùng đợt.
-Parser/audit và docs refresh sau đợt push đó hiện chưa commit; backend submodule vẫn pin6a16569.
-Root AGENTS/tracker nằm ngoài Git nên không có trong các pushes. Không tự copy/move.
-Quyền push cho đợt cũ đã dùng; lần sau chờ yêu cầu mới. Xem git log/status khi resume.
-Không ghi API key, không đổi `.env`; app DB ở0005. Inspect status trước khi làm.
+The user authorized this documentation push after the code delivery. Do not reuse
+that one-time permission for subsequent work; inspect Git status/log before continuing.
+Root AGENTS/tracker are outside Git. Inspect every repository's status before editing.
+No credentials in docs/logs; do not overwrite ignored `.env` or reset DB volumes.

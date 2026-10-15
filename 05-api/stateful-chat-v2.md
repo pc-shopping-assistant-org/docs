@@ -1,10 +1,9 @@
 # Stateful HTTP V2 reference
 
-Frontend dùng V2-only. Server chọn V2 explicit; Settings default vẫn stateful-off/V1.
+Frontend và server dùng V2-only, không có runtime enable/version flags.
 Shared endpoints/auth/pagination/SSE ở [HTTP reference](stateful-chat-v1.md).
-Select `AI_STATEFUL_REACT_ENABLED=true` and `AI_STATEFUL_REACT_VERSION=v2`
-with the documented stateful DB/auth/provider/catalog configuration. This selects
-V2 request, public view, graph and publication together; no automatic migration
+Configure the required DB/auth/provider/catalog dependencies; startup fails if absent.
+V2 request, public view, graph and publication are always selected; no automatic migration
 of conversations with accepted V1 execution checkpoints.
 
 Frontend assistant chat uses V2 exclusively, including product attachments and
@@ -87,7 +86,7 @@ Example: confirming an immutable proposal.
   as V1 for existing records. Legacy field names are not V2 aliases.
 - Stored canonical JSON omits absent optional commands. V1 payload/hash shape stays
   unchanged; V2 retains its version and complete command binding.
-- Coordinator defaults to V1 admission; the V2 factory explicitly selects V2.
+- The only server factory configures V2-only coordinator admission.
   Unsupported coordinator request versions use `AI_REQUEST_VERSION_UNSUPPORTED`.
 - V2 cannot publish through the V1 adapter. The internal V2 path revalidates exact
   accepted base/request/context/snapshot, native lineage and drained stop proof
@@ -149,7 +148,7 @@ status is COMPLETED only when every task completes; otherwise UNRESOLVED. A veri
 build is still saved when an unrelated task lacks evidence. Scoped no-solution
 evidence does not complete unrelated tasks. Aggregate model prose/evidence is not
 published; server combines validated per-task output. `MULTI_TASK` is not a new tool
-or an HTTP request command, and default V1 is unchanged.
+or an HTTP request command. Historical V1 fixtures do not define a server runtime.
 On per-task validation failure, bounded repair feedback includes the failed
 `task_indices` and static `TASK_INCOMPLETE` code. The agent corrects its candidate
 against the same canonical ledger; feedback cannot redefine tasks or authorize merge.
