@@ -64,6 +64,13 @@ là tool args/public output. Không gửi hidden reasoning ra frontend.
 Không cần `adjust_build`; requirements đã merge quyết định lần build tiếp theo.
 Commerce helpers không tự thành tools. Runtime không expose cart/order/payment mutation.
 
+Helper Python `find_compatible_alternatives(args, catalog)` cũng không là tool V2.
+Caller truyền active canonical `ComponentSpec` có ID; helper lọc category, mức giá
+và socket/RAM được yêu cầu, sắp giá/ID rồi áp dụng limit. Thiếu catalog thì báo lỗi;
+không có candidate phù hợp thì trả rỗng. Đây là matching theo tiêu chí, không phải
+chứng nhận tương thích toàn bộ build. `in_stock=null` vì input chưa có stock evidence;
+message là `CATALOG_ALTERNATIVES_FOUND` hoặc `CATALOG_ALTERNATIVES_EMPTY`.
+
 ## Tool policy
 
 `allowed_tools(context)` tính subset theo trusted state; dispatcher recheck ngay

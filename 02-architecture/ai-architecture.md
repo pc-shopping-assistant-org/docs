@@ -38,6 +38,9 @@ flowchart LR
   ADAPTERS -. optional stateless retrieval .-> QD
 ```
 
+Mũi tên ở sơ đồ này thể hiện tích hợp lúc chạy, không phải hướng import giữa các
+layer. Sơ đồ bên dưới tách rõ luồng gọi và chiều hiện thực port/adapter.
+
 Hai nhánh PostgreSQL có chủ sở hữu riêng: bảng ứng dụng lưu conversation, run,
 message và event; LangGraph checkpointer lưu checkpoint thực thi. Qdrant là index
 phái sinh tùy chọn, không quyết định visibility/giá/tồn kho hiện tại và không lưu
@@ -76,11 +79,20 @@ flowchart TB
   HTTP --> UC --> RUN --> DB
   RUN --> EXEC --> GRAPH
   GRAPH --> POLICY
-  GRAPH --> DISPATCH --> PORTS --> ADAPTERS
+  GRAPH --> DISPATCH
+  GRAPH --> PORTS
+  DISPATCH --> PORTS
   DISPATCH --> BUILD --> OPT
   ADAPTERS --> DB
-  GRAPH --> ADAPTERS
+  ADAPTERS -. implements .-> PORTS
 ```
+
+Mũi tên liền thể hiện luồng gọi lúc chạy; mũi tên chấm thể hiện adapter hiện thực
+port. Application/capability chỉ phụ thuộc contract; composition root inject
+adapter khi khởi động. Helper legacy cũng nhận port bắt buộc: `WebSearchTools(search_client)`,
+`ShoppingAssistantTools(commerce_client)`, `PCBuilderTools(rule_engine)`.
+Không tự tạo HTTP/search/hardware adapter trong capability. Test kiến trúc chặn
+import infrastructure và runtime framework vào hai tầng bên trong.
 
 ### API — nhận request và trả response
 
@@ -96,36 +108,47 @@ vào SDK model, SQL hay API cụ thể của LangGraph.
 
 ### Run coordinator — admission và publication
 
-`PostgresRunCoordinator` quản lý idempotency, revision, active run, claim, budget
-và accepted checkpoint. Nó ghi nhận run trước khi executor chạy; khi kết thúc,
-nó kiểm tra stop evidence và lineage rồi CAS accepted head. Đây là authority cho
-trạng thái được công bố.
+`PostgresRunCoordinator` ghi run cùng điều kiện chạy/publish: `request_id` lặp không
+tạo run trùng, mỗi conversation chỉ có một run đang chạy, và mỗi run giữ revision
+cùng checkpoint gốc. Accepted checkpoint là snapshot hội thoại đang được công bố.
+Khi run kết thúc, coordinator chỉ cập nhật snapshot nếu revision/head vẫn khớp base
+(compare-and-swap); checkpoint cuối phải thuộc chuỗi checkpoint phát sinh từ base.
+Đây là nguồn chuẩn cho trạng thái được công bố.
 
 ### Managed executor — sở hữu vòng đời execution
 
-`ManagedExecutor` claim các run đã lưu, chạy graph trong task group có quản lý,
-theo dõi heartbeat, nhận cancel và drain child work. Nó chỉ phát stop ACK sau khi
-execution đã dừng; mất kết nối SSE không ảnh hưởng graph.
+`ManagedExecutor` nhận các run đã lưu để xử lý, chạy graph trong task group có quản
+lý, theo dõi heartbeat, nhận cancel và chờ các graph/tool call con kết thúc. Nó chỉ
+phát stop ACK (xác nhận execution đã dừng) sau khi mọi tác vụ con đã dừng; mất kết
+nối SSE không ảnh hưởng graph.
 
 ### LangGraph — điều phối một lượt ReAct
 
-Graph bắt đầu từ accepted checkpoint của conversation, xử lý lượt mới và chạy
-bounded loop: chuẩn bị context → model chọn action → validate → gọi tool hoặc
-kiểm tra câu trả lời. Checkpoint lưu tiến trình để recovery; graph không tự quyết
-checkpoint nào được publish.
+Graph bắt đầu từ accepted checkpoint của conversation, xử lý lượt mới và chạy vòng
+lặp có giới hạn số lần gọi model/tool và thời gian: bind task/pending reply → model
+chọn action → validate → gọi tool, đề xuất sửa requirement hoặc trả lời. Checkpoint
+lưu tiến trình để recovery; graph không tự quyết checkpoint nào được publish.
 
 ### Requirements — chuyển lời người dùng thành constraint có nghĩa
 
-`capabilities/assistant/requirements/` nhận requirement draft, resolve tên linh
-kiện/đơn vị bằng catalog và merge thành canonical requirement state. Compiler
-chuyển state đó thành optimizer input; verifier đối chiếu kết quả với yêu cầu đã
-được chấp nhận. Model không được âm thầm thêm hoặc nới constraint.
+`capabilities/assistant/requirements/` chạy khi agent đề xuất đổi requirements
+hoặc khi user trả lời một requirement/confirmation đang chờ; câu hỏi đọc/tra cứu
+không bị ép qua pipeline này. Nó resolve tên linh kiện/đơn vị bằng catalog, áp
+thay đổi có bằng chứng từ lời user vào **working state**, hoặc giữ proposal do agent
+tạo ở trạng thái chờ user xác nhận. Compiler chuyển working state thành optimizer
+input; verifier đối chiếu kết quả với yêu cầu. Accepted state chỉ đổi khi coordinator
+publish thành công. Model không được âm thầm thêm hoặc nới constraint.
+
+Budget/workload, capacity/unit và CLEAR có thể xử lý trước hardware I/O. Catalog
+được tải khi cần resolve SKU hoặc khi BUILD đã đủ prerequisite; sau merge, graph
+kiểm tra lại điều kiện này. Chưa tải candidates không chứng minh thiếu metadata.
 
 ### ReAct capability — chọn hành động trong giới hạn
 
 `capabilities/assistant/react/` định nghĩa action/tool contracts, tool policy theo
-state, execution outcome và answer-completion/grounding checks. Model đề xuất hành
-động; capability kiểm tra điều kiện và giữ tool result trong typed ledger.
+state, execution outcome và kiểm tra câu trả lời đã hoàn tất task, có evidence phù
+hợp hay chưa (grounding). Model đề xuất hành động; capability kiểm tra điều kiện
+và giữ tool result có schema trong ledger.
 
 ### Tool dispatcher — nối action với năng lực hệ thống
 
@@ -230,26 +253,32 @@ thái bằng `GET /api/v1/conversations/{id}/runs/{run_id}`.
 
 ```mermaid
 flowchart LR
-  START([Accepted state + user turn]) --> TASK[Resolve task and pending reply]
-  TASK --> AGENT[Model chooses an action]
-  AGENT --> CHECK[Validate action schema and tool policy]
-  CHECK -->|invalid or repairable| AGENT
-  CHECK -->|read or build tool| TOOL[Dispatcher executes typed tool]
-  TOOL --> LEDGER[Validated outcome in canonical ledger]
+  START([Accepted state + tin nhắn mới]) --> BIND[Gắn task và xử lý pending reply]
+  BIND -->|Đã đủ thông tin| AGENT[Model đề xuất action]
+  BIND -->|Cần hỏi tiếp| ASK[Lưu proposal/câu hỏi chờ user]
+  BIND -->|Pending requirement đã resolve| WORK[Cập nhật working state của run]
+  WORK --> AGENT
+  AGENT --> CHECK[Validate schema và policy theo state]
+  CHECK -->|Repair| AGENT
+  CHECK -->|CALL_TOOL| TOOL[Dispatcher gọi service typed]
+  TOOL --> LEDGER[Lưu tool outcome đã validate]
   LEDGER --> AGENT
-  CHECK -->|clarification needed| ASK[Prepare clarification]
-  CHECK -->|candidate answer| VALIDATE[Grounding and task completion]
-  VALIDATE -->|missing proof| AGENT
-  VALIDATE -->|valid| PREPARE[Prepare publish snapshot]
-  ASK --> END([Executor stop and coordinator publication])
-  PREPARE --> END
+  CHECK -->|PROPOSE_REQUIREMENTS| RESOLVE[Resolve theo lời user và catalog]
+  RESOLVE -->|Có bằng chứng từ user| WORK
+  RESOLVE -->|Cần xác nhận hoặc làm rõ| ASK[Lưu proposal/câu hỏi chờ user]
+  CHECK -->|ASK_CLARIFICATION| ASK
+  CHECK -->|FINAL_ANSWER| VALIDATE[Kiểm tra hoàn tất task và grounding]
+  VALIDATE -->|Thiếu bằng chứng| AGENT
+  VALIDATE -->|Candidate hợp lệ| PREPARE[Chuẩn bị snapshot publish]
+  ASK --> PREPARE
+  PREPARE --> END([Drain execution, validate và CAS publish])
 ```
 
-Graph không ép mọi câu hỏi đi qua cùng một chuỗi tool. Nó chỉ expose tool phù hợp
-với task và state hiện tại. Với yêu cầu build, application compile canonical
-requirements thành optimizer input; optimizer xác định các cấu hình xếp hạng;
-verifier riêng đối chiếu kết quả với yêu cầu gốc. Câu hỏi sản phẩm có thể chỉ cần
-catalog evidence, không chạy optimizer.
+Requirement resolution là một nhánh agent chọn, không phải prefix bắt buộc của
+mọi câu hỏi. Graph chỉ expose tool phù hợp với task và state hiện tại. Với yêu cầu
+build, application compile working requirements thành optimizer input; optimizer
+xếp hạng cấu hình; verifier đối chiếu kết quả với yêu cầu gốc. Câu hỏi sản phẩm có
+thể chỉ cần catalog evidence, không chạy optimizer.
 
 `tool ledger` là execution record; model messages được dựng từ typed tool outcomes.
 Model có thể diễn giải kết quả, nhưng application chỉ publish sau khi xác nhận đủ
@@ -340,6 +369,7 @@ ai_service/
 | Nhận run và publication | [runs.py](../../ai-service/src/ai_service/infrastructure/persistence/runs.py) |
 | Tool policy/dispatcher | [react/tools.py](../../ai-service/src/ai_service/capabilities/assistant/react/tools.py) |
 | Requirements/verifier | [requirements/](../../ai-service/src/ai_service/capabilities/assistant/requirements/) |
+| Catalog acquisition/clarification policy | [catalog_policy.py](../../ai-service/src/ai_service/capabilities/assistant/requirements/catalog_policy.py) |
 | Optimizer | [pc_builder/](../../ai-service/src/ai_service/capabilities/pc_builder/) |
 
 ## Phạm vi hiện tại

@@ -11,6 +11,13 @@ User message → Requirement draft → Reference/unit resolver
              → Versioned compiler → Optimizer → Satisfaction verifier
 ```
 
+Catalog acquisition theo nhu cầu: ngân sách/workload, capacity, unit và CLEAR có
+thể resolve/confirm trước khi gọi hardware backend. SKU/resource identity cần
+canonical catalog; BUILD tải candidates sau khi prerequisite không phụ thuộc
+catalog đã đủ. Sau working merge, graph kiểm tra lại điều kiện build.
+Chưa tải catalog không phải bằng chứng `METADATA_INSUFFICIENT` hay variant bị thiếu;
+graph và publication dùng chung policy này.
+
 ## Distinguish the meaning
 
 | User says | Meaning | Current support |

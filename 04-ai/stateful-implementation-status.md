@@ -27,8 +27,10 @@ Server Settings remain stateful-off/V1 unless explicitly configured for V2.
 
 ## Latest code verification
 
-Recorded2026-10-14 in `ai-service/`: **738 core +105 native PostgreSQL pass**;
-Ruff, mypy175 files, offline lock and diff checks pass. Model/auth/catalog are fixtures.
+Verified2026-10-15 on clean AI commit `33bca30`: **747 core +106 native PostgreSQL pass**;
+Ruff, mypy176 files, offline lock, wheel/sdist build and diff checks pass.
+Current workspace:756 core, including nine pre-existing uncommitted parser tests.
+Model/auth/catalog are fixtures.
 
 ```bash
 uv run --no-sync pytest -q --tb=short
@@ -38,6 +40,23 @@ uv run --no-sync mypy src
 uv lock --check --offline
 git diff --check
 ```
+
+ISSUE-127 resolved: requirement-owned catalog policy separates user clarification
+and scalar/unit admission from optimizer candidate acquisition. Eight graph tests
+cover first-turn missing goals, merge-before-fetch recovery, canonical references
+and waiting revalidation. A three-turn managed V2/API/SQL/saver test publishes
+clarification → unit question → confirmation with an unavailable hardware backend
+and zero hardware requests. Accepted state/consent/stop/lineage/CAS remain guarded.
+
+ISSUE-128 resolved: web/commerce/build helpers require injected ports. An AST gate
+first reproduced all three infrastructure imports, then passed after caller migration.
+69 focused architecture/helper tests preserve existing outcomes; V2 wiring unchanged.
+
+ISSUE-129 resolved: alternatives use explicitly supplied canonical components with
+IDs; strict price/category/socket/RAM filters replace embedded names/prices. No match
+returns empty; absent catalog fails closed. Output retains source values and stable
+price/ID limit; stock is unknown. Eight new regression cases pass. This helper is
+not exposed in V2 and does not certify full-build compatibility.
 
 Tom’s parser RED6 failures/2 pass → focused9 pass; curated slice35/native runtime5.
 Native attachment→ordinary follow-up retains one conversation and prior published context.
@@ -71,9 +90,14 @@ Approved backlog/gates: [roadmap](stateful-chat-implementation-plan.md).
 Live identity/catalog/model smoke is separate from native fixture proofs.
 Delete/retention90/7-day policy exists but jobs are not enabled; replay internal-only.
 No SSE reconnect/token streaming requirement added.
+No additional tool was exposed for ISSUE-129. Legacy heuristic helpers remain separate
+from the selected V2 dispatcher; their wider functionality is not a live integration claim.
 
 ## Delivery state
 
-Published baseline: AI6a16569; backend e7ae822 pins that AI commit; FE45068a8.
-Subsequent parser/audit/documentation changes are uncommitted.
-No commit/push authorization for the current slice. Inspect actual git status/log before delivery.
+Historical published baseline: AI6a16569; backend e7ae822 pins that AI commit; FE45068a8.
+Current delivery: `3e64c67` catalog admission; `33bca30` capability ports/canonical
+alternatives. User authorized this push only. Existing Tom's parser/tests and native
+attachment-fixture edits remain local; backend submodule is unchanged at `6a16569`.
+Docs are in a separate repository. Workspace-root USECASE_IMPLEMENTATION.md is not
+inside a Git repository; its updated tracker remains local.
