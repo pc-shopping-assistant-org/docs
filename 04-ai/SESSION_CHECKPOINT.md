@@ -1,4 +1,4 @@
-# Resume checkpoint — 2026-10-15
+# Resume checkpoint — 2026-10-16
 
 ## Read first
 
@@ -7,6 +7,19 @@ Root `AGENTS.md` → [status](stateful-implementation-status.md) →
 
 ## Current code
 
+- Local research registry11: shared legacy presets/policy, publisher→Steam
+  requirements, official-only research_driver; gaming/productivity sources separate.
+  Never download installers. Cloudflare reader work stays deferred (ISSUE-135).
+  Gates:817 core/102 PostgreSQL, Ruff/mypy181/lock. Live scope probes correct but
+  Steam/Adobe/MSI reads failed; no live-provider/factuality claim. See [web research](web-research.md).
+- AI observability: run UUID.hex = stable persisted/public trace_id; managed execution,
+  graph/model/tool/web/finalize steps emit correlated duration/outcome logs/spans.
+  Local backend LGTM is running at http://localhost:3300/d/pcshop-ai; real store
+  lookup verified20 logs/10 spans with fixture graph. Local ignored AI env configured;
+  restart an existing AI process to load it. [Guide](observability.md).
+- Local commits authorized2026-10-16: AI research `872f841`, tracing `2d6d72f`;
+  backend `7b5747d` provisions Grafana and pins AI `2d6d72f`. Docs updated with this
+  local delivery. Nothing pushed; publish AI before backend if later authorized.
 - Code baseline: AI `e3e1bd2`, including parser `8f9fb89`, is published.
   README commit `d1cbb9b` changes no runtime code; backend `c8ffb30` pins it.
 - Server/frontend use V2 only; no enable/version flags or stateless chat routes.

@@ -1,7 +1,7 @@
 # Tool and action reference
 
 Internal models: `ai-service/src/ai_service/capabilities/assistant/react/contracts.py`.
-Sáu tools được nối vào managed V2 runtime; không còn cờ enable/version.
+11 tools được nối vào managed V2 runtime; không còn cờ enable/version.
 Policy/protocol: [agent](../04-ai/agent-tools.md).
 ToolResult schema version1 vẫn được dùng trong V2 action/runtime, không có nghĩa HTTP V1.
 Public transport: [HTTP V2](stateful-chat-v2.md), [shared SSE](stateful-chat-v1.md#sse-contract).
@@ -19,6 +19,11 @@ không authorization.
 | build_pc | objective optional BuildObjective | BuildResult: server build_ref, BuildReceipt, SatisfactionReport |
 | search_web | query <=1000 chars; limit 1..10 | SearchWebResult: title/url/snippet, không citation evidence |
 | read_web_page | url <=2000 chars; offset >=0; max_chars 1..16000 (default 12000) | ReadWebPageResult: bounded content, next_offset/total_chars, source hash và segment evidence ref |
+| research_hardware | model <=300 chars; focus enum; optional question <=500; max_sources 1..2 | ResearchResult: một section với search metadata và pages đã đọc |
+| research_compatibility | part_a/part_b <=300; optional concern <=500; max_sources 1..2 | ResearchResult: nguồn về cặp linh kiện; không phải deterministic compatibility certificate |
+| research_workload | workload <=300; mode BENCHMARK/REQUIREMENTS; benchmark_kind GAMING/PRODUCTIVITY; <=3 hardware names; optional resolution/preset/upscaling; max_sources 1..2 | ResearchResult + missing_conditions; không tự điền điều kiện đo |
+| research_pc_build | optional current-run build_ref UUID; optional distinct slots <=8; question <=500 | ResearchResult: từng core part, canonical build_source_ref và per-subject source status |
+| research_driver | component_name <=300; software_type VGA_DRIVER/BIOS_UPDATE/CHIPSET_DRIVER/RGB_CONTROL; optional operating_system/version <=100; max_sources 1..2 | ResearchResult: official-only support pages; no install/download |
 
 Current objective non-null bị reject tới khi versioned policy support.
 Budget/revision/requirements, candidates/prices/stock và prior build lấy trusted context,
@@ -43,7 +48,7 @@ ToolResult
   tool_call_id, tool, status
   input_hash                    # canonical args/context SHA-256
   constraints_revision
-  result                        # CatalogResult | DetailsResult | ComparisonResult | BuildResult | SearchWebResult | ReadWebPageResult | null
+  result                        # catalog/detail/comparison/build/search/page/research payload | null
   error                         # ToolError | null
   evidence_refs                 # bounded, distinct
 ```
@@ -60,6 +65,32 @@ Search không có matches là COMPLETED với results=[]; nguồn bị chặn/l�
 không nhận diện là FAILED / WEB_SEARCH_UNAVAILABLE. Snippet không sinh evidence.
 Runtime cancel/budget/provider errors cần explicit application mapping; không giả enum
 variant hoặc leak SDK exception.
+
+## Research results
+
+Args/focus/status enums và limits nằm trong
+`capabilities/web_search/research_contracts.py`; result/ledger contracts ở `react/contracts.py`.
+`ResearchSourceStatus`: READABLE / NO_RESULTS / UNREADABLE / UNAVAILABLE / SOURCE_UNRESOLVED.
+Mỗi section giữ subjects/focus/query, official_source_status và search_steps
+(tier/query/target_domains/status/result_urls). Tối đa2 pages/tier; build research
+tra mọi core part, tối đa1 page/tier/part; `slots` thu hẹp phạm vi.
+Result giữ source_policy_version/hash. Official trước, independent review sau;
+specs/requirements dừng sau readable official. UNKNOWN là chưa resolve hãng/publisher,
+không tự đoán domain. General-web fallback chỉ khi cấu hình cho phép và scoped
+sources chưa đọc được. Driver không mở review/general fallback. Requirements dùng
+publisher→STORE_LISTING, không review/general dù fallback config bật. Publisher hoặc
+hãng resolve từ application registry, không model args. Registry không phải factuality guarantee.
+Mỗi page trả <=2000 ký tự kèm next_offset; đọc tiếp bằng `read_web_page`.
+
+Evidence refs phải đúng các page/fact thực sự trả về, được deduplicate. Không đọc
+được nguồn nào thì không có citation evidence. Partial failures giữ từng section;
+empty/unavailable research hỗ trợ unresolved outcome, không chứng minh vô nghiệm.
+Generic model names chỉ là research subjects. Build subjects lấy từ exact accepted
+snapshot hoặc current-run/context-matching, verified optimizer result. Foreign/stale
+build refs và slot không tồn tại bị reject; research không sửa requirements/build.
+
+Hardware focus: GENERAL, PERFORMANCE, PRODUCTIVITY, THERMAL_NOISE, MOTHERBOARD,
+MEMORY, STORAGE, PSU_QUALITY, PSU_TIER, CASE_AIRFLOW, KNOWN_ISSUES, OFFICIAL_SPECS.
 
 ToolResult là internal observation. HTTP/SSE vẫn dùng {data, message, errors}, message static.
 

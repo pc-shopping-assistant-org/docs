@@ -1,6 +1,6 @@
 # Stateful AI roadmap
 
-Revision32 · 2026-10-15. V2-only server delivery is complete; approved feature
+Revision35 · 2026-10-16. V2-only server delivery is complete; approved feature
 backlog and phase statuses below are unchanged. [Architecture](../02-architecture/ai-architecture.md)
 explains runtime; [status](stateful-implementation-status.md) records evidence.
 
@@ -45,11 +45,24 @@ These IDs retain traceability to the original implementation plan:
 | P3-F01/F02/F03/F04 | V2 actions/hash/immutable confirmation, flexible loop, outcomes and publication |
 | P3-B01/B02/B03/B04 | Native adapters, tool loop, scoped optimizer report, provenance/context/reuse |
 | P3-W01 | Search/discovery and page-read/excerpt evidence |
+| P3-W03 (local) | Hardware/compatibility/workload/build research: manufacturer-first source policy, bounded read, provenance, canonical build binding, grounded review |
+| P3-W04/05 (local) | Topic-specific benchmark source expansion, shared helper presets, publisher/Steam requirements and official-only driver tool; Cloudflare transport deferred |
+| P4-O01 (local) | Stable run trace, timed structured steps and shared Grafana LGTM log/trace store |
 | P4-B01/B02/B03 | Selected stopped recovery, native lineage and fenced CAS |
 | P5-01/02/03 | Create/list/get/history/submit/poll/cancel, basic journal/SSE and FE V2 caller |
 | P6-01 | Selected code-core acceptance audit |
 
 “Delivered core” does not close broader live/feature gates under these IDs.
+Local extensions pass817 core/102 PostgreSQL gates, Ruff/mypy181/lock.
+Source strategy and acceptance are in
+[web research](web-research.md#research-strategy--manufacturer-first): configurable
+manufacturer-first, topic-specific reviews, domain filtering, typed provenance and
+explicit gaps. Live RM850x reads Corsair then Hardware Busters. Code is local,
+committed locally, not pushed. P3-W02 structured benchmarks, exact revision relevance and live
+LLM quality remain open; source policy does not certify factual correctness or FPS.
+P4-O01 includes fixture-managed graph→OTLP→Loki/Tempo lookup and Grafana dashboard,
+not distributed backend tracing, durable audit delivery or production retention.
+See [Observability](observability.md).
 
 ## Remaining delivery
 

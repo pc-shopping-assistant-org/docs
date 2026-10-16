@@ -71,12 +71,14 @@ Index `(account_id, updated_at DESC, id DESC)` for owner lists.
 | retry_policy_version | text NOT NULL, finite policy supplied by application |
 | retry_deadline | timestamptz NOT NULL |
 | versions, error | jsonb NULL; versioned validated internal payloads |
-| trace_id | text NULL, no secrets/prompts in diagnostic labels |
+| trace_id | text NULL for historical rows; new CHAT runs store id.hex (32 lowercase hex); stable across retry/resume |
 | replay_snapshot | jsonb NULL, validated ReplaySnapshotV1 |
 | created_at, updated_at | timestamptz NOT NULL |
 | started_at, finished_at | timestamptz NULL |
 
 Index `(conversation_id, created_at, id)` and `(status, lease_expires_at)`.
+Public run views derive the same trace ref for old NULL rows without a backfill.
+No schema migration is needed; Loki/Tempo hold diagnostic records, not application tables.
 Active slot composite FK `(conversations.id, active_run_id)` references
 `agent_runs(conversation_id,id)` and is deferred for transaction ordering; clear
 it only after verified exact-attempt stop evidence. No partial index by RUNNING

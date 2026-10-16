@@ -1,6 +1,6 @@
 # Implementation status
 
-Updated: **2026-10-15**. Current delivery evidence, not an architecture tutorial.
+Updated: **2026-10-16**. Current delivery evidence, not an architecture tutorial.
 Start at [AI documentation](README.md).
 
 ## Delivered
@@ -18,6 +18,43 @@ fixtures remain; the server does not select them as legacy execution modes.
 
 ## Published code
 
+### Local extensions — research and observability
+
+Five research tools bring the registry to11: hardware, compatibility, workload,
+canonical PC build and official-only driver/BIOS/chipset/RGB. Each searches/reads bounded sources; build research binds the
+current verified result or accepted snapshot. Source coverage and exact excerpts
+support a review; enums own source status/focus/mode. Manufacturer-first registry,
+topic-specific independent sources and result/final-domain filtering replace global
+top-N selection (ISSUE-134). Policy version/hash and per-tier queries/status persist.
+Unknown brands/publishers stay explicit; all-web fallback is disabled by default.
+Web attempts reserve per request;
+new runs default to48 TOOL_IO, existing persisted budgets stay unchanged.
+
+Requirements route publisher→Steam, not review sites; gaming/productivity sources
+are distinct. Legacy helpers reuse presets/policy instead of adding duplicate tools.
+Binary response bodies are not consumed. Live Wukong/Adobe/MSI discovery uses the
+correct domain scopes; Steam connection failed, Adobe/MSI403 prevented page evidence.
+Benchmark reader probes read8/10 samples; TechSpot/Phoronix Cloudflare403 remains
+ISSUE-135, deferred by owner. No browser/fetch bypass or structured FPS parser.
+
+Run observability adds stable public/persisted trace_id, timed graph/model/tool/web
+steps and stop/finalize spans. Managed retries share a trace, concurrent runs isolate
+context. JSON console + batched OTLP logs/traces reuse persistent backend LGTM.
+Grafana dashboard **PC Shopping - AI Runs** is provisioned and accessible locally.
+Real LGTM ingestion/lookup passed:20 logs/10 spans from a fixture-model managed graph;
+not a live provider/auth/catalog conversation. See [Observability](observability.md).
+
+Verified2026-10-16: **817 core +102 PostgreSQL** tests; Ruff/mypy181/lock/diff pass.
+Native protocol fixtures cover OpenAI/Gemini and committed-tool resume. Live probes
+read RM850x on Corsair first, then Hardware Busters; prior DeepCool AK620 probe read
+TechPowerUp. These verify
+search/read access, not live LLM/catalog/auth, relevance or structured FPS extraction.
+Local commits authorized2026-10-16: AI research `872f841`, tracing `2d6d72f`;
+backend `7b5747d` provisions the dashboard and pins AI `2d6d72f`. Documentation is
+updated in this local delivery. Nothing pushed; publish AI before backend when authorized.
+
+### Published baseline
+
 | Repository | Commit | Delivery |
 | --- | --- | --- |
 | AI service | `8f9fb89` | Curated GPU dimensions: explicit model-column binding, source locators and conflict handling |
@@ -27,8 +64,8 @@ fixtures remain; the server does not select them as legacy execution modes.
 | Backend documentation | `c8ffb30` | Updated integration README; gitlink advances to published AI `d1cbb9b` |
 
 Parser/native attachment changes from the previous local worktree are included.
-No AI/backend source or README changes remain uncommitted; the manual is delivered
-from the separate docs repository. Documentation-only pins do not change runtime behavior.
+The manual is delivered from the separate docs repository; the newer local extension
+above is pending publication. Documentation-only pins do not change runtime behavior.
 Workspace-root `USECASE_IMPLEMENTATION.md` is outside a Git repository and stays local.
 
 ## Verified code gates

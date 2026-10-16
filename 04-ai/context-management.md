@@ -108,6 +108,9 @@ Trước mỗi MODEL/TOOL_IO outbound:
 SDK retries disable hoặc phải instrument mỗi attempt. Backend fan-out tính từng
 request; logical tool count khác outbound count.
 Checkpoint counters là projections, không hard spending authority.
+Run mới mặc định48 TOOL_IO, định nghĩa bởi DEFAULT_TOOL_IO_LIMIT. Web ports reserve
+từng search/read trước I/O; logical tool admission cũng tiêu một attempt. Điều này
+cho phép research nhiều nguồn mà vẫn giữ giới hạn durable. Run cũ giữ budget đã lưu.
 
 Attempt cap không exactly-once external execution, total-token hoặc billing guarantee.
 Tool success chưa có checkpoint vẫn có thể chạy lại khi resume, nhưng phải reserve mới.

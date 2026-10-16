@@ -36,6 +36,7 @@ version gốc, không là fallback runtime. Khả năng đã có và backlog: [i
 | Hỗ trợ một requirement mới | [Extend requirements](guides/extend-requirements.md) |
 | Viết và chạy tests | [Testing](testing.md) |
 | Xử lý lỗi startup/run | [Troubleshooting](troubleshooting.md) |
+| Tra log và thời gian từng step bằng trace ID | [Logs and traces](observability.md) |
 
 ## Reference
 

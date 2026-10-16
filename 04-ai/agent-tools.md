@@ -60,6 +60,25 @@ là tool args/public output. Không gửi hidden reasoning ra frontend.
 | `build_pc` | Tạo mới/điều chỉnh từ trusted requirements qua optimizer/verifier |
 | `search_web` | Tìm nguồn |
 | `read_web_page` | Đọc nội dung/facts của nguồn đã chọn |
+| `research_hardware` | Search + đọc review theo performance, nhiệt/ồn, VRM/BIOS, RAM, SSD, PSU, airflow, lỗi hoặc specs |
+| `research_compatibility` | Search + đọc nguồn về hai model: BIOS, clearance, connector và concern cụ thể |
+| `research_workload` | Search + đọc yêu cầu hoặc benchmark game/application với điều kiện user đã cung cấp |
+| `research_pc_build` | Nghiên cứu từng linh kiện trong build hiện tại/đã lưu; báo nguồn đọc được và phần còn thiếu |
+| `research_driver` | Tìm/đọc trang driver, BIOS, chipset hoặc RGB của đúng hãng; không tải/cài phần mềm |
+
+Research tools trả evidence từ trang thực sự đã đọc. Snippet không thành evidence.
+Pipeline tra registry hãng trước, review domain theo chủ đề sau; lọc cả result/final
+URL và giữ từng tier/query/status. Registry cấu hình bằng `AI_WEB_RESEARCH_SOURCES`;
+không tự search toàn web khi hãng chưa xác định. Specs có thể dừng ở nguồn hãng;
+đánh giá hiệu năng/chất lượng vẫn cần independent evidence.
+`research_pc_build` dùng current-run `build_ref` hoặc accepted saved snapshot; không
+nhận danh sách linh kiện/giá do model tự cấp. `READABLE` chỉ nói nguồn đọc được,
+không chứng minh bài viết liên quan hoặc benchmark áp dụng cho toàn bộ cấu hình.
+Phạm vi và ví dụ: [web research](web-research.md#research-tools).
+
+Requirements tra publisher đã đăng ký rồi Steam, không review sites. Driver chỉ
+tra registry hãng; không resolve được thì `SOURCE_UNRESOLVED`, không tìm mirror.
+Các helper cũ dùng chung presets/policy, không expose thêm tám agent tools.
 
 Không cần `adjust_build`; requirements đã merge quyết định lần build tiếp theo.
 Commerce helpers không tự thành tools. Runtime không expose cart/order/payment mutation.

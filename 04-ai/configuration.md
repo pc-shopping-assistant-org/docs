@@ -60,6 +60,13 @@ Không dùng production, không sửa tables trực tiếp để né migration v
 Hash embeddings chỉ dành development. Indexing không điều kiện để stateful chat hoạt động;
 [Retrieval](rag.md) phân biệt seam này với V2 canonical tools.
 
+## Logs and traces
+
+`AI_LOG_LEVEL` là DEBUG/INFO/WARNING/ERROR/CRITICAL, default INFO. JSON console logs
+có run/trace/span IDs. `AI_OTLP_ENDPOINT=http://localhost:4318` gửi logs/traces vào
+LGTM local; compose AI dùng `http://lgtm:4318`. Bỏ endpoint thì không export.
+Kho log, Grafana và giới hạn: [Observability](observability.md).
+
 ## Execution limits
 
 Graph limits và durable attempt/run limits là hai lớp khác nhau. Defaults thuộc

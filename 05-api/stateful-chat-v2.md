@@ -100,6 +100,10 @@ Example: confirming an immutable proposal.
 
 ## Public view
 
+Submit/get run và run trong SSE/result có `trace_id` (32 lowercase hex). Giá trị
+ổn định theo run, kể cả idempotent retry và execution resume. Đây chỉ là reference
+tra log, không thay authorization hay conversation revision. Xem [Observability](../04-ai/observability.md).
+
 Create/get returns `schema_version: 2` and nullable `flexible`. Once published,
 `flexible` contains status, original task message/ID, canonical constraints revision,
 answer, task outcomes and the
