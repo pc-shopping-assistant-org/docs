@@ -22,7 +22,7 @@ version gốc, không là fallback runtime. Khả năng đã có và backlog: [i
 3. [State and recovery](context-management.md): conversation, run, checkpoint và publish.
 4. [Catalog retrieval](rag.md): nguồn sản phẩm chuẩn và ranh giới vector search.
 5. [Web research](web-research.md): search, đọc trang, facts và citations.
-6. [Model providers](model-strategy.md): OpenAI/Gemini và native tool protocol.
+6. [Model providers](model-strategy.md): OpenAI/Gemini/Qwen và native tool protocol.
 7. [PC optimizer](pc-build-optimizer.md): thuật toán, compatibility và scoring.
 
 ## Guides
@@ -37,6 +37,8 @@ version gốc, không là fallback runtime. Khả năng đã có và backlog: [i
 | Viết và chạy tests | [Testing](testing.md) |
 | Xử lý lỗi startup/run | [Troubleshooting](troubleshooting.md) |
 | Tra log và thời gian từng step bằng trace ID | [Logs and traces](observability.md) |
+| Chuẩn bị dataset, baseline và fine-tuning | [Training plan](training-plan.md) |
+| Chạy Qwen baseline → QLoRA → evaluate → serving | [Training runbook](training.md) |
 
 ## Reference
 

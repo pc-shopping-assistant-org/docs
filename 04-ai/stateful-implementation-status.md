@@ -1,13 +1,14 @@
 # Implementation status
 
-Updated: **2026-10-16**. Current delivery evidence, not an architecture tutorial.
+Updated: **2026-10-17**. Current delivery evidence, not an architecture tutorial.
 Start at [AI documentation](README.md).
 
 ## Delivered
 
 Server and frontend use **Stateful ReAct V2 only**. No runtime enable/version flags,
 guided/V1 native adapter selection or old `/chat` / `/chat/stream` routes.
-Startup requires PostgreSQL, JWKS, catalog mapping and an OpenAI/Gemini provider/key.
+Startup requires PostgreSQL, JWKS, catalog mapping and an OpenAI/Gemini provider/key
+or an explicitly configured self-hosted Qwen endpoint.
 Settings construction and OpenAPI inspection are offline; they do not prove readiness.
 
 Managed graph, typed tools, canonical requirements/compiler/verifier, deterministic
@@ -17,6 +18,42 @@ production completion. Shared versioned DTOs/DDL and historical graph/storage
 fixtures remain; the server does not select them as legacy execution modes.
 
 ## Published code
+
+### Qwen training workflow — code published, execution gates open
+
+AI service `264097f` published to origin/main on2026-10-17 in seven focused commits.
+This documentation accompanies that delivery; backend submodule pin was not changed.
+
+Reader-first [training plan](training-plan.md), [evaluation rubric](../06-evaluation/evaluation-plan.md)
+and an offline pilot:51 samples/50 scenario,10 task extraction/16 requirement
+extraction/25 ReAct decisions,39 train/6 validation/6 test samples. Eight frozen
+typed snapshots include synthetic catalog/web outcomes and a real optimizer receipt
+on synthetic parts. Grouped splits, hashes, runtime schemas/policy, source spans/
+quantities/current IDs and final grounding/completion are checked offline.
+
+Approved-only canonical exporter and captured-response evaluator are implemented.
+Prompt builders/native response admission are shared with runtime; input has no
+gold labels/review metadata, tool history keeps matched pairs, test targets never
+become SFT output. Evaluator keeps failures/missing cases and separates schema
+from source/policy/grounding checks; semantic review remains REQUIRED.
+[Commands and artifact format](../../ai-service/training/README.md).
+
+Owner selected Qwen/Qwen3-8B + SFT/QLoRA. Implementation now includes pinned model/
+tokenizer config, shared train/serve schema projection, final-completion loss mask,
+vLLM baseline/adapter capture, NF4/all-linear QLoRA recipe, adapter file provenance,
+paired comparison and explicit serving commands. Optional Qwen provider reuses native
+ReAct/structured contracts and recovery policy; untrained auxiliary heads use base
+weights. Training and serving dependencies are isolated. [A→Z runbook](training.md).
+
+All51 labels remain DRAFT. Native tokenizer, real GPU train/inference/vLLM and
+conversation quality remain verification gates (ISSUE-138). No weights download,
+active-provider change or automatic approval/promotion. Commit/push was separately
+authorized for this delivery only; no continuing publication authority.
+
+Verified2026-10-17:869 core tests, including52 training/provider/recovery regressions
+added since the817-core baseline; Ruff/mypy196/lock pass. Mock HTTP native ReAct,
+capture/report comparison, fixture trainer/artifact round-trip and CLI review-gate/
+serving dry-run pass. No real GPU/tokenizer/LLM, SQL or PostgreSQL rerun claimed.
 
 ### Local extensions — research and observability
 
@@ -49,9 +86,10 @@ Native protocol fixtures cover OpenAI/Gemini and committed-tool resume. Live pro
 read RM850x on Corsair first, then Hardware Busters; prior DeepCool AK620 probe read
 TechPowerUp. These verify
 search/read access, not live LLM/catalog/auth, relevance or structured FPS extraction.
-Local commits authorized2026-10-16: AI research `872f841`, tracing `2d6d72f`;
+Earlier commits authorized2026-10-16: AI research `872f841`, tracing `2d6d72f`;
 backend `7b5747d` provisions the dashboard and pins AI `2d6d72f`. Documentation is
-updated in this local delivery. Nothing pushed; publish AI before backend when authorized.
+updated in this delivery. Research/tracing commits are ancestors of published AI
+`264097f`; backend was not repinned for the training work.
 
 ### Published baseline
 
@@ -64,8 +102,8 @@ updated in this local delivery. Nothing pushed; publish AI before backend when a
 | Backend documentation | `c8ffb30` | Updated integration README; gitlink advances to published AI `d1cbb9b` |
 
 Parser/native attachment changes from the previous local worktree are included.
-The manual is delivered from the separate docs repository; the newer local extension
-above is pending publication. Documentation-only pins do not change runtime behavior.
+The manual is delivered from the separate docs repository. The Qwen code delivery
+above supersedes the older baseline; documentation-only pins do not change runtime behavior.
 Workspace-root `USECASE_IMPLEMENTATION.md` is outside a Git repository and stays local.
 
 ## Verified code gates

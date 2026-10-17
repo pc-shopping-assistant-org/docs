@@ -1,4 +1,4 @@
-# Resume checkpoint — 2026-10-16
+# Resume checkpoint — 2026-10-17
 
 ## Read first
 
@@ -6,6 +6,23 @@ Root `AGENTS.md` → [status](stateful-implementation-status.md) →
 [architecture](../02-architecture/ai-architecture.md) → relevant [roadmap](stateful-chat-implementation-plan.md) slice.
 
 ## Current code
+
+- Current goal: implement Qwen/Qwen3-8B SFT/QLoRA end-to-end code, not run a GPU job.
+  [Runbook](training.md) owns commands; [plan](training-plan.md) owns phase gates.
+  Done: typed data/review gates, native export, shared Qwen input projection and
+  completion mask, baseline/adapter capture, QLoRA trainer/artifact hashes, paired
+  comparison, serving launcher and opt-in Qwen Provider. No new agent runtime.
+  Native ReAct/structured adapters reuse Qwen HTTP client; auxiliary untrained heads
+  use base weights. Normal CI/server image do not install training/vLLM packages.
+  Verified869 core, Ruff/mypy196/lock; fixture trainer/native HTTP/report round-trips,
+  serving dry-run and DRAFT rejection. Source/API tests are not GPU/model proof.
+  All51 pilot labels stay DRAFT. Next: review dataset, native tokenizer/CUDA/vLLM
+  smoke, actual baseline/train and semantic/conversation evaluation (ISSUE-138).
+  AI code published as264097f on origin/main, seven focused commits. Docs accompany
+  the delivery. No weights download or active env/provider change. Backend submodule
+  was not repinned. One-time commit/push authorization is consumed by this delivery.
+- Owner reported pushing the previous research/observability delivery. Do not
+  reuse that permission for the training work.
 
 - Local research registry11: shared legacy presets/policy, publisher→Steam
   requirements, official-only research_driver; gaming/productivity sources separate.
@@ -17,9 +34,9 @@ Root `AGENTS.md` → [status](stateful-implementation-status.md) →
   Local backend LGTM is running at http://localhost:3300/d/pcshop-ai; real store
   lookup verified20 logs/10 spans with fixture graph. Local ignored AI env configured;
   restart an existing AI process to load it. [Guide](observability.md).
-- Local commits authorized2026-10-16: AI research `872f841`, tracing `2d6d72f`;
+- Earlier commits authorized2026-10-16: AI research `872f841`, tracing `2d6d72f`;
   backend `7b5747d` provisions Grafana and pins AI `2d6d72f`. Docs updated with this
-  local delivery. Nothing pushed; publish AI before backend if later authorized.
+  delivery; research/tracing code is included in published AI264097f.
 - Code baseline: AI `e3e1bd2`, including parser `8f9fb89`, is published.
   README commit `d1cbb9b` changes no runtime code; backend `c8ffb30` pins it.
 - Server/frontend use V2 only; no enable/version flags or stateless chat routes.

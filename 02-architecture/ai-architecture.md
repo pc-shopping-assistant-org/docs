@@ -11,7 +11,7 @@ flowchart LR
   FE[Web frontend]
   ID[Identity service<br/>JWKS]
   BE[Commerce backend<br/>sản phẩm, SKU, giá, tồn kho]
-  MODEL[OpenAI hoặc Gemini]
+  MODEL[OpenAI, Gemini hoặc Qwen qua vLLM]
   WEB[Web search và nguồn bài viết]
   DB[(PostgreSQL<br/>ai_db)]
   QD[(Qdrant<br/>index tùy chọn)]
@@ -182,10 +182,14 @@ trực tiếp bảng nội bộ của checkpointer.
 | FastAPI | HTTP routes, OpenAPI và application lifespan |
 | Pydantic | Validate request, tool, result và public-view contract |
 | LangGraph | Điều phối flow stateful có giới hạn và checkpoint graph state |
-| LangChain model adapters | Giao tiếp structured-output/tool protocol của từng provider |
+| Model adapters | LangChain cho OpenAI/Gemini; HTTP cho Qwen/vLLM, dùng chung native contracts |
 | PostgreSQL | Lưu bản ghi ứng dụng và native graph checkpoint |
 
 Request path chỉ có một graph runtime là LangGraph; không dùng PydanticAI.
+
+Training Qwen là pipeline offline riêng, không thuộc request path và không load GPU
+weights trong FastAPI. Model/adapter được serve bởi vLLM; application vẫn giữ quyền
+merge, kiểm tra evidence và publish. [Training và serving](../04-ai/training.md).
 
 ## Một lượt hội thoại
 

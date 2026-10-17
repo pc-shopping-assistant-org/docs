@@ -1,6 +1,6 @@
 # Model providers
 
-OpenAI và Gemini là model-call adapters, không orchestration runtimes.
+OpenAI, Gemini và Qwen là model-call adapters, không orchestration runtimes.
 LangGraph giữ loop/checkpoints; Pydantic giữ schemas; application giữ authority.
 
 ## Provider selection
@@ -8,6 +8,11 @@ LangGraph giữ loop/checkpoints; Pydantic giữ schemas; application giữ auth
 Chọn `AI_PROVIDER=openai` hoặc `gemini`, key tương ứng và model ID trong
 [Configuration](configuration.md). Model clients được lifecycle reuse/close sau drain.
 Không giữ một model message history riêng ngoài canonical context.
+
+`AI_PROVIDER=qwen` gọi vLLM ở `AI_QWEN_BASE_URL`, không gọi OpenAI/Gemini.
+Alias adapter ở `AI_QWEN_MODEL_NAME`; chưa train thì dùng `Qwen/Qwen3-8B`.
+Provider lazy/reused/closed, không SDK retry.429/5xx/timeouts đi qua recovery policy
+hiện có. Không đọc weight/GPU trong process FastAPI.
 
 Request-scoped fallback provider không chạy stateful ReAct. Stateful provider failure
 không downgrade BUILD thành generic advice success.
@@ -52,7 +57,18 @@ Không tạo FPS/spec/stock/giá từ knowledge của model.
 
 ## Testing an adapter
 
-Core dùng scripted models; protocol tests phải tôn trọng khác biệt OpenAI/Gemini.
+Dataset/fine-tuning là workflow offline riêng: [Training plan](training-plan.md).
+Đã có Qwen3-8B SFT/QLoRA trainer, inference capture, paired comparison và lệnh
+serve base/adapter. [Runbook](training.md) là hướng dẫn chạy chuẩn.
+Shared Qwen projection đưa structured schema vào model context giống lúc train;
+native tools dùng template/parser của vLLM, không text parser tự chế trong agent.
+Structured JSON hiện là schema guidance trong prompt + Pydantic validation, không
+server-enforced grammar decoding. Cần đo raw validity/repair trên model thật trước
+khi coi adapter đạt chất lượng; không bảo đảm output luôn hợp lệ.
+Chỉ ReAct/Draft/TaskDraftBatch dùng adapter; head phụ chưa train vẫn dùng base weights.
+Pilot còn DRAFT; chưa có lượt train, model quality hoặc GPU serving được xác minh.
+
+Core dùng scripted models; protocol tests phải tôn trọng khác biệt OpenAI/Gemini/Qwen.
 Kiểm tra schema binding, signatures, matched pairs, cancellation và reserve boundaries.
 Live semantic/factuality quality có gate riêng, không suy từ core/native pass.
 

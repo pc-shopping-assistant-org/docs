@@ -22,12 +22,19 @@ vẫn giữ version gốc; các fixture graph lịch sử không được chọn
 | `AI_JWT_ISSUER`, `AI_JWT_AUDIENCE` | Claims phải khớp access JWT |
 | `AI_BACKEND_API_URL` | Catalog API root; adapter thêm `/products` |
 | `AI_HARDWARE_CATALOG_MAPPING` | Versioned JSON mapping taxonomy/spec/options |
-| `AI_PROVIDER` | `openai` hoặc `gemini` cho stateful execution |
+| `AI_PROVIDER` | `openai`, `gemini` hoặc self-hosted `qwen` |
 | `AI_OPENAI_API_KEY` / `AI_GEMINI_API_KEY` | Key tương ứng provider đã chọn |
+| `AI_QWEN_BASE_URL` | Required với Qwen; vLLM API root, ví dụ http://localhost:8001/v1 |
+| `AI_QWEN_MODEL_NAME` | Base ID hoặc adapter alias được vLLM serve |
+| `AI_QWEN_API_KEY` | Optional nếu vLLM yêu cầu authentication |
+| `AI_QWEN_MAX_TOKENS` | Output cap, default2048 |
+| `AI_QWEN_REQUEST_TIMEOUT_SECONDS` | Qwen timeout riêng, default120s |
 
-`AI_MODEL_NAME` là bare model ID override, không dạng `provider:model`.
+`AI_MODEL_NAME` là bare model ID override cho OpenAI/Gemini, không dạng `provider:model`.
+Qwen dùng biến riêng trên; xem [train/serving runbook](training.md).
 Default provider model names nằm trong Settings, không phải khuyến nghị benchmark.
-`AI_REQUEST_TIMEOUT_SECONDS` điều khiển HTTP/provider timeout, không phải toàn run deadline.
+`AI_REQUEST_TIMEOUT_SECONDS` điều khiển HTTP/cloud-provider timeout; Qwen có timeout
+riêng. Chúng không phải toàn run deadline.
 
 `AI_PROVIDER=fallback` không hợp lệ cho server. Thiếu provider/key/mapping sẽ làm
 startup lỗi; Settings/OpenAPI và các công cụ offline vẫn dựng được không cần network.
