@@ -7,7 +7,13 @@ Root `AGENTS.md` → [status](stateful-implementation-status.md) →
 
 ## Current code
 
-- Current goal: implement Qwen/Qwen3-8B SFT/QLoRA end-to-end code, not run a GPU job.
+- Latest slice: FULL_SETUP accessories in V2, bounded equal-soft utility,
+  explicit owner memory in PostgreSQL. Migration0006 applied locally. AI published
+  through `aac8286` in three focused commits; backend submodule not repinned.
+  Policies/contracts: [requirements](requirements.md), [memory](context-management.md#account-memory).
+  Exact verification in [status](stateful-implementation-status.md); do not infer live
+  model/catalog quality or frontend memory UI from fixture-backed tests.
+- Previous delivery: Qwen/Qwen3-8B SFT/QLoRA end-to-end code, not a GPU job.
   [Runbook](training.md) owns commands; [plan](training-plan.md) owns phase gates.
   Done: typed data/review gates, native export, shared Qwen input projection and
   completion mask, baseline/adapter capture, QLoRA trainer/artifact hashes, paired
@@ -53,13 +59,13 @@ Root `AGENTS.md` → [status](stateful-implementation-status.md) →
 ## Deferred, not blockers to the closed core
 
 Live login/catalog/model smoke; FE list/history/reload; delete/retention90/7-day jobs;
-FULL_SETUP/soft scoring and source expansion; hard-death recovery/migration/internal replay.
+Richer accessory policy/attributes and source expansion; hard-death recovery/migration/internal replay.
 Keep phase/issue statuses from the tracker; no whole-plan100% or production claim.
 SSE reconnect and another agent/DSL framework are not implicit next work.
 
 ## Working agreement
 
-The user authorized this documentation push after the code delivery. Do not reuse
-that one-time permission for subsequent work; inspect Git status/log before continuing.
+The user authorized commit/push for this setup/preferences/memory delivery only.
+Do not reuse this authority for subsequent work; inspect Git status/log before continuing.
 Root AGENTS/tracker are outside Git. Inspect every repository's status before editing.
 No credentials in docs/logs; do not overwrite ignored `.env` or reset DB volumes.

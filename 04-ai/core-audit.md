@@ -29,7 +29,7 @@ this is not whole-project or production completion.
 | Version compatibility/recovery expansion | Unsupported-base guards and selected two-attempt recovery | Selected policy verified; legacy migration/process-death authority open |
 
 Live provider/catalog/identity smoke is separate from fixture-backed core evidence.
-Remaining P5 list/history/reload UI, retention/delete, FULL_SETUP/soft scoring, source expansion and
+Remaining P5 list/history/reload UI, retention/delete, richer accessory policy, source expansion and
 internal replay keep their own acceptance criteria in the feature backlog.
 
 Commands/results live in [implementation status](stateful-implementation-status.md).
@@ -42,7 +42,9 @@ close/reopen → second run from accepted root. Newer failed checkpoint is ignor
 R2 publishes once, without orphan evidence. Selected version policy rejects legacy
 bases after PostgreSQL reopen; migration/heartbeat takeover remain unsupported.
 
-Current commands/counts are in implementation status; app migration is0005_event_payload.
+Current commands/counts are in implementation status; app migration is0006_user_memory.
+The later FULL_SETUP/soft utility/explicit account-memory extension does not change
+the original selected core audit boundary; see status for its separate gates.
 All listed selected-policy gates
 are verified; feature/live/operational expansions above remain open under their own
 criteria, not silently marked complete.

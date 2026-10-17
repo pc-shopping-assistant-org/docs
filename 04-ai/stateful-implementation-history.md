@@ -53,7 +53,7 @@ revision, and keeps the slot busy when ACK persistence fails. Combined root gate
 now passes: actual first V2 run errors after tool commit, persists stop ACK/releases,
 then closes/reopens saver. New coordinator/executor publishes R2 from accepted root
 without orphan evidence. Duplicate submission adds no messages. Migration current
-was `0003_initial_root` at that gate; current head is `0005_event_payload`.
+was `0003_initial_root` at that gate; current head is `0006_user_memory`.
 P6-01 closes for selected fixture-backed core;
 live provider/catalog/identity, feature/operational extensions remain unfinished.
 Core audit found/fixed ISSUE-112: a read before requirement merge wrongly blocked

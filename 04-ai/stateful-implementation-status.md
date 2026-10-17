@@ -19,6 +19,34 @@ fixtures remain; the server does not select them as legacy execution modes.
 
 ## Published code
 
+### Setup/preferences/memory extension — code published
+
+AI source published to origin/main in three focused commits: `8a9fb01` (optimizer
+utility), `93b1240` (FULL_SETUP/compiler/history) and `aac8286` (account memory).
+This delivery's one-time publication was explicitly authorized; remote Actions
+results have not been observed.
+
+Compiler requirements-v2 wires FULL_SETUP into the existing V2 build tool. Canonical
+peripherals stay separate from eight core slots; owned0/pinned paid, explicit accessory
+cap for recommendations, no ratio. Public snapshots preserve complete setup spending
+and ownership for later explanation. Native managed-run test confirms history retains
+the original mouse price after catalog mutation. Monitor quality/resolution attributes
+and joint global setup optimization are not claimed.
+
+Bounded equal-preference utility influences optimizer ranking without removing hard
+constraints; match-aware pruning, absent preferences, hard pins, score breakdowns and
+unmet-preference disclosure are tested. [Exact policy](requirements.md#compiler).
+
+Explicit account memory has owner-scoped GET/PUT/DELETE, PostgreSQL migration0006,
+90-day validity and bounded run-context snapshots. No automatic raw-chat capture,
+new framework or implicit requirement merge. SQL restart/isolation/expiry/quota and
+HTTP/prompt boundaries are tested. [Memory semantics](context-management.md#account-memory).
+
+Local migration0006 was applied to ai_db; no catalog seed, active-provider change,
+real LLM or frontend memory UI verification. Verified884 core +104 PostgreSQL tests;
+Ruff/mypy203/lock167/diff pass. Migration0006 is local head. Policy review/live
+quality remain separate gates; backend submodule was not repinned.
+
 ### Qwen training workflow — code published, execution gates open
 
 AI service `264097f` published to origin/main on2026-10-17 in seven focused commits.
@@ -152,7 +180,7 @@ V1 request schema are absent. No lifespan/network/DB execution or runtime-suite 
 | --- | --- | --- |
 | P0–P1 | COMPLETED | Contract/pure-state baseline |
 | P2 | IN PROGRESS | Live identity, automatic/asynchronous initialization, legacy migration |
-| P3 | IN PROGRESS | Live model/catalog and semantic quality; FULL_SETUP/soft scoring, older-build selectors, more sources |
+| P3 | IN PROGRESS | Live model/catalog and semantic quality; richer accessory requirements/policy, older-build selectors, more sources |
 | P4 | IN PROGRESS | Hard process-death authority, expanded retry/version migration |
 | P5 | IN PROGRESS | FE list/history/reload; conversation delete and retention jobs |
 | P6 | IN PROGRESS | P6-01 core audit complete; internal replay/full-feature audit deferred |

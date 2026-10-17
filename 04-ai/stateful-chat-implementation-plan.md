@@ -1,7 +1,7 @@
 # Stateful AI roadmap
 
-Revision35 · 2026-10-16. V2-only server delivery is complete; approved feature
-backlog and phase statuses below are unchanged. [Architecture](../02-architecture/ai-architecture.md)
+Revision36 · 2026-10-17. V2-only server plus local setup/preferences/memory extension.
+Broader phase/live gates remain open. [Architecture](../02-architecture/ai-architecture.md)
 explains runtime; [status](stateful-implementation-status.md) records evidence.
 
 ## Goal
@@ -10,7 +10,7 @@ Multi-turn catalog-grounded chat and PC consultation with durable execution.
 Agent explores/asks/proposes; application controls state/completion/publication;
 deterministic optimizer/verifier computes builds.
 
-Login-only, conversation-local memory. BUILD_PC defaults to core; FULL_SETUP adds
+Login-only, conversation-local history plus explicit owner-managed account memory. BUILD_PC defaults to core; FULL_SETUP adds
 one monitor/mouse/keyboard/headset. Owned spending0, pinned paid; no implicit80/20.
 Retention policy90 days, unprotected orphan/debug7 days. Internal replay cannot publish.
 
@@ -51,6 +51,7 @@ These IDs retain traceability to the original implementation plan:
 | P4-B01/B02/B03 | Selected stopped recovery, native lineage and fenced CAS |
 | P5-01/02/03 | Create/list/get/history/submit/poll/cancel, basic journal/SSE and FE V2 caller |
 | P6-01 | Selected code-core acceptance audit |
+| P3-A04 (local extension) | FULL_SETUP canonical accessories/history, bounded soft utility; explicit account memory API/context |
 
 “Delivered core” does not close broader live/feature gates under these IDs.
 Local extensions pass817 core/102 PostgreSQL gates, Ruff/mypy181/lock.
@@ -74,7 +75,7 @@ the selected core milestone merely to add these features.
 | --- | --- | --- |
 | P5-03 / next UX | FE conversation list/history/reload | Same owned conversation/accepted result after reload; no duplicate admission or legacy fallback |
 | P5-04 / data lifecycle | Conversation delete and retention jobs | Stop/drain first; purge app/native/events/snapshots; preserve protected ancestry;90/7-day policy |
-| P3-A04 + ISSUE-085/087/099 | Soft scorer and FULL_SETUP | Approved accessory ranking, complete historical setup snapshots, no implicit budget split |
+| ISSUE-085/099 / domain extension | Rich accessory policy/requirements | Basic explicit-cap selection and soft utility are implemented; owner review/quality attributes, unsupported predicates and legacy migration remain open |
 | P3-W02 | More curated sources/benchmark evidence | Typed model/value/unit/conditions/source; content fallback does not fabricate facts |
 | P3 completion extensions | Arbitrary older-build selector | Exact authorized historical snapshot, no current accessory/price reconstruction |
 | P2 / ISSUE-092 | Automatic/asynchronous root reconcile and legacy migration | Exclusive proof-bound initialize/migrate; no latest-head adoption/copy-values recovery |
