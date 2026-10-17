@@ -14,8 +14,8 @@ Infra gồm PostgreSQL, Redis, RabbitMQ, Kafka/Debezium Connect, Elasticsearch v
 Mặc định chỉ chạy infra; profile `apps` thêm Eureka, Gateway, 8 business services,
 AI/migration và Next.js. Sync là application worker, không phải infrastructure.
 
-Runbook canonical: [infra README](../../infra/README.md). Cấu hình monolith cũ
-ở `infra/compose/` không phải entrypoint cho microservices hiện tại.
+Runbook canonical: [infra README](../../infra/README.md).
+Entrypoint duy nhất là `infra/compose.yaml`, chạy qua `infra/compose.sh`.
 
 ## Configuration
 
