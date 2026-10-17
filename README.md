@@ -15,6 +15,9 @@ It describes the current Stateful ReAct V2 architecture; delivery logs are separ
 
 ## Ecommerce and project specification
 
+[Deployment](02-architecture/deployment.md): server infrastructure/local development,
+GHCR apps profile, external runtime env and release-only SSH delivery.
+
 | Folder | Purpose |
 | --- | --- |
 | 01-overview | Scope, requirements and glossary |

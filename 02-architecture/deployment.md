@@ -1,45 +1,54 @@
 # Deployment
 
-## Production baseline
+## Boundary
 
-Production Compose is defined at
-`infra/compose/prod/compose-file/compose.yaml` and currently runs:
+`infra/` là checkout độc lập, không cần source application trên server.
+Một compose, hai chế độ:
 
-- `ai-service`, the FastAPI/Pydantic/LangGraph image pulled from GHCR;
-- PostgreSQL for ecommerce data and persistent carts/orders;
-- Qdrant as the private vector store for retrieval.
-
-PostgreSQL and Qdrant are attached only to the private data network and are
-not published to the host. The AI service binds to `127.0.0.1:8000` by
-default; a host reverse proxy should terminate TLS and expose the public API.
-
-Create the deployment environment from
-`infra/compose/prod/env/prod.env.example`, replace the placeholder password
-and external backend API root (`AI_BACKEND_API_URL`), then validate and start
-the stack:
-
-```sh
-cd infra/compose/prod
-cp env/prod.env.example env/prod.env
-docker compose --env-file env/prod.env -f compose-file/compose.yaml config
-docker compose --env-file env/prod.env -f compose-file/compose.yaml pull ai-service
-docker compose --env-file env/prod.env -f compose-file/compose.yaml up -d
+```text
+Dev:    local applications ── SSH/private network ── server infra
+Deploy: server application images ── Docker network ── server infra
 ```
 
-The backend contains the canonical Flyway baseline at
-`backend-api/server/src/main/resources/db/migration/V1__init.sql` plus
-incremental migrations such as `V2__add_shipping_method_fee.sql` and
-`V3__add_google_subject_to_accounts.sql`. They create the schema and
-PostgreSQL constraints represented by `db.dbml`. Run the backend once against a
-fresh local database to let Flyway apply all pending migrations before serving
-application traffic. Existing development databases created from the old V1
-must be recreated because that was a replacement baseline; databases already
-on the canonical V2 baseline only need the normal V3 migration.
+Infra gồm PostgreSQL, Redis, RabbitMQ, Kafka/Debezium Connect, Elasticsearch và LGTM.
+Mặc định chỉ chạy infra; profile `apps` thêm Eureka, Gateway, 8 business services,
+AI/migration và Next.js. Sync là application worker, không phải infrastructure.
 
-## Local staging
+Runbook canonical: [infra README](../../infra/README.md). Cấu hình monolith cũ
+ở `infra/compose/` không phải entrypoint cho microservices hiện tại.
 
-Local staging is data-only and is defined at
-`infra/compose/staging/compose-file/compose.yaml`. It runs PostgreSQL only with
-a localhost port binding; frontend and backend processes run locally on the
-host and use the values in
-`infra/compose/staging/env/staging.env.example`.
+## Configuration
+
+- Global runtime config: ignored `infra/.env.docker`, mẫu `.env.docker.example`.
+- `compose.sh` nạp global env, rồi image-tag overrides trong `.release.env`.
+- Không COPY env hoặc truyền deployment config/secrets qua Docker build args.
+- FE nhận Google client ID từ allowlisted runtime endpoint `/api/config`, không
+  dùng `NEXT_PUBLIC_*` baked values. Backend/AI endpoints chỉ nằm ở BFF server.
+- Local app dùng env mẫu riêng trong `infra/env/`; không dùng Docker DNS từ host.
+- Caddy global terminate TLS cho HTTP. Native dependencies mặc định loopback qua
+  SSH, có auth; không public plaintext native ports hoặc management APIs.
+
+## Release
+
+CI test trên push/PR/merge queue. Chỉ push/manual dispatch nhánh **release** mới
+build/publish GHCR và deploy qua SSH. Backend publish 10 image riêng; AI/FE mỗi
+repo một image. Release pin `sha-<full commit>`, không deploy mutable latest.
+
+GitHub Environment `release` giữ `SSH_HOST`, `SSH_USER`, `SSH_PORT`, `DEPLOY_PATH`
+variables và `SSH_PRIVATE_KEY`, `SSH_KNOWN_HOSTS` secrets. Chúng không đi vào image.
+Server giữ credentials đọc GHCR và app env; không dùng token publish để chạy app.
+
+Mỗi repo chỉ cập nhật nhóm của nó; infra release không restart applications.
+Lock server ngăn các repo cùng sửa deployment state. AI dừng executor rồi migrate
+trước khi restart; Java chạy Flyway. Health/migration lỗi làm CD fail, không tự
+rollback schema. Bootstrap connector sau khi catalog migrations thành công.
+
+## Limits and acceptance
+
+Named volumes ổn định; backup/migrate dữ liệu có chủ đích, không `down -v`.
+Đổi env không tự rotate password trong volume cũ. Single-node baseline chưa phải
+HA, least-privilege production accounts hoặc disaster-recovery đầy đủ.
+
+Offline config tests và workflow lint không chứng minh Actions/server runtime.
+Cần owner cấu hình env, SSH, GitHub Environment, package access, domain và chạy
+nghiệm thu thật. Retry/DLT của sync được theo dõi riêng ở ISSUE-141.
