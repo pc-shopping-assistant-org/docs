@@ -7,6 +7,16 @@ Root `AGENTS.md` → [status](stateful-implementation-status.md) →
 
 ## Current code
 
+- Versioned release update: app release/v1.0.0
+  publishes :1.0.0 + sha-*; infra same branch selects :1.0.0, supports per-app
+  version overrides. Manifest/pull checks precede changes; old local app images
+  cleaned only after health, no force/prune or GHCR deletion. Registry tag locking
+  is ISSUE-143. Verified33 offline infra tests, 12 executed app branch/version cases,
+  four workflow actionlint checks and shellcheck/Bash syntax. Published app branch:
+  AI dd62484, frontend 0f71f47, backend 2c29530 (AI submodule aligned).
+  GitHub Actions builds started; image publication not yet verified. Infra ea5692e
+  committed locally, not pushed: its release push would deploy, outside this
+  build-only request. Infra Environment release must allow release/* before CD.
 - Release ownership update: app release workflows only build/publish GHCR.
   Infra release deploys the full stack, including seed and AI migration. SSH config
   belongs only to infra. Default tags are mutable release; dispatch accepts three

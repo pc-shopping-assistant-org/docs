@@ -29,6 +29,15 @@ Deploy updated catalog before updated AI. No server/image rollout verified.
 
 ## Published code
 
+Versioned follow-up: release/vX.Y.Z selects image :X.Y.Z in app and
+infra workflows. Registry preflight and post-health local image cleanup added.
+Verified33 offline infra tests, 12 app branch/version cases, four actionlint checks
+and shellcheck/Bash syntax. Environment release must allow release/* branches.
+Published app release/v1.0.0: AI dd62484, frontend 0f71f47, backend 2c29530
+(submodule aligned). Actions builds started; image publication not yet verified.
+Infra ea5692e committed locally only: release push would deploy and is not part
+of the build-only push request. GHCR tag locking remains ISSUE-143.
+
 CI update published to main: AI baa8e4d, backend d5659ac (submodule aligned),
 frontend 5a8deb1 and infra c68d0e6. App release builds images only; infra release
 owns SSH deployment, seed and stop-AI/migrate/start ordering. Verified 24 offline

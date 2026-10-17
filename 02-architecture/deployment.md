@@ -34,21 +34,29 @@ Bootstrap đầy đủ: `infra/scripts/deploy.sh`. Script pull image, gọi cata
 
 ## Release
 
-CI test trên push/PR/merge queue. Nhánh **release** ở backend/AI/FE chỉ build/publish
-GHCR: backend 10 image riêng, AI/FE mỗi repo một image. Chỉ **infra release** SSH
+CI test trên push/PR/merge queue. Nhánh **release/vX.Y.Z** ở backend/AI/FE chỉ
+build/publish GHCR: backend 10 image riêng, AI/FE mỗi repo một image.
+`release/v1.0.0` publish tag `1.0.0` + `sha-<full commit>`; cũng hỗ trợ `-rc.N`.
+Chỉ **infra release/vX.Y.Z** SSH
 deploy cả hệ thống, sau khi các app builds thành công. Không tự deploy từ app repo.
 
 Chỉ repo infra cần GitHub Environment `release`: `SSH_HOST`, `SSH_USER`, `SSH_PORT`, `DEPLOY_PATH`
-variables và `SSH_PRIVATE_KEY`, `SSH_KNOWN_HOSTS` secrets. Chúng không đi vào image.
+variables và `SSH_PRIVATE_KEY`, `SSH_KNOWN_HOSTS` secrets. Deployment branch rule
+phải cho phép `release/*`. Chúng không đi vào image.
 Server giữ app env và credential đọc GHCR nếu package private; public không cần
 login. Không dùng token publish để chạy app.
 
-Infra mặc định pull tag mutable `release` mới nhất, không tái sử dụng override cũ.
-Muốn bản cố định, dispatch infra release với ba image-tag inputs là `sha-<full commit>`.
+Infra `release/v1.0.0` mặc định chọn chính xác `:1.0.0` cho BE/AI/FE, không lấy
+override cũ, latest hoặc mutable release. Dispatch hỗ trợ chọn version/sha-* riêng
+cho từng app. Đợi app builds thành công trước khi chạy infra release.
+Version đã phát hành không sửa lại branch; GHCR chưa tự khóa ghi đè (ISSUE-143).
 Lock server bảo vệ deploy config/apps; dependencies → seed → backend → stop AI →
 migrate → AI/FE. Chỉ ghi `.release.env` khi health pass. Health/migration lỗi làm
 CD fail, không tự rollback schema/container. Bootstrap connector sau khi catalog
 migrations thành công. Không sửa env server, xóa volumes hoặc quản lý Caddy global.
+Trước khi đổi service: kiểm tra đủ 12 app manifests và pull. Sau khi tất cả healthy:
+xóa local image cũ của app vừa thay thế, không force/prune; không xóa image GHCR.
+Cleanup lỗi chỉ cảnh báo. Rollback phải pull lại image cũ và xét tương thích schema.
 
 ## Limits and acceptance
 
