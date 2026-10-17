@@ -29,6 +29,12 @@ Deploy updated catalog before updated AI. No server/image rollout verified.
 
 ## Published code
 
+CI update published to main: AI baa8e4d, backend d5659ac (submodule aligned),
+frontend 5a8deb1 and infra c68d0e6. App release builds images only; infra release
+owns SSH deployment, seed and stop-AI/migrate/start ordering. Verified 24 offline
+infra tests, four workflow actionlint checks and shellcheck/Bash syntax. No release
+branch/image publication or server rollout triggered by this delivery.
+
 ### Setup/preferences/memory extension — code published
 
 AI source published to origin/main in three focused commits: `8a9fb01` (optimizer

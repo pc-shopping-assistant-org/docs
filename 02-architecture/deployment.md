@@ -34,18 +34,21 @@ Bootstrap đầy đủ: `infra/scripts/deploy.sh`. Script pull image, gọi cata
 
 ## Release
 
-CI test trên push/PR/merge queue. Chỉ push/manual dispatch nhánh **release** mới
-build/publish GHCR và deploy qua SSH. Backend publish 10 image riêng; AI/FE mỗi
-repo một image. Release pin `sha-<full commit>`, không deploy mutable latest.
+CI test trên push/PR/merge queue. Nhánh **release** ở backend/AI/FE chỉ build/publish
+GHCR: backend 10 image riêng, AI/FE mỗi repo một image. Chỉ **infra release** SSH
+deploy cả hệ thống, sau khi các app builds thành công. Không tự deploy từ app repo.
 
-GitHub Environment `release` giữ `SSH_HOST`, `SSH_USER`, `SSH_PORT`, `DEPLOY_PATH`
+Chỉ repo infra cần GitHub Environment `release`: `SSH_HOST`, `SSH_USER`, `SSH_PORT`, `DEPLOY_PATH`
 variables và `SSH_PRIVATE_KEY`, `SSH_KNOWN_HOSTS` secrets. Chúng không đi vào image.
-Server giữ credentials đọc GHCR và app env; không dùng token publish để chạy app.
+Server giữ app env và credential đọc GHCR nếu package private; public không cần
+login. Không dùng token publish để chạy app.
 
-Mỗi repo chỉ cập nhật nhóm của nó; infra release không restart applications.
-Lock server ngăn các repo cùng sửa deployment state. AI dừng executor rồi migrate
-trước khi restart; Java chạy Flyway. Health/migration lỗi làm CD fail, không tự
-rollback schema. Bootstrap connector sau khi catalog migrations thành công.
+Infra mặc định pull tag mutable `release` mới nhất, không tái sử dụng override cũ.
+Muốn bản cố định, dispatch infra release với ba image-tag inputs là `sha-<full commit>`.
+Lock server bảo vệ deploy config/apps; dependencies → seed → backend → stop AI →
+migrate → AI/FE. Chỉ ghi `.release.env` khi health pass. Health/migration lỗi làm
+CD fail, không tự rollback schema/container. Bootstrap connector sau khi catalog
+migrations thành công. Không sửa env server, xóa volumes hoặc quản lý Caddy global.
 
 ## Limits and acceptance
 

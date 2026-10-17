@@ -7,8 +7,16 @@ Root `AGENTS.md` → [status](stateful-implementation-status.md) →
 
 ## Current code
 
+- Release ownership update: app release workflows only build/publish GHCR.
+  Infra release deploys the full stack, including seed and AI migration. SSH config
+  belongs only to infra. Default tags are mutable release; dispatch accepts three
+  sha-* tags for a fixed selection. See [deployment](../02-architecture/deployment.md).
+  Published to main: AI baa8e4d, backend d5659ac (AI submodule aligned),
+  frontend 5a8deb1, infra c68d0e6. Verified 24 offline infra tests, four workflow
+  actionlint checks and shellcheck/Bash syntax. No release branch/image publication
+  or server deployment triggered. This delivery's one-time push permission is consumed.
 - Latest slice: catalog V9 adds stable hardware_type; `--seed-prod` runs
-  Flyway + production taxonomy UPSERT and exits. Infra deploy/BE release run seed.
+  Flyway + production taxonomy UPSERT and exits. Infra deploy runs seed.
   AI consumes snapshot hardwareType directly; no category UUID env required.
   Custom spec/option mapping optional; blank env uses defaults. Verified886 core,
   6 affected PostgreSQL integration, Java150/infra25, packaged CLI twice against
