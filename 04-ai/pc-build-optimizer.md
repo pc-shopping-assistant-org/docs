@@ -10,6 +10,8 @@ Theo một user flow ở [Build consultation](guided-selection.md).
 Core có tám slots CPU, mainboard, RAM, GPU, storage, PSU, case, cooler.
 Chọn một candidate mỗi slot, bao gồm CPU-grounded synthetic iGPU/stock cooler
 nếu metadata đủ. FULL_SETUP accessories được application xử lý ngoài core này.
+Accessory spending được trừ khỏi tổng cap trước core search; snapshot lưu cả hai phần.
+[Policy và giới hạn](requirements.md#budget-scope) không claim joint global optimum.
 
 Với candidate set N_k, biến nhị phân x_kj và effective spending c_kj:
 
@@ -108,6 +110,10 @@ phải canonical variant ID; fingerprint không tạo fake commerce identity.
 Independent satisfaction verifier đọc canonical requirements và result/evidence,
 không chỉ compiler projection. Mapping coverage/hash phải match, hard unmet/unknown
 không publish feasible success; supported soft unmet được disclose.
+Soft utility policy nằm ở `pc_builder/preferences.py`: 90% hardware utility +10%
+tỷ lệ preference match; hard budget/compatibility/pins luôn giữ nguyên. Category có
+preference match không được pruning mất ứng viên chỉ vì yếu hơn ở hardware score.
+Score breakdown chứa contribution riêng; không có preference thì kết quả cũ giữ nguyên.
 Facts/financial totals server render từ validated result; prose không sửa build.
 
 Provenance snapshot lưu catalog payload/hash, ordered normalized candidates,

@@ -24,7 +24,7 @@ graph và publication dùng chung policy này.
 | --- | --- | --- |
 | RAM ít nhất 32GB | HARD capacity/GTE | Supported mapping khi metadata đủ |
 | SSD đúng 1TB | HARD media/capacity/EQ | Supported mapping khi unit/media rõ |
-| Ưu tiên RTX5070Ti | SOFT preference | Scorer chưa support → explicit unsupported/clarify |
+| Ưu tiên RTX5070Ti | SOFT model preference | Bounded utility trên tên variant canonical; không pin SKU |
 | Giữ đúng ASUS TUF RTX5070Ti OC | Exact paid SKU pin | Canonical variant binding bắt buộc |
 | Tôi đã có nguồn này | Available resource | Chỉ thành selected owned khi yêu cầu sử dụng đã resolve |
 
@@ -115,8 +115,15 @@ optimizer. Mỗi requirement phải có status: APPLIED, NEEDS_CLARIFICATION, UN
 hoặc CONFLICT. Không nhận requirement rồi bỏ ngầm.
 
 Hard capabilities filter candidates trước pruning và kiểm tra selected owned/pinned.
-Available resource không tự khóa slot. Soft scorer chưa implemented thì unsupported.
+Available resource không tự khóa slot. Compiler `requirements-v2` hỗ trợ SOFT
+brand/model, RAM/storage capacity và storage media; predicate khác vẫn unsupported.
 Metadata thiếu không tự biến thành no-solution proof.
+
+Soft policy `equal-soft-utility-v1`: mỗi preference có trọng số bằng nhau; điểm cuối
+= 90% utility phần cứng + 10% tỷ lệ preference thỏa. Không có preference thì giữ
+nguyên scoring cũ. Unknown/unmatched được 0 điểm, không loại build; verifier ghi rõ
+preference chưa thỏa. Category có preference match không bị Pareto prune mất ứng viên.
+`model` chỉ match tên variant canonical đã chuẩn hóa, không suy ra benchmark hay pin SKU.
 
 Compiler output/mapping/hash là provenance, không source of truth thay original state.
 
@@ -135,7 +142,25 @@ BUILD_PC: tám core slots. FULL_SETUP: core + monitor/mouse/keyboard/headset, t�
 một mỗi loại. Không implicit 80/20. Resolved accessory spending trừ trước core cap;
 chưa rõ budget/selection thì hỏi.
 
-Full automatic accessory selection, historical full-setup projection và soft ranking
-còn [roadmap](stateful-chat-implementation-plan.md), không claim support đầy đủ từ schema.
+V2 dùng cùng canonical requirement pipeline, không bật lại runtime V1:
+
+| Subject | Predicate/operator/value | Ý nghĩa |
+| --- | --- | --- |
+| SETUP | scope / EQ / TEXT FULL_SETUP | Cho phép thêm phụ kiện |
+| SETUP | accessory_budget / LTE / QUANTITY VND | Cap phụ kiện do user cung cấp |
+| MONITOR/MOUSE/KEYBOARD/HEADSET | identity / EQ / REFERENCE | Pin SKU, vẫn tính tiền |
+| MONITOR/MOUSE/KEYBOARD/HEADSET | use_resource / EQ / REFERENCE | Reuse resource đã khai báo, chi phí 0 |
+| MONITOR/MOUSE/KEYBOARD/HEADSET | selection / EQ / TEXT RECOMMEND | Chọn từ catalog, cần cap rõ ràng |
+| MONITOR/MOUSE/KEYBOARD/HEADSET | brand / EQ / TEXT | HARD filter hoặc SOFT preference |
+
+Draft identity vẫn là TEXT mention; resolver tìm UUID thật trước merge. Chưa rõ scope,
+loại phụ kiện, cap hay SKU thì clarification; không tự thêm cả bốn loại hoặc chia 80/20.
+Policy `explicit-cap-match-price-v1` lọc hard requirements/stock, tối đa hóa số soft
+matches, rồi ưu tiên tổng giá thấp và UUID để tie-break. Không gọi giá thấp là chất
+lượng tốt. Đây là staged selection rồi optimize core, **không** joint global optimum;
+allocation tự chọn thất bại chỉ được báo SEARCH_INCOMPLETE, không chứng minh mọi setup vô nghiệm.
+Monitor resolution/refresh-rate và accessory quality scoring chưa hỗ trợ: trả unsupported,
+không tự suy diễn từ tên. Public snapshot lưu đủ core/phụ kiện, giá và ownership gốc;
+history dùng lại snapshot, không tái dựng bằng catalog hiện tại.
 
 **Next:** [Build consultation](guided-selection.md) · [Extend requirements](guides/extend-requirements.md).

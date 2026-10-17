@@ -46,6 +46,13 @@ message và event; LangGraph checkpointer lưu checkpoint thực thi. Qdrant là
 phái sinh tùy chọn, không quyết định visibility/giá/tồn kho hiện tại và không lưu
 conversation của Stateful ReAct V2.
 
+Account memory cũng thuộc application DB: user lưu preference/owned context rõ ràng,
+run đọc theo owner rồi freeze vào checkpoint. Đây là context gợi ý xuyên conversation,
+không phải requirements hay consent. [Memory boundaries](../04-ai/context-management.md#account-memory).
+Compiler xử lý FULL_SETUP ngoài tám core slots, snapshot phụ kiện và trừ chi phí trước
+core optimizer; SOFT chỉ cộng utility có giới hạn, không thay hard feasibility.
+[Requirement/scoring contract](../04-ai/requirements.md#compiler).
+
 | Hệ thống | Sở hữu | AI Service dùng để |
 | --- | --- | --- |
 | Identity service | Account và signing keys | Xác minh access token qua JWKS |

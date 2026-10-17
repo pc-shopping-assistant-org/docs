@@ -1,4 +1,4 @@
--- Reference DDL for Alembic 0001_stateful through 0005_event_payload. Apply via Alembic,
+-- Reference DDL for Alembic 0001_stateful through 0006_user_memory. Apply via Alembic,
 -- not by running this documentation file. Native saver tables are separate.
 BEGIN;
 
@@ -168,4 +168,19 @@ ALTER TABLE agent_run_events ADD CONSTRAINT ck_agent_run_events_payload CHECK (C
     false
 ));
 UPDATE alembic_version SET version_num='0005_event_payload' WHERE version_num='0004_run_events';
+-- Running upgrade 0005_event_payload -> 0006_user_memory
+CREATE TABLE user_memories (
+    account_id UUID NOT NULL,
+    key VARCHAR(64) NOT NULL,
+    kind VARCHAR(20) NOT NULL,
+    content VARCHAR(400) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    CONSTRAINT pk_user_memories PRIMARY KEY (account_id, key),
+    CONSTRAINT ck_user_memories_key CHECK (key ~ '^[a-z][a-z0-9_-]{0,63}$'),
+    CONSTRAINT ck_user_memories_kind CHECK (kind IN ('PREFERENCE', 'OWNED_CONTEXT')),
+    CONSTRAINT ck_user_memories_content CHECK (length(btrim(content)) BETWEEN 1 AND 400),
+    CONSTRAINT ck_user_memories_expiry CHECK (expires_at > updated_at)
+);
+UPDATE alembic_version SET version_num='0006_user_memory' WHERE version_num='0005_event_payload';
 COMMIT;

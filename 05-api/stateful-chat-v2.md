@@ -24,6 +24,31 @@ Verification nằm trong [status](../04-ai/stateful-implementation-status.md), k
 | `selected_product_ids` | Optional, at most 5 distinct canonical product IDs; 1 means ANSWER, 2–5 means COMPARE |
 | Optional command | At most one of the commands below |
 
+## Account memory
+
+Các endpoint trực tiếp của AI Service, cùng JWT/JWKS và envelope chuẩn. Owner lấy
+từ token, không nhận account_id hoặc checkpoint selector trong body.
+
+| Method/path | Kết quả / static message |
+| --- | --- |
+| GET `/api/v1/memories` | Entry còn hiệu lực của owner / AI_MEMORIES_LISTED |
+| PUT `/api/v1/memories/{key}` | Upsert một entry / AI_MEMORY_SAVED |
+| DELETE `/api/v1/memories/{key}` | Xóa idempotent trong owner scope / AI_MEMORY_DELETED |
+
+PUT body:
+
+```json
+{"kind":"PREFERENCE","content":"Tôi thích GPU NVIDIA"}
+```
+
+Kind: PREFERENCE hoặc OWNED_CONTEXT. Key: `[a-z][a-z0-9_-]{0,63}`; content1–400 ký
+tự; tối đa20 entry còn hiệu lực. Quá quota trả409/AI_MEMORY_LIMIT_REACHED; upsert key
+cũ vẫn được. Token thiếu/sai trả401; body/key sai trả422. Entry trả key, kind, content,
+updated_at, expires_at; không trả owner. Không có auto-save trong chat hoặc UI memory
+manager trong delivery này. [Semantics và recovery](../04-ai/context-management.md#account-memory).
+
+## Conversation commands
+
 | Command | Required binding |
 | --- | --- |
 | `confirmation` | `proposal_id`, `proposal_hash`, `target_revision`, `base_requirements_hash` |

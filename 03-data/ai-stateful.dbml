@@ -1,4 +1,16 @@
 // AI application DBML. CHECKs and deferred active slot: ai-stateful-constraints.sql.
+Table user_memories {
+  account_id uuid [not null]
+  key varchar(64) [not null, note: 'ASCII slug; PK is owner-scoped']
+  kind varchar(20) [not null, note: 'PREFERENCE, OWNED_CONTEXT']
+  content varchar(400) [not null, note: 'Nonblank; advisory context, not catalog/consent evidence']
+  updated_at timestamptz [not null]
+  expires_at timestamptz [not null, note: '> updated_at; 90 days from explicit save']
+  indexes {
+    (account_id, key) [pk]
+  }
+}
+
 Table conversations {
   id uuid [pk, not null]
   account_id uuid [not null]

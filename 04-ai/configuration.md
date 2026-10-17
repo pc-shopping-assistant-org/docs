@@ -43,7 +43,9 @@ startup lỗi; Settings/OpenAPI và các công cụ offline vẫn dựng đượ
 
 Mapping nội bộ có `version`, `categories`, `spec_fields`, `option_fields`:
 
-- Category UUID map tới một core component category; không đoán từ tên hoặc kế thừa category con.
+- Category UUID map tới core category hoặc MONITOR/MOUSE/KEYBOARD/HEADSET;
+  không đoán từ tên hoặc kế thừa category con. Phải bổ sung đúng UUID phụ kiện thật
+  vào mapping local để dùng FULL_SETUP; không tự seed catalog/mapping giả.
 - `spec_fields` map canonical field tới backend specification key.
 - Option UUID map tới canonical field; `null` chỉ cho cosmetic option.
 - Variant option override product common spec; price/stock/ID luôn từ variant.

@@ -26,8 +26,26 @@ checkpoints. Recovery của cùng run không tạo conversation/thread mới.
 | Tool outcomes/evidence | Checkpointed ledger |
 | Model messages/public DTO/events | Projections, không writable domain state riêng |
 
-Memory hiện conversation-local. Model history window là bounded published messages,
-không long-term memory xuyên conversation.
+Dialogue history vẫn conversation-local. Account memory riêng cho phép user lưu
+context xuyên conversation; không trộn nó vào canonical requirements.
+
+## Account memory
+
+`user_memories` trong PostgreSQL lưu entry do user chủ động PUT qua API; không có
+auto-extraction từ raw chat, Mem0 hoặc vector DB. Entry gồm key, kind
+PREFERENCE/OWNED_CONTEXT, content, updated_at và expires_at; tối đa20 entry/tài khoản,
+400 ký tự/entry, hiệu lực90 ngày từ lần lưu. User xem/sửa/xóa qua [Memory API](../05-api/stateful-chat-v2.md#account-memory).
+
+Run mới đọc memory của verified owner, đóng băng vào ToolContext/checkpoint. Recovery
+dùng snapshot đó, không reload memory mới. Model được dùng nó để hỏi/gợi ý, không được
+tự merge budget, pin, ownership hay xác nhận proposal. Current explicit requirements
+luôn ưu tiên; remembered ownership phải được user xác nhận và catalog resolve lại.
+Không coi memory là evidence giá, stock, compatibility hoặc benchmark.
+
+DELETE ảnh hưởng các run tạo sau đó; không viết lại checkpoint/hội thoại đã lưu.
+Memory do user quản lý độc lập conversation; xóa conversation không tự xóa entry tài
+khoản. Expired entries không được retrieve; upsert dọn expired rows của owner trong
+transaction. Global physical purge và protected checkpoint retention vẫn backlog.
 
 ## Accepted head and working checkpoints
 

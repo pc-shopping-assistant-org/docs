@@ -4,7 +4,7 @@ Database `ai_db` belongs to root `ai-service`; ecommerce Flyway/DBML are not its
 migration source. Application SQLAlchemy/Alembic and native LangGraph saver have
 separate ownership. Concepts: [state/recovery](../04-ai/context-management.md).
 Setup: [First steps](../04-ai/getting-started.md). Verification: [status](../04-ai/stateful-implementation-status.md).
-Current head is `0005_event_payload`; historical migrations are not edited. Startup requires
+Current head is `0006_user_memory`; historical migrations are not edited. Startup requires
 this exact application release revision and reads tables without creating them.
 DBML: `ai-stateful.dbml`; generated constraint reference: `ai-stateful-constraints.sql`.
 Apply via `alembic upgrade head`, then `python -m ai_service.bootstrap_stateful`.
@@ -26,6 +26,18 @@ Cursor is persisted event UUID scoped to owned run. No FK into LangGraph tables.
 Journal/lifecycle emission and basic HTTP SSE are implemented; public reconnect
 is outside selected scope. V2 completion payload retains public
 flexible state. Event-write failure rolls back assistant/head/event changes together.
+
+## user_memories (0006)
+
+PK `(account_id uuid, key varchar(64))`; kind varchar(20), content varchar(400),
+updated_at/expires_at timestamptz NOT NULL. CHECKs enforce key slug, supported
+PREFERENCE/OWNED_CONTEXT kind, nonblank content and expiry after update.
+No FK into commerce or LangGraph; these are explicitly saved account entries, not
+conversation-derived facts. All reads/writes scope verified owner. Per-owner advisory
+transaction lock serializes quota20 check + upsert. Expired rows are hidden on reads
+and removed on the next owner upsert. User delete is idempotent and owner-scoped.
+TTL90 days, no global purge job yet. Runtime snapshots entries into the run checkpoint;
+forget does not rewrite historic messages/checkpoints.
 
 ## conversations
 
