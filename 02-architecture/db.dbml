@@ -81,9 +81,14 @@ Table categories {
   id uuid [pk, default: `uuidv7()`]
   name varchar(255) [not null, unique]
   seo_name varchar(255) [not null, unique]
+  hardware_type varchar(20) [note: 'Nullable stable type: CPU, MAINBOARD, RAM, GPU, PSU, CASE, COOLER, STORAGE, MONITOR, MOUSE, KEYBOARD, HEADSET; independent of display name/UUID']
   parent_id uuid
   status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
   created_at timestamp [not null, default: `current_timestamp`]
+
+  checks {
+    `hardware_type IN ('CPU', 'MAINBOARD', 'RAM', 'GPU', 'PSU', 'CASE', 'COOLER', 'STORAGE', 'MONITOR', 'MOUSE', 'KEYBOARD', 'HEADSET')`
+  }
 }
 
 Table attribute_definitions {

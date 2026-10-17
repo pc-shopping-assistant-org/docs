@@ -1,13 +1,13 @@
 # Implementation status
 
-Updated: **2026-10-17**. Current delivery evidence, not an architecture tutorial.
+Updated: **2026-10-18**. Current delivery evidence, not an architecture tutorial.
 Start at [AI documentation](README.md).
 
 ## Delivered
 
 Server and frontend use **Stateful ReAct V2 only**. No runtime enable/version flags,
 guided/V1 native adapter selection or old `/chat` / `/chat/stream` routes.
-Startup requires PostgreSQL, JWKS, catalog mapping and an OpenAI/Gemini provider/key
+Startup requires PostgreSQL, JWKS and an OpenAI/Gemini provider/key
 or an explicitly configured self-hosted Qwen endpoint.
 Settings construction and OpenAPI inspection are offline; they do not prove readiness.
 
@@ -16,6 +16,16 @@ optimizer, accepted-head publication, bounded dialogue and basic SSE are impleme
 The [selected core milestone](core-audit.md) is complete, not full-project or
 production completion. Shared versioned DTOs/DDL and historical graph/storage
 fixtures remain; the server does not select them as legacy execution modes.
+
+## Catalog taxonomy update — source published
+
+AI reads typed `hardwareType` directly from catalog snapshots, without category
+UUID env. Custom field mapping is optional; empty env uses defaults. Catalog owns
+the production UPSERT seed and database constraint. Infra setup runs the seed job.
+Verified886 core + 6 affected PostgreSQL integration tests, Ruff/mypy203/lock167;
+Java150/infra25 and two packaged seed CLI runs on an isolated schema pass.
+Published to main: AI `5a84584`, backend `68884c5` (submodule aligned), infra `000edc7`.
+Deploy updated catalog before updated AI. No server/image rollout verified.
 
 ## Published code
 

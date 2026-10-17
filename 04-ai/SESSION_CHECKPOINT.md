@@ -1,4 +1,4 @@
-# Resume checkpoint — 2026-10-17
+# Resume checkpoint — 2026-10-18
 
 ## Read first
 
@@ -7,7 +7,15 @@ Root `AGENTS.md` → [status](stateful-implementation-status.md) →
 
 ## Current code
 
-- Latest slice: FULL_SETUP accessories in V2, bounded equal-soft utility,
+- Latest slice: catalog V9 adds stable hardware_type; `--seed-prod` runs
+  Flyway + production taxonomy UPSERT and exits. Infra deploy/BE release run seed.
+  AI consumes snapshot hardwareType directly; no category UUID env required.
+  Custom spec/option mapping optional; blank env uses defaults. Verified886 core,
+  6 affected PostgreSQL integration, Java150/infra25, packaged CLI twice against
+  isolated schema. Published to main: AI `5a84584`, backend `68884c5` (AI submodule
+  updated), infra `000edc7`. One-time push authorization consumed; release branch
+  untouched, Actions/server rollout unverified. Publish new BE/AI images first.
+- Previous slice: FULL_SETUP accessories in V2, bounded equal-soft utility,
   explicit owner memory in PostgreSQL. Migration0006 applied locally. AI published
   through `aac8286` in three focused commits; backend submodule not repinned.
   Policies/contracts: [requirements](requirements.md), [memory](context-management.md#account-memory).
@@ -46,7 +54,8 @@ Root `AGENTS.md` → [status](stateful-implementation-status.md) →
 - Code baseline: AI `e3e1bd2`, including parser `8f9fb89`, is published.
   README commit `d1cbb9b` changes no runtime code; backend `c8ffb30` pins it.
 - Server/frontend use V2 only; no enable/version flags or stateless chat routes.
-  Missing DB/JWKS/model/mapping fails startup, not a fallback execution.
+  Missing DB/JWKS/model credentials fails startup. Category data is read lazily
+  from catalog snapshots and is not a startup prerequisite.
 - Core audit is complete within its selected scope. Current counts and exact proof
   boundaries are in status; do not copy old totals from the historical journal.
 - Shared versioned DTOs/DDL and historical fixture graphs remain. Do not rename them

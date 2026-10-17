@@ -125,7 +125,7 @@ Provider dùng lại native ReAct/extractor contracts. Chỉ ReAct, Draft và Ta
 dùng adapter; các head choice/amendment chưa train dùng base `Qwen/Qwen3-8B` trên
 cùng vLLM server. Không tự chuyển sang OpenAI/Gemini khi Qwen lỗi. Dùng model base
 thay alias trên để thử phiên bản chưa fine-tune; rollback provider bằng cấu hình.
-Các yêu cầu DB/JWKS/catalog mapping của stateful runtime vẫn giữ nguyên.
+Runtime vẫn yêu cầu DB/JWKS/provider; hardware taxonomy lấy trực tiếp từ catalog.
 
 ## Code nằm ở đâu?
 

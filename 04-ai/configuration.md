@@ -1,6 +1,7 @@
 # Configuration
 
 Settings đọc `AI_*` từ ignored `.env`; biến shell có ưu tiên cao hơn.
+Biến env rỗng được bỏ qua để dùng mặc định; các giá trị bắt buộc vẫn được kiểm tra khi startup.
 Nguồn chuẩn: [Settings](../../ai-service/src/ai_service/config/settings.py) và
 [env example](../../ai-service/.env.example). Không đưa secrets vào tài liệu.
 
@@ -21,7 +22,6 @@ vẫn giữ version gốc; các fixture graph lịch sử không được chọn
 | `AI_JWT_JWKS_URL` | JWKS endpoint của identity service |
 | `AI_JWT_ISSUER`, `AI_JWT_AUDIENCE` | Claims phải khớp access JWT |
 | `AI_BACKEND_API_URL` | Catalog API root; adapter thêm `/products` |
-| `AI_HARDWARE_CATALOG_MAPPING` | Versioned JSON mapping taxonomy/spec/options |
 | `AI_PROVIDER` | `openai`, `gemini` hoặc self-hosted `qwen` |
 | `AI_OPENAI_API_KEY` / `AI_GEMINI_API_KEY` | Key tương ứng provider đã chọn |
 | `AI_QWEN_BASE_URL` | Required với Qwen; vLLM API root, ví dụ http://localhost:8001/v1 |
@@ -36,23 +36,29 @@ Default provider model names nằm trong Settings, không phải khuyến nghị
 `AI_REQUEST_TIMEOUT_SECONDS` điều khiển HTTP/cloud-provider timeout; Qwen có timeout
 riêng. Chúng không phải toàn run deadline.
 
-`AI_PROVIDER=fallback` không hợp lệ cho server. Thiếu provider/key/mapping sẽ làm
+`AI_PROVIDER=fallback` không hợp lệ cho server. Thiếu provider/key sẽ làm
 startup lỗi; Settings/OpenAPI và các công cụ offline vẫn dựng được không cần network.
 
 ## Hardware mapping
 
-Mapping nội bộ có `version`, `categories`, `spec_fields`, `option_fields`:
+Category type lấy từ `hardwareType` trong snapshot catalog, không đọc mapping UUID
+từ env. Catalog seed production quản lý taxonomy; đổi tên category không đổi loại.
+Category không thuộc phần cứng trả `null` và không đi vào optimizer.
+Snapshot thiếu field `hardwareType` hoặc chứa mã không hỗ trợ bị từ chối; AI không
+đoán loại từ tên sản phẩm. Deploy catalog mới trước AI mới.
 
-- Category UUID map tới core category hoặc MONITOR/MOUSE/KEYBOARD/HEADSET;
-  không đoán từ tên hoặc kế thừa category con. Phải bổ sung đúng UUID phụ kiện thật
-  vào mapping local để dùng FULL_SETUP; không tự seed catalog/mapping giả.
+`AI_HARDWARE_CATALOG_MAPPING` là optional, chỉ dùng cho custom field mapping:
+`version`, `spec_fields`, `option_fields`. Bỏ `categories` khỏi env cũ.
+
+- Không đoán hardware type từ tên hoặc kế thừa category con.
 - `spec_fields` map canonical field tới backend specification key.
 - Option UUID map tới canonical field; `null` chỉ cho cosmetic option.
 - Variant option override product common spec; price/stock/ID luôn từ variant.
 - Không nhận mapping từ user/model; thiếu metadata không tự điền defaults.
 
 Xem [catalog snapshot reference](../05-api/catalog-snapshot.md). Read-only turns không
-quét hardware snapshot; mapping vẫn là startup prerequisite cho runtime build/resolve.
+quét hardware snapshot. Startup không cần category data hoặc field mapping;
+catalog được đọc khi xử lý build/resolve.
 
 ## Database initialization
 

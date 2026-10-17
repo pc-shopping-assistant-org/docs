@@ -17,6 +17,10 @@ AI/migration và Next.js. Sync là application worker, không phải infrastruct
 Runbook canonical: [infra README](../../infra/README.md).
 Entrypoint duy nhất là `infra/compose.yaml`, chạy qua `infra/compose.sh`.
 
+Bootstrap đầy đủ: `infra/scripts/deploy.sh`. Script pull image, gọi catalog job
+`seed-prod` (Flyway + UPSERT taxonomy), rồi bật apps. Seed riêng bằng
+`infra/scripts/seed-prod.sh`. AI đọc hardware type từ catalog, không ghi UUID vào env.
+
 ## Configuration
 
 - Global runtime config: ignored `infra/.env.docker`, mẫu `.env.docker.example`.

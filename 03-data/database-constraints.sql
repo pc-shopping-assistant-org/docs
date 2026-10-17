@@ -1,3 +1,9 @@
+-- catalog-service V9: NULL for categories outside the hardware taxonomy.
+ALTER TABLE categories ADD CONSTRAINT ck_categories_hardware_type CHECK (
+    hardware_type IN ('CPU', 'MAINBOARD', 'RAM', 'GPU', 'PSU', 'CASE', 'COOLER',
+                     'STORAGE', 'MONITOR', 'MOUSE', 'KEYBOARD', 'HEADSET')
+);
+
 -- Partial unique index: one default address per customer.
 -- Non-default addresses remain unlimited.
 CREATE UNIQUE INDEX ux_customer_default_address

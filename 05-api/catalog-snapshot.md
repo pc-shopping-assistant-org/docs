@@ -11,9 +11,16 @@ visible catalog; no top-k/keyword shortlist is treated as complete candidate pro
 
 Response: `{data, message: "SUCCESS", errors: []}`. Data is
 `{items: ProductDetailResponse[], hasNext, nextCursor, size}`. Each item contains
-product identity/category/status/specifications and variants with identity,
+product identity/category/status/specifications, nullable `hardwareType`, and variants with identity,
 productId/SKU/price/quantity/status/options. Empty arrays/maps are valid; missing
 specifications/variants are not a hardware snapshot and AI rejects the response.
+
+`hardwareType` comes from the product category's stable hardware code, batch-loaded
+with its display name. Core values: CPU, MAINBOARD, RAM, GPU, PSU, CASE, COOLER,
+STORAGE; accessories: MONITOR, MOUSE, KEYBOARD, HEADSET. A non-hardware/inactive
+category returns null. `GET /categories` also exposes this metadata. AI consumes
+the snapshot field directly; category UUIDs and names are not configuration.
+Publish the updated catalog before the updated AI image.
 
 Products retain descending-ID cursor order; variants sort by product, price, ID.
 One read-only REPEATABLE_READ transaction covers a page's product/association reads.

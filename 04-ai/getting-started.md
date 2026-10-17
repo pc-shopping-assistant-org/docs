@@ -9,7 +9,7 @@ Thực hiện từ workspace có `ai-service/`, `backend/` và `docs/` cạnh nh
 - PostgreSQL có database `ai_db`; dùng backend Compose local.
 - Identity service cấp access JWT và JWKS endpoint truy cập được.
 - Catalog service có search/detail và [snapshot endpoint](../05-api/catalog-snapshot.md).
-- OpenAI hoặc Gemini key; hardware mapping dùng category/option UUID thật.
+- OpenAI hoặc Gemini key; catalog snapshot trả `hardwareType` từ taxonomy đã seed.
 
 Không có provider/catalog/auth thì có thể chạy [core tests](testing.md), nhưng
 không thể coi đó là live chat.
