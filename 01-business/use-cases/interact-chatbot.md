@@ -19,6 +19,11 @@ Tương tác với chatbot AI Agent theo phạm vi nghiệp vụ được report
 
 Người dùng truy cập giao diện chatbot.
 
+V1 yêu cầu đăng nhập khi gửi tin nhắn. Khách chưa đăng nhập vẫn được mở chat,
+soạn câu hỏi và chọn sản phẩm; khi gửi, UI mời đăng nhập trong popup và giữ nguyên
+bản nháp. Đăng nhập thành công không tự gửi câu hỏi. API vẫn kiểm tra JWT và trả
+`401 / AI_UNAUTHENTICATED` nếu phiên không hợp lệ.
+
 ## Điều kiện sau
 
 Người dùng nhận phản hồi AI dựa trên truy vấn.
