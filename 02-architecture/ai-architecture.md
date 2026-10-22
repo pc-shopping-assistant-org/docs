@@ -150,6 +150,12 @@ Budget/workload, capacity/unit và CLEAR có thể xử lý trước hardware I/
 được tải khi cần resolve SKU hoặc khi BUILD đã đủ prerequisite; sau merge, graph
 kiểm tra lại điều kiện này. Chưa tải candidates không chứng minh thiếu metadata.
 
+Task registration và requirement change dùng hai contract/provider riêng:
+`TaskDraftBatch` chỉ đề xuất task từ message; `RequirementDraft` chỉ đề xuất
+requirement items. Task registration quyết định việc cần làm; requirement
+resolution không thể thêm, thay hoặc xóa task. `Draft` dạng gộp chỉ còn để đọc
+artifact V1 đã lưu qua compatibility boundary, không phải runtime graph.
+
 ### ReAct capability — chọn hành động trong giới hạn
 
 `capabilities/assistant/react/` định nghĩa action/tool contracts, tool policy theo

@@ -121,11 +121,15 @@ AI_QWEN_MAX_TOKENS=2048
 AI_QWEN_REQUEST_TIMEOUT_SECONDS=120
 ```
 
-Provider dùng lại native ReAct/extractor contracts. Chỉ ReAct, Draft và TaskDraftBatch
-dùng adapter; các head choice/amendment chưa train dùng base `Qwen/Qwen3-8B` trên
-cùng vLLM server. Không tự chuyển sang OpenAI/Gemini khi Qwen lỗi. Dùng model base
-thay alias trên để thử phiên bản chưa fine-tune; rollback provider bằng cấu hình.
-Runtime vẫn yêu cầu DB/JWKS/provider; hardware taxonomy lấy trực tiếp từ catalog.
+Provider dùng lại native contracts. Nhãn task dùng `TaskDraftBatch`; nhãn yêu cầu
+dùng `RequirementDraft`; export lấy prompt/schema từ đúng adapter tương ứng.
+`prepare_qwen_request` là projection chung cho serving và training: schema JSON đầy
+đủ đi vào system message, còn tool schema giữ ở native `tools`; không chèn schema
+lần hai trong extractor. ReAct/tool-calling và hai structured heads trên dùng
+adapter; choice/amendment chưa train dùng base `Qwen/Qwen3-8B` trên cùng vLLM
+server. Không tự chuyển provider khi Qwen lỗi. Dùng model base thay alias để thử
+chưa fine-tune; rollback provider bằng cấu hình. Runtime vẫn yêu cầu DB/JWKS;
+hardware taxonomy lấy trực tiếp từ catalog.
 
 ## Code nằm ở đâu?
 

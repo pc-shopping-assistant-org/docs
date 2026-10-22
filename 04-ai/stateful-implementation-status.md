@@ -1,6 +1,6 @@
 # Implementation status
 
-Updated: **2026-10-18**. Current delivery evidence, not an architecture tutorial.
+Updated: **2026-10-22**. Current delivery evidence, not an architecture tutorial.
 Start at [AI documentation](README.md).
 
 ## Delivered
@@ -13,6 +13,11 @@ Settings construction and OpenAPI inspection are offline; they do not prove read
 
 Managed graph, typed tools, canonical requirements/compiler/verifier, deterministic
 optimizer, accepted-head publication, bounded dialogue and basic SSE are implemented.
+Task registration and requirement extraction use separate `TaskDraftBatch` and
+`RequirementDraft` contracts; combined V1 `Draft` is restricted to persisted-data
+compatibility reads. T5 focused gate: 75 unit + 48 PostgreSQL tests. Final audit:
+867 unit + 93 PostgreSQL integration tests; Ruff, mypy and lock checks pass. No
+live provider/GPU run is implied.
 The [selected core milestone](core-audit.md) is complete, not full-project or
 production completion. Shared versioned DTOs/DDL and historical graph/storage
 fixtures remain; the server does not select them as legacy execution modes.

@@ -52,7 +52,13 @@ compatibility DTO không được dùng thay content equality.
 
 ## Draft and resolution
 
-Draft giữ đề xuất và exact message span; extractor không tự tạo canonical SKU UUID.
+Current extractors have separate strict contracts: `TaskDraftBatch` contains
+registered task candidates; `RequirementDraft` contains requirement items only.
+The requirement schema rejects `tasks`. Historical combined `Draft` is retained
+only to validate persisted V1 artifacts at compatibility boundaries; do not use it
+for a current provider, catalog port, or graph input.
+
+`RequirementDraft` giữ đề xuất và exact message span; extractor không tự tạo canonical SKU UUID.
 Resolver kiểm tra message evidence, units, catalog identity/category/visibility.
 
 - Product ID dành detail/compare; variant ID/SKU dành purchased/owned/pinned parts.

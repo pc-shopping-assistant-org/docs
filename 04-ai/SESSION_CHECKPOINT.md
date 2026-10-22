@@ -1,11 +1,21 @@
-# Resume checkpoint — 2026-10-18
+# Resume checkpoint — 2026-10-22
+
+## Latest task — requirement/task separation
+
+- `ISSUE-148`, plan `task-requirement-separation-plan.md`: T0–T6 complete.
+- Runtime/training use separate `RequirementDraft` and `TaskDraftBatch`; removed
+  the unused combined-draft graph. Legacy `Draft` remains only at strict persisted
+  V1 compatibility boundaries.
+- Verified: 867 unit and 93 PostgreSQL integration tests; Ruff, mypy,
+  `uv lock --check`, and diff check pass. No live provider/GPU/tokenizer run.
+- Code and docs changes are uncommitted. No commit, push, or deploy was performed.
 
 ## Read first
 
 Root `AGENTS.md` → [status](stateful-implementation-status.md) →
 [architecture](../02-architecture/ai-architecture.md) → relevant [roadmap](stateful-chat-implementation-plan.md) slice.
 
-## Current code
+## Previous delivery context (2026-10-18)
 
 - Versioned release update: app release/v1.0.0
   publishes :1.0.0 + sha-*; infra same branch selects :1.0.0, supports per-app

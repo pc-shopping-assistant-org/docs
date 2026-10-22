@@ -54,6 +54,7 @@ version gốc, không là fallback runtime. Khả năng đã có và backlog: [i
 Không dùng các trang này để học kiến trúc:
 
 - [Roadmap](stateful-chat-implementation-plan.md): việc còn lại và gates.
+- [Task/requirement separation](task-requirement-separation-plan.md): contract boundary, compatibility và verification record.
 - [Current status](stateful-implementation-status.md): khả năng thực tế và verification.
 - [Core audit](core-audit.md): phạm vi core đã được kiểm chứng.
 - [Historical journal](stateful-implementation-history.md): bằng chứng các slice trước.
