@@ -2,12 +2,12 @@
 
 ## Current review — conversational agent refactor
 
-- [Plan](conversational-agent-refactor-plan.md), `ISSUE-149`: owner authorized implementation and push when complete. P0–P2 complete; P3 in progress.
+- [Plan](conversational-agent-refactor-plan.md), `ISSUE-149`: P0–P3 implementation complete; owner explicitly deferred live eval and authorized this push.
 - Goal: use accepted/build/pending context to understand each turn; separate turn response from task completion; replace the full model-facing FlexibleDecision union with smaller native actions.
 - Side-question publication must preserve pending state and original proposal binding despite a new conversation revision. Compatibility, training parity and paired live-model eval are explicit gates.
 - P3 full gate: **897 unit + 96 PostgreSQL integration**, Ruff/mypy206/lock167 pass. Serving/training parity verified; export blocks DRAFT react-13/14/15 for manual review, no labels/hashes modified. Requirements-only admission and SSE response cards covered.
-- Remaining gate: paired live-model scenarios. Local config=fallback, no model key/endpoint. Owner was asked to configure `.env` or explicitly defer live eval before push. Do not read old chat secrets, reset DB, repin backend or deploy. Run DB suites sequentially; concurrent managed executors claim shared test runs.
-- AI code committed locally as `781d2d2` on `release/v1.0.0`; not pushed. See phase handoff before continuing. Source worktree clean at this handoff.
+- Deferred: paired live-model scenarios. Local config=fallback, no model key/endpoint. Owner instruction: “hoãn live eval, push”. No live quality/GPU/tokenizer claim. Run DB suites sequentially; concurrent managed executors claim shared test runs.
+- AI `781d2d2` pushed to `origin/release/v1.0.0`; docs on independent `main`. CI/image publishing is not a server deployment. No backend repin, env change or deploy; this one-time push grants no future publication authority.
 
 ## Latest task — requirement/task separation
 

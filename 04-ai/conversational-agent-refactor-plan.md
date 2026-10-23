@@ -1,14 +1,14 @@
 # Plan — Conversational ReAct theo state
 
-Ngày: **2026-10-23** · Trạng thái: **IN PROGRESS — P3 chờ live-model gate**.
+Ngày: **2026-10-23** · Trạng thái: **IMPLEMENTED — live eval hoãn theo owner**.
 Phạm vi: `UC-AI-001/003/004/005` · Theo dõi: `ISSUE-149`.
 
 **Mục tiêu:** agent trò chuyện tự nhiên, dùng được state trước đó và gọi tool khi
 cần; application vẫn kiểm soát thay đổi requirements và tính đúng của kết quả.
 
 Plan này mô tả thiết kế đích; tiến độ và evidence nằm ở §9. Owner đã yêu cầu
-triển khai và push khi hoàn tất; chưa cho phép deploy. Live-model gate chưa qua
-không được coi toàn bộ refactor đã nghiệm thu.
+triển khai và push khi hoàn tất; chưa cho phép deploy. Owner xác nhận “hoãn live
+eval, push”: nghiệm thu code bằng regression, không tuyên bố chất lượng model thật.
 
 ## 1. Vấn đề cần giải quyết
 
@@ -224,7 +224,8 @@ tests build/consent để cho text đi qua.
 Đo paired scenarios trên cùng model/config: đúng context, task fulfillment, tool
 thừa, parse/repair, calls, latency và usage nếu có. Đo cả system + schemas + context;
 không lấy schema nhỏ hơn làm bằng chứng UX tốt hơn. Không có provider thì ghi live
-gate **UNVERIFIED**, không tuyên bố toàn bộ refactor hoàn tất.
+gate **UNVERIFIED**, không tự coi là đã pass. Owner đã đồng ý hoãn riêng live eval
+để giao code; quality eval vẫn cần chạy trước khi đánh giá/promote model.
 
 Gate cuối, từ `ai-service/`:
 
@@ -249,8 +250,8 @@ Trạng thái dưới đây gồm gate mới và handoff từng phase. Historica
 | --- | --- | --- |
 | P0 | COMPLETED | — |
 | P1 | COMPLETED | — |
-| P2 | COMPLETED | Live quality evidence ở P3 |
-| P3 | IN PROGRESS | Live paired eval: chưa có model credentials/endpoint |
+| P2 | COMPLETED | — |
+| P3 | COMPLETED | Live paired eval được owner hoãn; chưa có quality evidence |
 
 Tài liệu nguồn cần đồng bộ khi implementation được xác minh:
 [agent/tools](agent-tools.md), [context/recovery](context-management.md),
@@ -299,5 +300,5 @@ thiết kế. Push sau khi hoàn tất gate, hoặc khi owner đồng ý hoãn r
 - Managed HTTP/native fixture verifies greeting → BUILD clarification → unit consent → question about proposal; publication preserves proposal/tasks without hardware I/O. Native saver reopen tests cover original confirmation at a later revision. These are fixture-model tests, not live LLM quality.
 - Requirements-only dialogue supports source-admitted merge or separately confirmed proposal, without fabricated BUILD. Reused publication replay validates the change; stale side-response text is cleared for a later unresolved selection. SSE product cards use selected refs from either response or business answer.
 - Architecture, agent/provider/state/API/training docs updated. No SQL migration, framework/dependency, runtime fallback, backend repin or deploy.
-- **Remaining:** live paired scenarios from §8. Local provider remains fallback with no configured credentials/endpoint; owner must configure `.env` (never send secrets in chat) or explicitly defer this gate before push/full-completion claim.
-- AI implementation committed locally as `781d2d2` on `release/v1.0.0`; not pushed. No deployment triggered.
+- **Deferred by owner:** live paired scenarios from §8. Explicit instruction: “hoãn live eval, push”. Keep live quality UNVERIFIED; configure local provider and run paired scenarios later under the existing evaluation workstream, without automatic model promotion.
+- AI `781d2d2` pushed to `origin/release/v1.0.0`. This triggers CI/image publishing, not deployment. Docs publication uses its independent `main` branch; backend submodule was not repinned.
