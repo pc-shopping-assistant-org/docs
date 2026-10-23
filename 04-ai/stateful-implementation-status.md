@@ -1,7 +1,21 @@
 # Implementation status
 
-Updated: **2026-10-22**. Current delivery evidence, not an architecture tutorial.
+Updated: **2026-10-23**. Current delivery evidence, not an architecture tutorial.
 Start at [AI documentation](README.md).
+
+## Current refactor — ISSUE-149
+
+[Conversational agent plan](conversational-agent-refactor-plan.md): P0–P2 pass;
+P3 code/parity/docs verified at **897 unit + 96 PostgreSQL integration tests**;
+Ruff/mypy206/lock167 pass. Optional-task dialogue and side responses preserve
+accepted requirements/build/pending; original confirmation survives a later revision
+and native saver reopen. Requirements-only admission needs no fabricated BUILD.
+Native text/control protocol replaces full decision JSON; application derives outcomes.
+Training uses the same serving projection/parser; export rejects three old DRAFT
+clarification labels pending review (ISSUE-138). No pilot labels/approval changed.
+Live paired model-quality gate is **UNVERIFIED**: local provider=fallback, no keys or
+Qwen endpoint. AI code commit `781d2d2` is local only; no push/deploy yet and no
+full-refactor completion claim.
 
 ## Delivered
 

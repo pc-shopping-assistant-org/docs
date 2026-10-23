@@ -35,7 +35,13 @@ AIMessage/ToolMessage. Tối đa một accepted call mỗi response.
 - Reject malformed/multiple/mixed action response; repair không làm hỏng last valid transcript.
 - Gemini signature giữ opaque theo call cho serialization/reopen.
 - Không parse text/`exec` để fake tool-calling capability.
-- JSON non-tool actions dùng V2 contract; JSON CALL_TOOL bị reject vì native protocol.
+- Text thường thành candidate response. Native controls `propose_requirements`,
+  `ask_clarification`, `submit_result` được normalize nội bộ; JSON action envelope
+  cũ bị reject, không fallback. Model chọn refs, application xác định outcome.
+
+Protocol `text-native-controls-v1` được dùng chung bởi serving và training export.
+Control acknowledgements là checkpointed transitions, không business ToolResults;
+projection giữ matched pairs và thứ tự cùng business ledger.
 
 Model không được quyết định principal, attempt budget, source provenance, publish
 authority hoặc completion của requested task.
@@ -65,7 +71,7 @@ native tools dùng template/parser của vLLM, không text parser tự chế tro
 Structured JSON hiện là schema guidance trong prompt + Pydantic validation, không
 server-enforced grammar decoding. Cần đo raw validity/repair trên model thật trước
 khi coi adapter đạt chất lượng; không bảo đảm output luôn hợp lệ.
-Chỉ ReAct/Draft/TaskDraftBatch dùng adapter; head phụ chưa train vẫn dùng base weights.
+Chỉ ReAct/RequirementDraft/TaskDraftBatch dùng adapter; head phụ chưa train vẫn dùng base weights.
 Pilot còn DRAFT; chưa có lượt train, model quality hoặc GPU serving được xác minh.
 
 Core dùng scripted models; protocol tests phải tôn trọng khác biệt OpenAI/Gemini/Qwen.

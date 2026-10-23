@@ -27,6 +27,11 @@ Requirement resolution không là mandatory prefix của mọi câu hỏi. Agent
 đọc catalog/web trước khi đủ thông tin build. Nó không được đổi BUILD/COMPARE thành
 ANSWER chỉ để kết thúc sớm.
 
+Task registration có thể trả danh sách rỗng cho hội thoại/kiến thức chung. Internal
+RESPOND tạo response cho lượt hiện tại, không công nhận business completion.
+Khi có pending, agent có thể giải thích context và publish response trong khi giữ
+nguyên task/proposal; application revalidate việc bảo toàn này trước CAS.
+
 Clarification kết thúc execution với pending artifact; user trả lời ở run sau,
 không giữ coroutine chờ user.
 
@@ -38,17 +43,28 @@ không giữ coroutine chờ user.
 | `PROPOSE_REQUIREMENTS` | Draft được application resolve/validate; không tự merge |
 | `ASK_CLARIFICATION` | Hỏi đúng thông tin thiếu hoặc confirmation |
 | `FINAL_ANSWER` | Candidate phải qua grounding/completion trước publish |
+| `RESPOND` | Hội thoại thường hoặc câu hỏi chen ngang; không tự hoàn tất task |
 
 Model response không cấp owner, revision, checkpoint selector hay trusted task kind.
 V2 action schemas: [tool reference](../05-api/tool-contracts.md).
 
-Native tool calling dùng OpenAI/Gemini adapters; không text parser/`exec`.
+Model trả text thường cho hội thoại, hoặc native function call. Control functions
+`propose_requirements`, `ask_clarification`, `submit_result` được normalize thành
+internal actions; không phải business ToolResult. `submit_result` chỉ chọn refs;
+application suy ra outcome từ canonical ledger. `task_index=null` trả grounded
+response cho lượt này mà không hoàn tất task pending. Model không xuất JSON
+FlexibleDecision; union này chỉ còn là representation nội bộ/đọc dữ liệu đã lưu.
+
+Native tool calling dùng OpenAI/Gemini/Qwen adapters; không text parser/`exec`.
 Chỉ bind allowed subset. Khi hỗ trợ thì tắt parallel calls, nhưng vẫn validate:
 multiple/malformed/mixed calls bị reject cả response. Không append hai calls rồi
 trả một ToolMessage. Repair hữu hạn dùng static feedback và durable attempt mới.
 
 Gemini provider signature được giữ opaque theo call cho protocol recovery, không
 là tool args/public output. Không gửi hidden reasoning ra frontend.
+Control acknowledgements được checkpoint riêng với business ledger; AIMessage và
+ToolMessage được project theo model-step order. Resume không chạy lại transition
+đã commit để tạo acknowledgement.
 
 ## Tools
 

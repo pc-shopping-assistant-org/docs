@@ -123,9 +123,20 @@ AI_QWEN_REQUEST_TIMEOUT_SECONDS=120
 
 Provider dùng lại native contracts. Nhãn task dùng `TaskDraftBatch`; nhãn yêu cầu
 dùng `RequirementDraft`; export lấy prompt/schema từ đúng adapter tương ứng.
+ReAct dùng protocol `text-native-controls-v1`: response hội thoại là text; proposal,
+clarification và result selection là native function calls. `FlexibleDecision` chỉ
+là nhãn nội bộ; không export JSON envelope/full union vào prompt. Export và serving
+dùng cùng request projection/parser; application suy ra outcome từ canonical results.
+
+Export ghi `react_protocol` trong manifest. Artifacts/adapter train bằng JSON protocol
+cũ phải regenerate/retrain trước dùng protocol mới; không tự overwrite weights hay
+approve labels. Pilot `react-13/14/15` còn DRAFT, cần reviewer sửa context/nhãn: typed
+clarification hiện không có business task để bind. Export chặn các action không được
+expose thay vì âm thầm đổi intent thành text.
+
 `prepare_qwen_request` là projection chung cho serving và training: schema JSON đầy
-đủ đi vào system message, còn tool schema giữ ở native `tools`; không chèn schema
-lần hai trong extractor. ReAct/tool-calling và hai structured heads trên dùng
+đủ của **structured extraction heads** đi vào system message, còn tool/control schema
+giữ ở native `tools`; không chèn schema lần hai trong extractor. ReAct/tool-calling và hai structured heads trên dùng
 adapter; choice/amendment chưa train dùng base `Qwen/Qwen3-8B` trên cùng vLLM
 server. Không tự chuyển provider khi Qwen lỗi. Dùng model base thay alias để thử
 chưa fine-tune; rollback provider bằng cấu hình. Runtime vẫn yêu cầu DB/JWKS;

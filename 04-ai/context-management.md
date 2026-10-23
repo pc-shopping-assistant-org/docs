@@ -29,6 +29,24 @@ checkpoints. Recovery của cùng run không tạo conversation/thread mới.
 Dialogue history vẫn conversation-local. Account memory riêng cho phép user lưu
 context xuyên conversation; không trộn nó vào canonical requirements.
 
+## Response và tiến độ nghiệp vụ
+
+Mỗi turn có thể publish `response` mà không hoàn tất business task. Snapshot giữ
+response riêng với `answer`/task outcomes: hội thoại không có task không tạo outcome
+giả; câu hỏi chen ngang giữ nguyên WAITING_INPUT, original task và pending artifact.
+`assistant_message` ưu tiên response của lượt mới; history vẫn lưu qua application.
+
+Agent đọc requirements, saved build và pending projection để hiểu “con đó”, “nâng
+lên vậy”. Snapshot/history không trở thành giá hiện tại hoặc quyền confirmation.
+Side response vẫn tăng conversation revision qua CAS; proposal id/hash/original
+target revision giữ nguyên, confirmation kiểm tra current requirements hash và
+CAS dùng current expected revision. Không reissue proposal chỉ vì user hỏi thêm.
+
+Requirements cũng có thể được ghi nhận trước khi có task BUILD. Response sau merge
+phải replay source-admission receipts hoặc original confirmation bằng cùng publication
+validator; không dùng plain text làm authority. Nếu không đổi requirements, giữ nguyên
+pending. Câu hỏi/chọn lựa mới không được vô tình phát lại side-response cũ.
+
 ## Account memory
 
 `user_memories` trong PostgreSQL lưu entry do user chủ động PUT qua API; không có

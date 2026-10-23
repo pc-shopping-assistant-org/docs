@@ -111,7 +111,7 @@ mutations chỉ vì đã có helper. Thiếu canonical adapter thì fail closed,
 ## Flexible V2 contracts — server runtime
 
 `react/actions.py`: FlexibleDecision(schema_version=2, action), discriminated by
-CALL_TOOL / PROPOSE_REQUIREMENTS / ASK_CLARIFICATION / FINAL_ANSWER. Requirement
+CALL_TOOL / PROPOSE_REQUIREMENTS / ASK_CLARIFICATION / FINAL_ANSWER / RESPOND. Requirement
 proposal cannot replace tasks; no owner/hash/merge authority fields in model action.
 RepairFeedback has static code, missing/evidence refs and allowed next actions.
 It can include `task_indices` (0..7, at most 8) from application validation to target
@@ -137,14 +137,22 @@ input/catalog hashes and algorithm/pruning/policy versions. Outcomes FEASIBLE /
 INFEASIBLE / SEARCH_INCOMPLETE must match declared completion/coverage/pruning and
 termination. Metadata validation alone is not proof of actual search correctness.
 
-`NativeFlexibleModel` supports V2 native CALL_TOOL and JSON non-tool actions;
-JSON CALL_TOOL is rejected to preserve provider protocol. RepairFeedback restricts
-allowed corrective actions; invalid output returns no decision, not a fake answer.
-The adapter does not authorize merges or certify final outcomes.
+`NativeFlexibleModel` accepts plain text or one native call; no JSON action envelope.
+Native controls are `propose_requirements`, `ask_clarification`, `submit_result`.
+The last selects evidence/build refs by task index; it cannot supply outcome/status.
+One selection with `task_index=null` is a grounded response without completing the
+pending task. Application derives internal final outcomes and revalidates them.
+Control schemas and availability live in `react/control_actions.py`; selection
+contract is `react/submissions.py`. RepairFeedback restricts corrective actions;
+invalid protocol returns no decision, not a fake answer. Control acknowledgements
+are checkpointed separately from business ToolResults, with matched provider pairs.
 
 FinalAnswerAction also accepts `supporting_tool_call_ids` for failed/empty outcomes
 with no fact refs. Internal `FlexibleAnswer(schema_version=2)` has outcome/reason,
 response status, original task_outcomes, evidence refs and optional build_ref.
+`ConversationResponse` separately contains text/evidence_refs. A response may
+coexist with WAITING_INPUT and unchanged pending artifacts; no-business-task turns
+have empty task outcomes, not a fabricated ANSWER/BUILD result.
 Empty search/unavailable source can end a turn while tasks remain UNRESOLVED;
 typed result refs, not model prose, justify the server-rendered response.
 Shared persisted contracts giữ version gốc; HTTP/publication của server chỉ dùng V2.

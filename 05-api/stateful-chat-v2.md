@@ -79,6 +79,16 @@ be combined with confirmation/another reply or inferred implicitly from prose.
 
 Example: confirming an immutable proposal.
 
+A side-question turn publishes its own answer while preserving pending task and
+proposal. `flexible.answer` is the latest turn response; `flexible.task_outcomes`
+and pending fields still describe the original work. Conversation revision advances,
+but proposal `target_revision`/hash do not change. Send the **current**
+`expected_revision` and the **original** confirmation binding from the offered
+proposal. Plain “OK” without this command does not grant consent.
+No-business-task conversation may complete with `task_outcomes: []`; this does
+not claim a business outcome. Requirements can also be collected before asking
+for a build, using the same source admission/confirmation rules.
+
 ```json
 {
   "schema_version": 2,
@@ -173,7 +183,8 @@ task kinds/statuses or redefine the request. Application validates each entry us
 the existing single-task grounding, optimizer/search and missing-data validators.
 
 Each public task outcome can include its validated `outcome` and `reason`. Overall
-status is COMPLETED only when every task completes; otherwise UNRESOLVED. A verified
+business-result status is COMPLETED only when every requested task completes;
+otherwise UNRESOLVED. Conversation-only response completion is separate. A verified
 build is still saved when an unrelated task lacks evidence. Scoped no-solution
 evidence does not complete unrelated tasks. Aggregate model prose/evidence is not
 published; server combines validated per-task output. `MULTI_TASK` is not a new tool

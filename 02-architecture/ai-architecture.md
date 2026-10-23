@@ -285,6 +285,8 @@ flowchart LR
   RESOLVE -->|Cần xác nhận hoặc làm rõ| ASK[Lưu proposal/câu hỏi chờ user]
   CHECK -->|ASK_CLARIFICATION| ASK
   CHECK -->|FINAL_ANSWER| VALIDATE[Kiểm tra hoàn tất task và grounding]
+  CHECK -->|RESPOND| RESPONSE[Validate response; giữ pending hoặc replay thay đổi đã được chấp nhận]
+  RESPONSE --> PREPARE
   VALIDATE -->|Thiếu bằng chứng| AGENT
   VALIDATE -->|Candidate hợp lệ| PREPARE[Chuẩn bị snapshot publish]
   ASK --> PREPARE
@@ -298,8 +300,11 @@ xếp hạng cấu hình; verifier đối chiếu kết quả với yêu cầu g
 thể chỉ cần catalog evidence, không chạy optimizer.
 
 `tool ledger` là execution record; model messages được dựng từ typed tool outcomes.
-Model có thể diễn giải kết quả, nhưng application chỉ publish sau khi xác nhận đủ
-evidence và task đã hoàn thành. Xem [agent/tools](../04-ai/agent-tools.md) và
+Model trả text hội thoại hoặc native control/tool call; không xuất full decision
+union. Application validate response và task completion riêng: câu hỏi về proposal
+có thể được trả lời trong khi task vẫn chờ input. Nó dùng requirements/build/pending
+và history để hiểu context, không chỉ giữ state thụ động. Giá hiện tại cần catalog;
+đọc saved snapshot không cần optimize lại. Xem [agent/tools](../04-ai/agent-tools.md) và
 [requirements](../04-ai/requirements.md).
 
 ## Conversation, run và checkpoint
