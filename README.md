@@ -18,6 +18,8 @@ It describes the current Stateful ReAct V2 architecture; delivery logs are separ
 [Deployment](02-architecture/deployment.md): server infrastructure/local development,
 GHCR apps profile, external runtime env and release-only SSH delivery.
 
+[Media storage](05-api/media-storage.md): API upload, S3/Cloudinary adapters and historical URLs.
+
 | Folder | Purpose |
 | --- | --- |
 | 01-overview | Scope, requirements and glossary |

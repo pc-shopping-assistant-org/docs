@@ -10,7 +10,7 @@ Dev:    local applications ── SSH/private network ── server infra
 Deploy: server application images ── Docker network ── server infra
 ```
 
-Infra gồm PostgreSQL, Redis, RabbitMQ, Kafka/Debezium Connect, Elasticsearch và LGTM.
+Infra gồm PostgreSQL, Redis, RabbitMQ, Kafka/Debezium Connect, Elasticsearch, SeaweedFS/S3 và LGTM.
 Mặc định chỉ chạy infra; profile `apps` thêm Eureka, Gateway, 8 business services,
 AI/migration và Next.js. Sync là application worker, không phải infrastructure.
 
@@ -18,8 +18,11 @@ Runbook canonical: [infra README](../../infra/README.md).
 Entrypoint duy nhất là `infra/compose.yaml`, chạy qua `infra/compose.sh`.
 
 Bootstrap đầy đủ: `infra/scripts/deploy.sh`. Script pull image, gọi catalog job
-`seed-prod` (Flyway + UPSERT taxonomy), rồi bật apps. Seed riêng bằng
-`infra/scripts/seed-prod.sh`. AI đọc hardware type từ catalog, không ghi UUID vào env.
+`seed-prod` (Flyway + INSERT missing identity/media/catalog + S3 image import), rồi
+bật apps. Tạo bucket/key trong Admin UI và seed lần đầu trước release vì bộ ảnh
+có thể vượt timeout CD. Seed riêng bằng `infra/scripts/seed-prod.sh`;
+[seed contract](../03-data/sample-data.md). AI đọc hardware type từ catalog,
+không ghi UUID vào env.
 
 ## Configuration
 
