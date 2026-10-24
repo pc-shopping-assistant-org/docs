@@ -22,9 +22,11 @@ thủ công trong Admin UI. Key deterministic `seed/catalog/<file-id>/<original-
 object đã có được tái sử dụng qua HEAD, không ghi đè. `media_db.files` lưu provider
 `S3`, key, MIME/dung lượng thật và URL `<public-origin>/<bucket>/<key>`.
 File row EXTERNAL/Cloudinary đã có được giữ nguyên, không tự migrate ảnh lịch sử.
+URL nguồn trả HTML/404 hoặc không đọc được sẽ được báo và bỏ qua ảnh/liên kết đó;
+sản phẩm vẫn được seed. Lần chạy sau thử lại ảnh còn thiếu. Lỗi S3/DB vẫn dừng seed.
 
 Catalog được validate bằng cùng validator của API trước upload/commit seed.
-Ba DB có transaction riêng; validation/upload lỗi rollback hàng chưa commit,
+Ba DB có transaction riêng; validation/S3 lỗi rollback hàng chưa commit,
 lỗi commit báo các DB đã commit. Chạy lại tiếp tục từ hàng/object đã có. Flyway
 migrations commit độc lập. Không có tuyên bố atomic transaction xuyên ba DB/S3.
 
