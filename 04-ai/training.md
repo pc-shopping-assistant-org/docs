@@ -121,9 +121,11 @@ AI_QWEN_MAX_TOKENS=2048
 AI_QWEN_REQUEST_TIMEOUT_SECONDS=120
 ```
 
-Provider dùng lại native contracts. Nhãn task dùng `TaskDraftBatch`; nhãn yêu cầu
-dùng `RequirementDraft`; export lấy prompt/schema từ đúng adapter tương ứng.
-ReAct dùng protocol `text-native-controls-v1`: response hội thoại là text; proposal,
+Provider dùng lại native contracts. Dataset giữ nhãn nội bộ `TaskDraftBatch` và
+`RequirementDraft`; export chuyển sang `QuotedTaskBatch` và
+`QuotedRequirementDraft` đúng schema runtime. Offset chỉ được tính sau khi model
+trả quote. Adapter train từ export cũ không tương thích với protocol v2.
+ReAct dùng protocol `text-native-controls-v2`: response hội thoại là text; proposal,
 clarification và result selection là native function calls. `FlexibleDecision` chỉ
 là nhãn nội bộ; không export JSON envelope/full union vào prompt. Export và serving
 dùng cùng request projection/parser; application suy ra outcome từ canonical results.

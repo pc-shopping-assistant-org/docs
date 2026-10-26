@@ -55,6 +55,12 @@ application suy ra outcome từ canonical ledger. `task_index=null` trả ground
 response cho lượt này mà không hoàn tất task pending. Model không xuất JSON
 FlexibleDecision; union này chỉ còn là representation nội bộ/đọc dữ liệu đã lưu.
 
+**Source evidence:** model chỉ trả quote nguyên văn khi đăng ký task, trích xuất
+requirements, chọn/sửa pending hoặc đề xuất requirements trong ReAct. Application
+tìm quote trong đúng user message (hoặc `source_text` của proposal) rồi tính
+`start/end` trước khi ghi state. Quote thiếu hoặc trùng vị trí bị từ chối; model
+không được tự cung cấp offset. Checkpoint cũ vẫn đọc theo contract nội bộ có span.
+
 Native tool calling dùng OpenAI/Gemini/Qwen adapters; không text parser/`exec`.
 Chỉ bind allowed subset. Khi hỗ trợ thì tắt parallel calls, nhưng vẫn validate:
 multiple/malformed/mixed calls bị reject cả response. Không append hai calls rồi

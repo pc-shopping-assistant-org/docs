@@ -22,6 +22,7 @@ không downgrade BUILD thành generic advice success.
 Requirement/task extraction trả typed drafts, không trực tiếp trusted state.
 Wire schema phải map explicit; null/refusal/truncation/malformed không trở thành empty patch.
 Validation toàn response trước resolve/merge; không stream partial draft vào state.
+Model trả quote nguyên văn; application tính source offsets trước khi tạo draft nội bộ.
 
 Task extraction chỉ đăng ký requested tasks. Requirement extraction được dùng khi
 proposal cần chứng minh explicit user source, không mandatory prefix mọi turn.
@@ -39,7 +40,7 @@ AIMessage/ToolMessage. Tối đa một accepted call mỗi response.
   `ask_clarification`, `submit_result` được normalize nội bộ; JSON action envelope
   cũ bị reject, không fallback. Model chọn refs, application xác định outcome.
 
-Protocol `text-native-controls-v1` được dùng chung bởi serving và training export.
+Protocol `text-native-controls-v2` được dùng chung bởi serving và training export.
 Control acknowledgements là checkpointed transitions, không business ToolResults;
 projection giữ matched pairs và thứ tự cùng business ledger.
 
@@ -71,7 +72,7 @@ native tools dùng template/parser của vLLM, không text parser tự chế tro
 Structured JSON hiện là schema guidance trong prompt + Pydantic validation, không
 server-enforced grammar decoding. Cần đo raw validity/repair trên model thật trước
 khi coi adapter đạt chất lượng; không bảo đảm output luôn hợp lệ.
-Chỉ ReAct/RequirementDraft/TaskDraftBatch dùng adapter; head phụ chưa train vẫn dùng base weights.
+Chỉ ReAct/QuotedRequirementDraft/QuotedTaskBatch dùng adapter; head phụ chưa train vẫn dùng base weights.
 Pilot còn DRAFT; chưa có lượt train, model quality hoặc GPU serving được xác minh.
 
 Core dùng scripted models; protocol tests phải tôn trọng khác biệt OpenAI/Gemini/Qwen.

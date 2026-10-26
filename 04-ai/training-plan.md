@@ -38,6 +38,8 @@ Ba nhóm nhãn, dùng lại DTO của runtime:
 
 Scope này chưa cover mọi model call: task/reference/unit reply, amendment và các
 head phụ phải được đánh giá riêng trước khi thay provider toàn cục.
+Từ protocol v2, model học quote nguyên văn; runtime tính source offsets. Adapter
+huấn luyện bằng export cũ phải train lại trước khi dùng với schema mới.
 
 ## Các phase và điều kiện hoàn thành
 
