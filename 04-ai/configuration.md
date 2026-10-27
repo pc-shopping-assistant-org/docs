@@ -41,11 +41,13 @@ startup lỗi; Settings/OpenAPI và các công cụ offline vẫn dựng đượ
 
 ## Hardware mapping
 
-Category type lấy từ `hardwareType` trong snapshot catalog, không đọc mapping UUID
+Category type lấy từ `hardwareType` (code của master data) trong snapshot catalog,
+không đọc mapping UUID
 từ env. Catalog seed production quản lý taxonomy; đổi tên category không đổi loại.
-Category không thuộc phần cứng trả `null` và không đi vào optimizer.
-Snapshot thiếu field `hardwareType` hoặc chứa mã không hỗ trợ bị từ chối; AI không
-đoán loại từ tên sản phẩm. Deploy catalog mới trước AI mới.
+Category `OTHER` và các nhóm sản phẩm như `PREBUILT_PC` không phải slot linh kiện
+nên được bỏ qua khi dựng candidate pool; chúng vẫn hợp lệ cho catalog/product search.
+Snapshot thiếu field `hardwareType` vẫn bị từ chối; mã master mới không làm hỏng toàn
+bộ trang nhưng không được tự ép vào một slot optimizer. Deploy catalog mới trước AI mới.
 
 `AI_HARDWARE_CATALOG_MAPPING` là optional, chỉ dùng cho custom field mapping:
 `version`, `spec_fields`, `option_fields`. Bỏ `categories` khỏi env cũ.

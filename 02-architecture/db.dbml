@@ -77,17 +77,33 @@ Table brands {
   created_at timestamp [not null, default: `current_timestamp`]
 }
 
+Table hardware_types {
+  id uuid [pk, default: `uuidv7()`]
+  code varchar(30) [not null, unique, note: 'Stable machine code consumed by catalog/AI']
+  name_vi varchar(100) [not null]
+  name_en varchar(100) [not null]
+  status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
+  display_order int [not null, default: 0]
+  created_at timestamp [not null, default: `current_timestamp`]
+
+  checks {
+    `display_order >= 0`
+  }
+}
+
 Table categories {
   id uuid [pk, default: `uuidv7()`]
   name varchar(255) [not null, unique]
   seo_name varchar(255) [not null, unique]
-  hardware_type varchar(20) [note: 'Nullable stable type: CPU, MAINBOARD, RAM, GPU, PSU, CASE, COOLER, STORAGE, MONITOR, MOUSE, KEYBOARD, HEADSET; independent of display name/UUID']
+  hardware_type_id uuid [not null, ref: > hardware_types.id, note: 'Master-data reference; OTHER represents the generic Khác category']
+  description text
+  display_order int [not null, default: 0, note: 'Lower values appear first; ties fall back to name']
   parent_id uuid
   status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
   created_at timestamp [not null, default: `current_timestamp`]
 
   checks {
-    `hardware_type IN ('CPU', 'MAINBOARD', 'RAM', 'GPU', 'PSU', 'CASE', 'COOLER', 'STORAGE', 'MONITOR', 'MOUSE', 'KEYBOARD', 'HEADSET')`
+    `display_order >= 0`
   }
 }
 
@@ -95,36 +111,25 @@ Table attribute_definitions {
   id uuid [pk, default: `uuidv7()`]
   key varchar(100) [not null, unique]
   display_name varchar(255) [not null]
-  data_type varchar(20) [not null, note: 'NUMBER, STRING, ENUM, BOOLEAN']
+  data_type varchar(20) [not null, note: 'NUMBER, STRING, ENUM, BOOLEAN, LIST']
   unit varchar(50)
   allowed_values jsonb
   aliases jsonb
   filterable boolean [not null, default: false]
   comparable boolean [not null, default: false]
-  status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
-  created_at timestamp [not null, default: `current_timestamp`]
-}
-
-Table category_attribute_groups {
-  id uuid [pk, default: `uuidv7()`]
-  category_id uuid [not null, ref: > categories.id]
-  name varchar(100) [not null, note: 'Màn hình, Camera, Pin & Sạc...']
-  display_order int [not null, default: 0]
-  status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
   created_at timestamp [not null, default: `current_timestamp`]
 }
 
 Table category_attributes {
   id uuid [pk, default: `uuidv7()`]
-  category_group_id uuid [not null, ref: > category_attribute_groups.id]
+  category_id uuid [not null, ref: > categories.id]
   attribute_id uuid [not null, ref: > attribute_definitions.id]
   required boolean [not null, default: false]
   display_order int [not null, default: 0]
-  status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
   created_at timestamp [not null, default: `current_timestamp`]
 
   indexes {
-    (category_group_id, attribute_id) [unique]
+    (category_id, attribute_id) [unique]
   }
 }
 

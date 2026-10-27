@@ -11,16 +11,29 @@ visible catalog; no top-k/keyword shortlist is treated as complete candidate pro
 
 Response: `{data, message: "SUCCESS", errors: []}`. Data is
 `{items: ProductDetailResponse[], hasNext, nextCursor, size}`. Each item contains
-product identity/category/status/specifications, nullable `hardwareType`, and variants with identity,
+product identity/category/status/specifications, a master-data `hardwareType`, and variants with identity,
 productId/SKU/price/quantity/status/options. Empty arrays/maps are valid; missing
 specifications/variants are not a hardware snapshot and AI rejects the response.
 
-`hardwareType` comes from the product category's stable hardware code, batch-loaded
-with its display name. Core values: CPU, MAINBOARD, RAM, GPU, PSU, CASE, COOLER,
-STORAGE; accessories: MONITOR, MOUSE, KEYBOARD, HEADSET. A non-hardware/inactive
-category returns null. `GET /categories` also exposes this metadata. AI consumes
-the snapshot field directly; category UUIDs and names are not configuration.
+`hardwareType` comes from the product category's `hardware_types.code`,
+batch-loaded through its FK. Core values: CPU, MAINBOARD, RAM,
+GPU, PSU, CASE, COOLER, STORAGE; accessories: MONITOR, MOUSE, KEYBOARD, HEADSET.
+Prebuilt product groups use separate master codes such as `PREBUILT_PC` and `PC_GAMING`;
+they are valid catalog taxonomy but are not optimizer slots. The generic `OTHER` category
+is used for products outside the component/accessory taxonomy. `GET /categories`
+also exposes this metadata. AI consumes the snapshot field directly; category UUIDs and names are not configuration.
+Category responses also expose non-negative `displayOrder`; public/admin lists and
+the nested tree sort by `displayOrder ASC`, then category name. The generic `Khác`
+category uses the `OTHER` hardware type and a high display order so it stays after
+typed hardware categories.
 Publish the updated catalog before the updated AI image.
+
+`GET /hardware-types` returns active `{id, code, nameVi, nameEn, displayOrder}`
+records sorted by display order/code. The admin dropdown uses this endpoint.
+Category create/update accepts `hardwareTypeCode` and `displayOrder`; create defaults
+to the `OTHER` master row, while update keeps the existing type/order when omitted.
+Employee-only `PUT /categories/order` accepts `{items: [{id, displayOrder}]}`.
+All IDs must be distinct live categories with the same parent; the update is atomic.
 
 Products retain descending-ID cursor order; variants sort by product, price, ID.
 One read-only REPEATABLE_READ transaction covers a page's product/association reads.

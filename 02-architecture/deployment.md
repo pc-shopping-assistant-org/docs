@@ -31,7 +31,7 @@ không ghi UUID vào env.
 - Không COPY env hoặc truyền deployment config/secrets qua Docker build args.
 - FE nhận Google client ID từ allowlisted runtime endpoint `/api/config`, không
   dùng `NEXT_PUBLIC_*` baked values. Backend/AI endpoints chỉ nằm ở BFF server.
-- Local app dùng env mẫu riêng trong `infra/env/`; không dùng Docker DNS từ host.
+- Local app dùng `.env.example` trong từng repo backend/AI; không dùng Docker DNS từ host.
 - Caddy global terminate TLS cho HTTP. Native dependencies mặc định loopback qua
   SSH, có auth; không public plaintext native ports hoặc management APIs.
 

@@ -1,8 +1,12 @@
--- catalog-service V9: NULL for categories outside the hardware taxonomy.
-ALTER TABLE categories ADD CONSTRAINT ck_categories_hardware_type CHECK (
-    hardware_type IN ('CPU', 'MAINBOARD', 'RAM', 'GPU', 'PSU', 'CASE', 'COOLER',
-                     'STORAGE', 'MONITOR', 'MOUSE', 'KEYBOARD', 'HEADSET')
-);
+-- Hardware type is master data. Generic categories use the explicit OTHER row;
+-- categories must not leave the FK NULL after V13.
+-- `hardware_types.code` is unique in the V13 table definition.
+ALTER TABLE categories ALTER COLUMN hardware_type_id SET NOT NULL;
+
+-- Category navigation order is explicit; migration V12 owns the table constraint.
+-- The storefront sorts by display_order ASC, then name ASC.
+ALTER TABLE categories ADD CONSTRAINT ck_categories_display_order CHECK (display_order >= 0);
+CREATE INDEX idx_categories_parent_display_order ON categories(parent_id, display_order, name);
 
 -- Partial unique index: one default address per customer.
 -- Non-default addresses remain unlimited.
