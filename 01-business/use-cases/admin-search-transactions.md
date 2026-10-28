@@ -5,7 +5,7 @@
 | Thuộc tính | Giá trị |
 |---|---|
 | ID | `UC-ADM-PAY-003` |
-| Tác nhân | Quản lý cửa hàng |
+| Tác nhân | Nhân viên |
 | Mức nguồn | **REQUIREMENT** |
 | Nguồn | Chương 3.1.2, tr. 42 |
 
@@ -17,7 +17,7 @@ Tìm kiếm giao dịch thanh toán theo phạm vi nghiệp vụ được report
 
 ## Điều kiện trước
 
-Có dữ liệu thanh toán.
+Tác nhân đã đăng nhập với vai trò nhân viên (`ROLE_EMPLOYEE`). Có dữ liệu thanh toán.
 
 ## Điều kiện sau
 
@@ -25,13 +25,14 @@ Các giao dịch phù hợp được hiển thị.
 
 ## Luồng chính
 
-1. Nhập mã giao dịch, khách hàng hoặc thời gian.
-2. Hệ thống tìm kiếm.
-3. Hiển thị kết quả.
+1. Nhập mã giao dịch, mã đơn, khách hàng, trạng thái hoặc khoảng thời gian tạo.
+2. Hệ thống tìm kiếm. Nếu nhập tên khách thì hệ thống hỏi Identity Service lấy danh sách khách phù hợp rồi lọc theo đó (kết hợp với mã khách nếu có cả hai). Không khách nào khớp tên thì trả danh sách rỗng.
+3. Hiển thị kết quả theo số trang (mỗi trang 1–100, mặc định 50), mới nhất trước, kèm tổng số.
 
 ## Luồng thay thế / ngoại lệ
 
-- Không được report đặc tả thêm.
+- Số trang âm, kích thước trang ngoài 1–100, hoặc thời điểm bắt đầu không trước thời điểm kết thúc → từ chối.
+- Identity Service không trả lời khi tìm theo tên khách → báo lỗi.
 
 ## Ghi chú phạm vi
 

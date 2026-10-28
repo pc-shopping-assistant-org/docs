@@ -5,7 +5,7 @@
 | Thuộc tính | Giá trị |
 |---|---|
 | ID | `UC-ADM-STAT-001` |
-| Tác nhân | Quản lý cửa hàng |
+| Tác nhân | Quản trị viên |
 | Mức nguồn | **IMPLEMENTATION** |
 | Nguồn | Chương 5.2.7, tr. 89 |
 
@@ -17,7 +17,7 @@ Xem thống kê theo phạm vi nghiệp vụ được report mô tả.
 
 ## Điều kiện trước
 
-Quản lý đã đăng nhập.
+Tác nhân đã đăng nhập với vai trò quản trị viên (`ROLE_ADMIN`).
 
 ## Điều kiện sau
 
@@ -25,12 +25,15 @@ Thông tin thống kê được hiển thị.
 
 ## Luồng chính
 
-1. Mở trang thống kê.
-2. Hệ thống tổng hợp và hiển thị dữ liệu.
+1. Mở trang thống kê và chọn khoảng ngày (theo múi giờ cửa hàng, gồm cả ngày cuối).
+2. Hệ thống tổng hợp từ Order Service và hiển thị:
+   - Doanh thu theo ngày hoặc tháng (biểu đồ): tổng tiền các đơn `COMPLETED` nhóm theo ngày giao, kèm số đơn; kỳ không có đơn là 0. Tối đa 366 ngày, hoặc 60 tháng khi xem theo tháng.
+   - Top sản phẩm bán chạy: nhóm các dòng hàng của đơn `COMPLETED` theo variant, xếp theo tổng số lượng (tối đa 50 dòng), kèm doanh thu; tên, SKU, nhãn lấy từ snapshot của dòng hàng. Tính theo variant, không gộp theo sản phẩm.
+   - Số đơn theo trạng thái, lọc theo ngày tạo; luôn có đủ 6 trạng thái.
 
 ## Luồng thay thế / ngoại lệ
 
-- Report không đặc tả chỉ số/thước đo cụ thể trong Chương 3.
+- Khoảng ngày đảo ngược hoặc quá dài, giới hạn top ngoài 1–50, thiếu ngày bắt đầu/kết thúc ở biểu đồ doanh thu → từ chối.
 
 ## Ghi chú phạm vi
 

@@ -17,7 +17,7 @@ Xem chi tiết đơn hàng theo phạm vi nghiệp vụ được report mô tả
 
 ## Điều kiện trước
 
-Khách hàng có quyền xem đơn.
+Tác nhân đã đăng nhập với vai trò khách hàng (`ROLE_CUSTOMER`). Khách hàng là chủ đơn.
 
 ## Điều kiện sau
 
@@ -27,12 +27,13 @@ Chi tiết sản phẩm, giá và số lượng của đơn được hiển th�
 
 1. Chọn một đơn hàng.
 2. Hệ thống xác minh order thuộc customer hiện tại.
-3. Hệ thống tải snapshot người nhận, địa chỉ, shipping method/fee, các dòng hàng, payment attempts và trạng thái order.
-4. Hiển thị `unit_price`, item discount, subtotal, order discount và total đúng theo snapshot lúc đặt hàng.
+3. Hệ thống tải snapshot người nhận, địa chỉ, ghi chú, phương thức và phí giao hàng, các dòng hàng, trạng thái order (kèm lý do hủy nếu có) và ngày giao; các lần thanh toán được lấy từ Payment Service, chỉ gồm payment của chính khách.
+4. Hiển thị đơn giá, giảm giá theo dòng, tạm tính, giảm giá cấp đơn và tổng tiền đúng theo snapshot lúc đặt hàng.
 
 ## Luồng thay thế / ngoại lệ
 
-- Order không tồn tại hoặc không thuộc customer hiện tại: không trả dữ liệu đơn.
+- Order không tồn tại hoặc không thuộc customer hiện tại → xử lý như đơn không tồn tại, không trả dữ liệu.
+- Payment Service không trả lời → báo lỗi, không hiển thị chi tiết thiếu thông tin thanh toán.
 
 ## Ghi chú phạm vi
 

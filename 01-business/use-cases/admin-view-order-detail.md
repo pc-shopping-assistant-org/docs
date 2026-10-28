@@ -5,7 +5,7 @@
 | Thuộc tính | Giá trị |
 |---|---|
 | ID | `UC-ADM-ORD-002` |
-| Tác nhân | Quản lý cửa hàng |
+| Tác nhân | Nhân viên |
 | Mức nguồn | **REQUIREMENT** |
 | Nguồn | Chương 3.1.2, tr. 41; Hình 22 |
 
@@ -17,7 +17,7 @@ Xem chi tiết đơn hàng theo phạm vi nghiệp vụ được report mô tả
 
 ## Điều kiện trước
 
-Đơn hàng tồn tại.
+Tác nhân đã đăng nhập với vai trò nhân viên (`ROLE_EMPLOYEE`). Đơn hàng tồn tại.
 
 ## Điều kiện sau
 
@@ -26,12 +26,13 @@ Xem chi tiết đơn hàng theo phạm vi nghiệp vụ được report mô tả
 ## Luồng chính
 
 1. Chọn một đơn hàng.
-2. Hệ thống tải snapshot người nhận, địa chỉ, shipping method/fee, các dòng hàng, discount, payment attempts và lịch sử trạng thái hiện có.
+2. Hệ thống tải snapshot người nhận, địa chỉ, ghi chú, phương thức và phí giao hàng, các dòng hàng, tiền giảm, mọi lần thanh toán (lấy từ Payment Service) và lịch sử trạng thái đầy đủ, mỗi dòng gồm trạng thái cũ, mới, người đổi, lý do và thời điểm.
 3. Hiển thị dữ liệu tài chính từ snapshot của order, không tính lại bằng giá catalog hoặc bảng phí hiện tại.
 
 ## Luồng thay thế / ngoại lệ
 
-- Order không tồn tại: hệ thống thông báo không tìm thấy.
+- Order không tồn tại → thông báo không tìm thấy.
+- Payment Service không trả lời → báo lỗi, không hiển thị thiếu thông tin thanh toán.
 
 ## Ghi chú phạm vi
 

@@ -5,7 +5,7 @@
 | Thuộc tính | Giá trị |
 |---|---|
 | ID | `UC-ADM-INV-001` |
-| Tác nhân | Quản lý cửa hàng |
+| Tác nhân | Nhân viên |
 | Mức nguồn | **REQUIREMENT** |
 | Nguồn | Chương 3.1.2, tr. 41–42 |
 
@@ -17,7 +17,7 @@ Xem hóa đơn theo phạm vi nghiệp vụ được report mô tả.
 
 ## Điều kiện trước
 
-Đơn hàng đã hoàn tất theo mô tả report.
+Tác nhân đã đăng nhập với vai trò nhân viên (`ROLE_EMPLOYEE`). Đơn hàng đã hoàn tất theo mô tả report.
 
 ## Điều kiện sau
 
@@ -27,11 +27,12 @@ Thông tin hóa đơn được hiển thị.
 
 1. Mở chức năng hóa đơn.
 2. Chọn hóa đơn/đơn hoàn tất.
-3. Hệ thống hiển thị thông tin.
+3. Hệ thống hiển thị danh sách hóa đơn (số hóa đơn, người nhận, tổng tiền, ngày hóa đơn, mới nhất trước, phân trang như danh sách đơn) và chi tiết một hóa đơn (người nhận, số điện thoại, địa chỉ giao, các dòng hàng, tạm tính, tiền giảm, phí giao, tổng tiền).
+4. Hóa đơn không có bảng riêng: đó là đơn hàng `COMPLETED`, nội dung lấy từ snapshot của đơn, ngày hóa đơn là ngày giao. Số hóa đơn được sinh lúc tạo đơn nên đơn chưa hoàn tất hoặc đã hủy cũng có số, nhưng màn hình hóa đơn chỉ hiển thị đơn `COMPLETED`.
 
 ## Luồng thay thế / ngoại lệ
 
-- Report không cho thấy module invoice độc lập ở Chương 4/5; đây là source gap cần quyết định.
+- Đơn không tồn tại hoặc chưa `COMPLETED` (kể cả đã hủy) → không hiển thị như hóa đơn.
 
 ## Ghi chú phạm vi
 

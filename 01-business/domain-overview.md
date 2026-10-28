@@ -52,12 +52,12 @@ Track Order
 Review after purchase
 ```
 
-### Quản lý cửa hàng
+### Nhân viên và quản trị viên
 
 Mục tiêu: vận hành dữ liệu và các quy trình bán hàng cơ bản.
 
 ```text
-Products / Categories / Suppliers
+Products / Categories
               ↓
            Catalog
               ↓

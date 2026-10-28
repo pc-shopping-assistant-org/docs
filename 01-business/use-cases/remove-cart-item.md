@@ -17,7 +17,7 @@ Xóa sản phẩm khỏi giỏ theo phạm vi nghiệp vụ được report mô 
 
 ## Điều kiện trước
 
-Giỏ hàng có mặt hàng cần xóa.
+Tác nhân đã đăng nhập với vai trò khách hàng (`ROLE_CUSTOMER`). Giỏ hàng có mặt hàng cần xóa.
 
 ## Điều kiện sau
 
@@ -26,12 +26,13 @@ Mặt hàng được xóa khỏi giỏ.
 ## Luồng chính
 
 1. Mở giỏ hàng.
-2. Chọn xóa mặt hàng.
-3. Hệ thống cập nhật giỏ.
+2. Chọn xóa mặt hàng, hoặc xóa toàn bộ giỏ.
+3. Hệ thống tìm dòng trong cart của customer hiện tại, xóa dòng (hoặc mọi dòng khi xóa toàn bộ giỏ), rồi hiển thị giỏ hàng đã cập nhật. Không phụ thuộc trạng thái bán của variant nên dòng đã hết bán vẫn xóa được.
 
 ## Luồng thay thế / ngoại lệ
 
-- Không được report đặc tả thêm.
+- Customer chưa có cart hoặc variant không nằm trong giỏ → từ chối.
+- Xóa toàn bộ giỏ khi chưa có cart hoặc giỏ đã rỗng → giỏ rỗng, không lỗi.
 
 ## Ghi chú phạm vi
 

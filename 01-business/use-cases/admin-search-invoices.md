@@ -5,7 +5,7 @@
 | Thuộc tính | Giá trị |
 |---|---|
 | ID | `UC-ADM-INV-002` |
-| Tác nhân | Quản lý cửa hàng |
+| Tác nhân | Nhân viên |
 | Mức nguồn | **REQUIREMENT** |
 | Nguồn | Chương 3.1.2, tr. 41–42 |
 
@@ -17,7 +17,7 @@ Tìm kiếm/lọc hóa đơn theo phạm vi nghiệp vụ được report mô t�
 
 ## Điều kiện trước
 
-Có dữ liệu hóa đơn/đơn hoàn tất.
+Tác nhân đã đăng nhập với vai trò nhân viên (`ROLE_EMPLOYEE`). Có dữ liệu hóa đơn/đơn hoàn tất.
 
 ## Điều kiện sau
 
@@ -25,13 +25,14 @@ Kết quả phù hợp được hiển thị.
 
 ## Luồng chính
 
-1. Tìm theo mã hóa đơn hoặc tên khách hàng.
-2. Có thể lọc theo ngày/tháng/năm.
-3. Hệ thống hiển thị kết quả.
+1. Tìm theo số hóa đơn hoặc tên khách hàng (tên người nhận trên đơn), chỉ trong các đơn `COMPLETED`.
+2. Có thể lọc theo ngày hóa đơn (ngày giao hàng): từ ngày (gồm) đến ngày (không gồm), từ ngày phải trước đến ngày.
+3. Hệ thống hiển thị kết quả. Từ khóa khớp một phần số hóa đơn hoặc tên người nhận, không phân biệt hoa thường; bỏ trống thì không lọc theo từ khóa. Sắp theo ngày hóa đơn mới nhất trước, phân trang (mỗi trang 1–100).
 
 ## Luồng thay thế / ngoại lệ
 
-- Report không xác định rõ invoice entity độc lập.
+- Số trang âm, kích thước trang ngoài 1–100, hoặc khoảng ngày sai → từ chối.
+- Không có hóa đơn khớp → danh sách rỗng.
 
 ## Ghi chú phạm vi
 

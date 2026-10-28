@@ -5,7 +5,7 @@
 | Thuộc tính | Giá trị |
 |---|---|
 | ID | `UC-ADM-CUS-001` |
-| Tác nhân | Quản lý cửa hàng |
+| Tác nhân | Nhân viên |
 | Mức nguồn | **REQUIREMENT** |
 | Nguồn | Chương 3.1.2, tr. 42; Hình 19 |
 
@@ -17,7 +17,7 @@ Xem danh sách khách hàng theo phạm vi nghiệp vụ được report mô t�
 
 ## Điều kiện trước
 
-Quản lý đã đăng nhập.
+Tác nhân đã đăng nhập với vai trò nhân viên (`ROLE_EMPLOYEE`).
 
 ## Điều kiện sau
 
@@ -26,11 +26,11 @@ Danh sách khách hàng được hiển thị.
 ## Luồng chính
 
 1. Mở quản lý khách hàng.
-2. Hệ thống tải và hiển thị danh sách.
+2. Hệ thống tải và hiển thị danh sách khách, đăng ký mới nhất trước, phân trang (mỗi trang tối đa 100). Mỗi dòng có ảnh đại diện.
 
 ## Luồng thay thế / ngoại lệ
 
-- Không được report đặc tả thêm.
+- Chưa có khách nào → danh sách rỗng.
 
 ## Ghi chú phạm vi
 

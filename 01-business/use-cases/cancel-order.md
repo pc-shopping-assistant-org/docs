@@ -17,22 +17,30 @@ Hủy đơn hàng theo phạm vi nghiệp vụ được report mô tả.
 
 ## Điều kiện trước
 
-Đơn hàng thuộc trạng thái đang chờ duyệt/chờ xác nhận theo report.
+Tác nhân đã đăng nhập với vai trò khách hàng (`ROLE_CUSTOMER`). Là chủ đơn; đơn đang ở `PENDING_PAYMENT` hoặc `PENDING_CONFIRMATION`.
 
 ## Điều kiện sau
 
-Đơn hàng được chuyển sang trạng thái hủy.
+Đơn hàng được chuyển sang `CANCELLED`.
 
 ## Luồng chính
 
 1. Khách hàng chọn đơn đang chờ.
-2. Chọn hủy đơn.
-3. Hệ thống kiểm tra trạng thái.
-4. Nếu hợp lệ, cập nhật đơn thành đã hủy.
+2. Chọn hủy đơn (có thể nhập lý do).
+3. Hệ thống khóa đơn để kết quả thanh toán hay lần hủy thứ hai không chen vào, rồi kiểm tra chủ đơn và trạng thái.
+4. Nếu hợp lệ, hệ thống chuyển đơn sang `CANCELLED` và ghi một dòng lịch sử trạng thái (lý do hủy nếu khách nhập) trong cùng transaction.
+5. Hệ thống xử lý hệ quả qua saga:
+   - Order Service ghi vào outbox, cùng transaction với việc hủy, lệnh trả tồn kho và sự kiện đơn bị hủy.
+   - Catalog Service trả lại đúng phần tồn kho đơn đang giữ (đơn chưa giữ được thì không có gì để trả).
+   - Payment Service chuyển payment `PENDING` (đơn chờ thanh toán online, hoặc đơn COD chưa thu tiền) sang `CANCELLED`.
+   - Đơn đã thanh toán online: payment vẫn `PAID`. Nhân viên liên hệ khách, hoàn tiền ngoài hệ thống rồi đánh dấu `REFUNDED` (UC-ADM-PAY-002). Hệ thống không hoàn tiền qua cổng thanh toán.
 
 ## Luồng thay thế / ngoại lệ
 
-- Đơn không còn ở trạng thái cho phép hủy.
+- Đơn không còn ở trạng thái cho phép hủy (từ `CONFIRMED` trở đi khách không tự hủy được; liên hệ nhân viên) → từ chối.
+- Đơn không thuộc khách đang đăng nhập → xử lý như đơn không tồn tại.
+- Đơn đã `CANCELLED` → từ chối (trạng thái cuối).
+- Hệ thống cũng tự hủy đơn (không do khách) khi thanh toán online thất bại, hoặc khi Catalog không giữ được tồn kho; trường hợp thanh toán thất bại có trả lại tồn kho. Lý do hủy hiển thị cho khách ở trạng thái và chi tiết đơn.
 
 ## Ghi chú phạm vi
 

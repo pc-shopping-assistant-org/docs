@@ -10,9 +10,14 @@
 - Email và số điện thoại đăng ký không được trùng theo luồng report.
 - Đổi/quên mật khẩu sử dụng OTP.
 - Google Login chỉ chấp nhận ID token đã verify (signature, issuer, audience và
-  `email_verified`); MVP liên kết Google `sub` với tài khoản local đã tồn tại.
-- Google Login không tự tạo customer mới vì luồng đăng ký local vẫn yêu cầu
-  phone, password và địa chỉ giao hàng.
+  `email_verified`).
+- Lần đầu đăng nhập Google: nếu email đã có tài khoản local thì liên kết Google
+  `sub` vào tài khoản đó; nếu chưa có thì tự tạo tài khoản khách hàng
+  (`ROLE_CUSTOMER`, `ACTIVE`) chưa có mật khẩu và số điện thoại. Google Login
+  không bao giờ tạo hay nâng quyền tài khoản nhân viên/quản trị.
+- Tài khoản tạo từ Google đặt mật khẩu lần đầu bằng mã OTP gửi email (không cần
+  mật khẩu hiện tại) và bổ sung số điện thoại sau; ảnh Google được sao chép nền
+  vào Media Service, lỗi ảnh không ảnh hưởng đăng nhập.
 - Chức năng quản trị yêu cầu đăng nhập đúng vai trò.
 - Tài khoản có thể bị khóa mà dữ liệu hồ sơ vẫn được giữ.
 - Khóa customer hoặc employee được thực hiện bằng `accounts.status = LOCKED`; không xóa profile.
@@ -33,7 +38,6 @@
 - Sản phẩm có thể ngừng trưng bày.
 - Report nói chỉ xóa sản phẩm khi chưa nhập về kho; khả năng chứng minh rule này phải được kiểm tra ở data design.
 - Danh mục chỉ được xóa nếu chưa có sản phẩm thuộc danh mục.
-- Product và supplier có quan hệ nhiều-nhiều qua `product_suppliers`; nhà cung cấp chỉ được xóa khi không còn liên kết với product.
 - File/media dùng `files` làm registry; entity nghiệp vụ chỉ lưu `file_id`, không lưu URL như identity.
 - Mỗi variant có tối đa một ảnh main đang `ACTIVE`; gallery ảnh liên kết với variant qua `product_images`.
 - Signed URL được resolve khi đọc và không phải source of truth của file.

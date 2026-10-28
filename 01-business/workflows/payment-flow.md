@@ -8,9 +8,9 @@ Checkout có hai nhánh chính: COD và thanh toán online. Hai nhánh chỉ kh�
 flowchart TD
     A[Checkout] --> B{Phương thức}
     B -- Online --> C[Tạo order: PENDING_PAYMENT]
-    C --> D[Xử lý payment]
+    C --> D[Xử lý payment: VNPAY trả kết quả qua callback IPN/return có chữ ký]
     D --> E{Payment PAID?}
-    E -- Không --> F[Payment FAILED; order vẫn PENDING_PAYMENT theo policy]
+    E -- Không --> F[Payment FAILED; order CANCELLED, trả tồn kho]
     E -- Có --> G[Order: PENDING_CONFIRMATION]
     G --> H[Admin confirm]
     H --> I[Order: CONFIRMED]
@@ -25,3 +25,5 @@ flowchart TD
     N --> P[Order: COMPLETED]
     O --> P
 ```
+
+Thứ tự trong thực tế hơi khác sơ đồ ở một điểm: đơn chuyển `COMPLETED` do nhân viên đẩy trạng thái và không kiểm tra payment; với COD nhân viên đánh dấu payment `PAID` bằng thao tác riêng (UC-ADM-PAY-002), có thể trước hoặc sau khi hoàn tất đơn.

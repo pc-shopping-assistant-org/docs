@@ -16,8 +16,33 @@ flowchart TD
     I --> J[Tạo đơn hàng]
 ```
 
-Sau bước tạo đơn:
+Giỏ hàng chỉ có cho khách đã đăng nhập, nên bước đầu của luồng bắt buộc là đăng nhập. Khi bấm xác nhận, hệ thống gộp bước "Tạo đơn hàng" thành một transaction ở Order Service (kiểm tra giỏ, snapshot giá/địa chỉ/phí giao, áp discount, lưu đơn, xóa các dòng giỏ, ghi lệnh giữ tồn kho vào outbox); client gửi kèm `idempotencyKey` nên gửi lại không tạo đơn thứ hai.
 
-- Online: order `PENDING_PAYMENT` → payment `PAID` → order `PENDING_CONFIRMATION`.
-- COD: order `PENDING_CONFIRMATION` → admin confirm → `CONFIRMED`.
+Sau bước tạo đơn, việc còn lại chạy bất đồng bộ qua saga:
+
+```mermaid
+sequenceDiagram
+    participant C as Khách hàng
+    participant O as Order Service
+    participant K as Catalog Service
+    participant P as Payment Service
+    C->>O: POST /orders (idempotencyKey)
+    O-->>C: 201, đơn PENDING_PAYMENT (online) / PENDING_CONFIRMATION (COD)
+    O->>K: ReserveStockCommand (RabbitMQ, outbox)
+    alt giữ được tồn kho
+        K-->>O: stock.reserved (Kafka)
+        O->>P: tạo payment PENDING (khóa = id đơn)
+        opt thanh toán online
+            C->>P: lấy URL VNPAY, thanh toán
+            P-->>O: payment.completed -> PENDING_CONFIRMATION
+            P-->>O: payment.failed -> CANCELLED + trả tồn kho
+        end
+    else không giữ được
+        K-->>O: stock.reserve-failed -> đơn CANCELLED
+    end
+```
+
+- Online: order `PENDING_PAYMENT` → payment `PAID` → order `PENDING_CONFIRMATION`. Payment thất bại thì đơn bị hủy và trả tồn kho, không ở lại `PENDING_PAYMENT`.
+- COD: order `PENDING_CONFIRMATION` → nhân viên xác nhận → `CONFIRMED`.
 - Cả hai nhánh tiếp tục `SHIPPING` → giao thành công → `COMPLETED`.
+- Khách hủy được khi đơn còn `PENDING_PAYMENT`/`PENDING_CONFIRMATION`.

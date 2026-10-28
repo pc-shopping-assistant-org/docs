@@ -5,7 +5,7 @@
 | Thuộc tính | Giá trị |
 |---|---|
 | ID | `UC-ADM-EMP-003` |
-| Tác nhân | Quản lý cửa hàng |
+| Tác nhân | Quản trị viên |
 | Mức nguồn | **REQUIREMENT** |
 | Nguồn | Hình 20, tr. 52 |
 
@@ -17,7 +17,7 @@ Xem thông tin chi tiết nhân viên theo phạm vi nghiệp vụ được repo
 
 ## Điều kiện trước
 
-Nhân viên tồn tại.
+Tác nhân đã đăng nhập với vai trò quản trị viên (`ROLE_ADMIN`). Nhân viên tồn tại.
 
 ## Điều kiện sau
 
@@ -26,11 +26,11 @@ Thông tin chi tiết nhân viên được hiển thị.
 ## Luồng chính
 
 1. Chọn nhân viên.
-2. Hệ thống hiển thị thông tin.
+2. Hệ thống hiển thị thông tin chi tiết của nhân viên.
 
 ## Luồng thay thế / ngoại lệ
 
-- Không được report đặc tả thêm.
+- Mã không phải của nhân viên (kể cả khách hàng, quản trị viên) → thông báo không tìm thấy.
 
 ## Ghi chú phạm vi
 

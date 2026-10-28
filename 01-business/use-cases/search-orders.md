@@ -17,7 +17,7 @@ Tìm kiếm đơn hàng theo phạm vi nghiệp vụ được report mô tả.
 
 ## Điều kiện trước
 
-Khách hàng có quyền xem đơn của mình.
+Tác nhân đã đăng nhập với vai trò khách hàng (`ROLE_CUSTOMER`). Khách hàng có đơn hàng của mình.
 
 ## Điều kiện sau
 
@@ -26,15 +26,13 @@ Khách hàng có quyền xem đơn của mình.
 ## Luồng chính
 
 1. Nhập số hóa đơn/mã đơn theo mô tả report.
-2. Client gửi giá trị qua query `keyword`; backend chấp nhận UUID đầy đủ,
-   UUID không dấu gạch hoặc mã hóa đơn `INV-XXXXXXXX` (8 ký tự đầu UUID).
-3. Hệ thống tìm trong phạm vi đơn của khách và áp dụng thêm status/cursor nếu
-   được gửi.
-4. Hiển thị kết quả.
+2. Hệ thống chấp nhận mã đơn (UUID đầy đủ hoặc không dấu gạch) hoặc số hóa đơn dạng `INV-` + 10 ký tự ngẫu nhiên, sinh lúc tạo đơn (ví dụ `INV-7K3M9QX2BD`).
+3. Hệ thống tìm trong phạm vi đơn của khách và áp dụng thêm trạng thái nếu được chọn. Từ khóa khớp **chính xác** mã đơn hoặc số hóa đơn (không phân biệt hoa thường); không tìm theo một phần mã hay theo tên sản phẩm.
+4. Hiển thị kết quả cùng định dạng, phân trang với lịch sử đơn hàng. Từ khóa rỗng thì trả toàn bộ đơn của khách.
 
 ## Luồng thay thế / ngoại lệ
 
-- Không tìm thấy đơn.
+- Không tìm thấy đơn, hoặc mã thuộc đơn của khách khác → danh sách rỗng (không lộ đơn người khác).
 
 ## Ghi chú phạm vi
 

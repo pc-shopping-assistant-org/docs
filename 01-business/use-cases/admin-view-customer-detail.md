@@ -5,7 +5,7 @@
 | Thuộc tính | Giá trị |
 |---|---|
 | ID | `UC-ADM-CUS-003` |
-| Tác nhân | Quản lý cửa hàng |
+| Tác nhân | Nhân viên |
 | Mức nguồn | **REQUIREMENT** |
 | Nguồn | Hình 19, tr. 51; Chương 3.1.2, tr. 42 |
 
@@ -17,7 +17,7 @@ Xem thông tin khách hàng theo phạm vi nghiệp vụ được report mô t�
 
 ## Điều kiện trước
 
-Quản lý đã đăng nhập; khách hàng tồn tại.
+Tác nhân đã đăng nhập với vai trò nhân viên (`ROLE_EMPLOYEE`). Khách hàng tồn tại.
 
 ## Điều kiện sau
 
@@ -26,11 +26,11 @@ Thông tin khách hàng được hiển thị.
 ## Luồng chính
 
 1. Chọn khách hàng.
-2. Hệ thống hiển thị thông tin chi tiết.
+2. Hệ thống hiển thị hồ sơ khách: email, số điện thoại, trạng thái tài khoản, họ tên, giới tính, ngày sinh, ảnh đại diện, ngày đăng ký, kèm danh sách địa chỉ (địa chỉ mặc định trước).
 
 ## Luồng thay thế / ngoại lệ
 
-- Không được report đặc tả thêm.
+- Mã không phải của khách hàng → thông báo không tìm thấy.
 
 ## Ghi chú phạm vi
 

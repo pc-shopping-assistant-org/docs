@@ -5,7 +5,7 @@
 | Thuộc tính | Giá trị |
 |---|---|
 | ID | `UC-ADM-PAY-001` |
-| Tác nhân | Quản lý cửa hàng |
+| Tác nhân | Nhân viên |
 | Mức nguồn | **REQUIREMENT** |
 | Nguồn | Chương 3.1.2, tr. 42 |
 
@@ -17,7 +17,7 @@ Xem phương thức thanh toán theo phạm vi nghiệp vụ được report mô
 
 ## Điều kiện trước
 
-Quản lý đã đăng nhập.
+Tác nhân đã đăng nhập với vai trò nhân viên (`ROLE_EMPLOYEE`).
 
 ## Điều kiện sau
 
@@ -26,11 +26,12 @@ Các hình thức thanh toán được hỗ trợ được hiển thị.
 ## Luồng chính
 
 1. Mở quản lý thanh toán.
-2. Hệ thống hiển thị các phương thức hỗ trợ.
+2. Hệ thống hiển thị mọi phương thức đã cấu hình, đang dùng hay không, sắp theo tên: mã, tên, trạng thái (`ACTIVE`/`INACTIVE`). Hiện có `COD` và `VNPAY` đang dùng; thẻ online cũ đã `INACTIVE` từ khi chuyển sang VNPAY.
+3. Khách hàng khi đặt hàng chỉ thấy các phương thức `ACTIVE`.
 
 ## Luồng thay thế / ngoại lệ
 
-- Không được report đặc tả thêm.
+- Hệ thống chỉ cho xem; chưa có chức năng thêm, sửa hoặc bật/tắt phương thức thanh toán (thay đổi qua cập nhật dữ liệu hệ thống).
 
 ## Ghi chú phạm vi
 

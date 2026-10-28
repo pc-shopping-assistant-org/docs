@@ -26,18 +26,20 @@ Tài khoản khách hàng mới được tạo thành công.
 ## Luồng chính
 
 1. Mở trang đăng ký.
-2. Nhập thông tin tài khoản, email, số điện thoại, họ tên, ngày sinh, địa chỉ, mật khẩu.
-3. Hệ thống kiểm tra dữ liệu và gửi OTP đến email.
-4. Khách hàng nhập OTP.
-5. Hệ thống xác minh OTP.
-6. Hệ thống tạo tài khoản và chuyển tới đăng nhập.
+2. Nhập email, số điện thoại, mật khẩu, họ, tên, giới tính, ngày sinh và địa chỉ.
+3. Hệ thống chuẩn hóa email/số điện thoại, kiểm tra trùng email và số điện thoại, lưu tạm dữ liệu đăng ký (10 phút) rồi gửi OTP 6 số đến email (hiệu lực 5 phút). Chưa có tài khoản nào được tạo ở bước này.
+4. Khách hàng nhập OTP (có thể yêu cầu gửi lại OTP khi phiên đăng ký còn hiệu lực).
+5. Hệ thống đối chiếu OTP với giá trị đã gửi.
+6. Hệ thống tạo trong một transaction: tài khoản (`ROLE_CUSTOMER`, `ACTIVE`, mật khẩu băm), hồ sơ khách hàng và địa chỉ mặc định (người nhận = họ + tên, số điện thoại và địa chỉ vừa nhập), rồi xóa OTP và dữ liệu đăng ký tạm.
+7. Hệ thống đăng nhập luôn cho khách hàng (cấp token như đăng nhập) nên khách vào hệ thống ngay, không phải đăng nhập lại.
 
 ## Luồng thay thế / ngoại lệ
 
 - Email đã tồn tại.
 - Số điện thoại đã tồn tại.
 - OTP không hợp lệ.
-- Dữ liệu không thỏa ràng buộc.
+- Phiên đăng ký đã hết hạn (quá 10 phút) → phải đăng ký lại; không gửi lại OTP được.
+- Dữ liệu không thỏa ràng buộc: số điện thoại Việt Nam (`0` hoặc `+84` rồi 9–10 số), mật khẩu 8–100 ký tự gồm chữ hoa, chữ thường và số, địa chỉ tối đa 500 ký tự.
 - Người dùng hủy đăng ký.
 
 ## Ghi chú phạm vi

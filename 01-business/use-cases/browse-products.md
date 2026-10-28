@@ -17,7 +17,7 @@ Xem danh sách sản phẩm theo phạm vi nghiệp vụ được report mô t�
 
 ## Điều kiện trước
 
-Người dùng truy cập website.
+Người dùng truy cập website (không cần đăng nhập).
 
 ## Điều kiện sau
 
@@ -26,12 +26,15 @@ Danh sách sản phẩm phù hợp trạng thái hiển thị được trả v�
 ## Luồng chính
 
 1. Mở trang danh sách/danh mục.
-2. Hệ thống tải các sản phẩm.
-3. Hiển thị thông tin cơ bản để người dùng lựa chọn.
+2. Hệ thống tải các sản phẩm. Chỉ sản phẩm `ACTIVE` có ít nhất một variant `ACTIVE` mới được liệt kê, sắp theo sản phẩm mới nhất trước.
+3. Hiển thị thông tin cơ bản để người dùng lựa chọn: tên, thương hiệu, danh mục, ảnh chính, khoảng giá thấp nhất–cao nhất, số variant và tổng tồn kho. Sản phẩm hết hàng vẫn được liệt kê.
+4. Danh sách được phân trang theo số trang (kèm tổng số sản phẩm và tổng số trang), mặc định 20 sản phẩm mỗi trang, tối đa 100. Nếu người dùng yêu cầu trang vượt quá số trang hiện có, giao diện hiển thị trang cuối.
+5. Menu danh mục lấy từ cây danh mục công khai, mỗi danh mục kèm số sản phẩm hiển thị được (gồm cả danh mục con) và tên loại phần cứng lấy từ master data `hardware_types` để dịch tên danh mục theo ngôn ngữ.
 
 ## Luồng thay thế / ngoại lệ
 
-- Không được report đặc tả thêm.
+- Không có sản phẩm nào hiển thị được → danh sách rỗng.
+- Số trang âm → từ chối.
 
 ## Ghi chú phạm vi
 

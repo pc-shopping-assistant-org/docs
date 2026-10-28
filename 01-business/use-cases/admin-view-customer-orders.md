@@ -5,7 +5,7 @@
 | Thuộc tính | Giá trị |
 |---|---|
 | ID | `UC-ADM-CUS-004` |
-| Tác nhân | Quản lý cửa hàng |
+| Tác nhân | Nhân viên |
 | Mức nguồn | **REQUIREMENT** |
 | Nguồn | Chương 3.1.2, tr. 42; Hình 19 |
 
@@ -17,7 +17,7 @@ Xem đơn hàng của khách hàng theo phạm vi nghiệp vụ được report 
 
 ## Điều kiện trước
 
-Khách hàng tồn tại.
+Tác nhân đã đăng nhập với vai trò nhân viên (`ROLE_EMPLOYEE`). Khách hàng tồn tại.
 
 ## Điều kiện sau
 
@@ -27,11 +27,11 @@ Danh sách đơn của khách được hiển thị.
 
 1. Mở chi tiết khách hàng.
 2. Chọn danh sách đơn hàng.
-3. Hệ thống tải các đơn liên quan.
+3. Hệ thống tải các đơn của khách (dùng chung danh sách đơn của nhân viên, lọc theo khách; có thể thêm lọc trạng thái, khoảng ngày, từ khóa), phân trang. Chọn một đơn để xem chi tiết.
 
 ## Luồng thay thế / ngoại lệ
 
-- Không được report đặc tả thêm.
+- Khách chưa có đơn → danh sách rỗng. Màn hình chi tiết khách đã xác nhận khách tồn tại từ hồ sơ.
 
 ## Ghi chú phạm vi
 
