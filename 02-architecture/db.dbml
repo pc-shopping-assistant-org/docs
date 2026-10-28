@@ -67,7 +67,7 @@ Table customer_addresses {
 
 Table hardware_types {
   id uuid [pk, default: `uuidv7()`]
-  code varchar(30) [not null, unique]
+  code varchar(30) [not null, unique, note: 'Stable machine code consumed by catalog/AI']
   name_vi varchar(100) [not null]
   name_en varchar(100) [not null]
   status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
@@ -93,8 +93,8 @@ Table categories {
   status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
   created_at timestamptz [not null, default: `now()`]
   description text
-  display_order int [not null, default: 0]
-  hardware_type_id uuid [not null]
+  display_order int [not null, default: 0, note: 'Lower values appear first; ties fall back to name']
+  hardware_type_id uuid [not null, note: 'Master-data reference; OTHER represents the generic Khác category']
 }
 
 Table attribute_definitions {
