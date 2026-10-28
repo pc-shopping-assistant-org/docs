@@ -1,145 +1,66 @@
--- Hardware type is master data. Generic categories use the explicit OTHER row;
--- categories must not leave the FK NULL after V13.
--- `hardware_types.code` is unique in the V13 table definition.
-ALTER TABLE categories ALTER COLUMN hardware_type_id SET NOT NULL;
+-- Reference only. The source of truth for every constraint is the Flyway
+-- migrations of each service (src/main/resources/db/migration). This file lists
+-- the constraints that are easy to miss because they are partial indexes or
+-- triggers rather than column definitions.
 
--- Category navigation order is explicit; migration V12 owns the table constraint.
--- The storefront sorts by display_order ASC, then name ASC.
-ALTER TABLE categories ADD CONSTRAINT ck_categories_display_order CHECK (display_order >= 0);
-CREATE INDEX idx_categories_parent_display_order ON categories(parent_id, display_order, name);
-
--- Partial unique index: one default address per customer.
--- Non-default addresses remain unlimited.
-CREATE UNIQUE INDEX ux_customer_default_address
+-- identity-service: one default address per customer.
+CREATE UNIQUE INDEX uk_customer_addresses_default
 ON customer_addresses (customer_id)
 WHERE is_default = true;
 
--- A verified Google provider subject can link to at most one account. Local
--- accounts that have not linked Google keep this field NULL.
-CREATE UNIQUE INDEX ux_accounts_google_subject
+-- identity-service: a Google subject links to at most one account.
+CREATE UNIQUE INDEX uk_accounts_google_subject
 ON accounts (google_subject)
 WHERE google_subject IS NOT NULL;
 
--- Shipping method tariffs are non-negative. Orders snapshot the selected fee
--- into orders.shipping_fee at checkout.
--- Implemented as a table CHECK in the Flyway migration:
--- CHECK (fee >= 0)
+-- catalog-service: names, SEO names, SKUs and barcodes are unique only among
+-- non-deleted rows, so a soft-deleted row never blocks reuse.
+CREATE UNIQUE INDEX uk_brands_name        ON brands (name)            WHERE status <> 'DELETED';
+CREATE UNIQUE INDEX uk_brands_seo_name    ON brands (seo_name)        WHERE status <> 'DELETED';
+CREATE UNIQUE INDEX uk_categories_name    ON categories (name)        WHERE status <> 'DELETED';
+CREATE UNIQUE INDEX uk_categories_seo_name ON categories (seo_name)   WHERE status <> 'DELETED';
+CREATE UNIQUE INDEX uk_products_seo_name  ON products (seo_name)      WHERE status <> 'DELETED';
+CREATE UNIQUE INDEX uk_product_variants_sku     ON product_variants (sku)     WHERE status <> 'DELETED';
+CREATE UNIQUE INDEX uk_product_variants_barcode ON product_variants (barcode) WHERE status <> 'DELETED';
 
--- One active main image per product variant.
-CREATE UNIQUE INDEX ux_variant_main_image
-ON product_images (product_variant_id)
-WHERE is_main = true AND status = 'ACTIVE';
+-- catalog-service: hardware type is master data (hardware_types.code is unique).
+-- Every category references one, the generic category using the explicit OTHER row.
+-- Category navigation order is explicit: display_order >= 0, and the storefront
+-- sorts by display_order ASC, then name ASC.
+-- categories.hardware_type_id is NOT NULL; ck_categories_display_order CHECK (display_order >= 0)
+CREATE INDEX idx_categories_parent_display_order ON categories (parent_id, display_order, name);
 
--- A customer or guest session can own at most one active cart.
-CREATE UNIQUE INDEX ux_carts_active_customer
-ON carts (customer_id)
-WHERE status = 'ACTIVE' AND customer_id IS NOT NULL;
+-- catalog-service: at most one main image per product.
+CREATE UNIQUE INDEX uk_product_images_main
+ON product_images (product_id)
+WHERE is_main = true;
 
-CREATE UNIQUE INDEX ux_carts_active_session
-ON carts (session_token)
-WHERE status = 'ACTIVE' AND session_token IS NOT NULL;
+-- catalog-service: a variant has at most one option per normalized option name
+-- (trim + uppercase). Enforced by deferred constraint triggers:
+--   trg_variant_options_unique_type          AFTER INSERT OR UPDATE ON variant_options
+--   trg_options_type_unique_after_change     AFTER UPDATE OF name ON options
+-- (functions check_variant_option_type_uniqueness / check_option_rename_uniqueness,
+--  see V6__product_schema_update.sql)
 
--- Failed attempts are retained, but an order can have only one paid attempt.
-CREATE UNIQUE INDEX ux_payments_one_paid_per_order
+-- promotion-service: discount codes are unique case-insensitively among
+-- non-deleted discounts.
+CREATE UNIQUE INDEX discounts_normalized_code
+ON discounts (upper(code))
+WHERE code IS NOT NULL AND status <> 'DELETED';
+
+-- promotion-service: scope-target is a cross-table invariant. Deferred
+-- constraint triggers (enforce_discount_scope_targets, see V3) check, at commit,
+-- that ORDER / ALL_ITEMS discounts have no category target and CATEGORY
+-- discounts have at least one:
+--   trg_discount_scope_targets     AFTER INSERT OR UPDATE ON discounts
+--   trg_discount_category_targets  AFTER INSERT OR UPDATE OR DELETE ON discount_categories
+
+-- order-service: invoice numbers and idempotency keys are unique.
+CREATE UNIQUE INDEX ux_orders_invoice_number ON orders (invoice_number);
+-- orders.idempotency_key is unique where not null (see V3__add_order_idempotency.sql)
+
+-- payment-service: failed attempts are retained, but an order can have only one
+-- paid attempt.
+CREATE UNIQUE INDEX uk_payments_order_paid
 ON payments (order_id)
 WHERE status = 'PAID';
-
--- A variant can have at most one non-deleted option of each type.
--- This must also run when an option's type/status changes.
-CREATE OR REPLACE FUNCTION enforce_variant_option_type_unique()
-RETURNS trigger
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  IF EXISTS (
-    SELECT 1
-    FROM variant_options vo
-    JOIN options o ON o.id = vo.option_id
-    WHERE vo.status <> 'DELETED'
-      AND o.status <> 'DELETED'
-    GROUP BY vo.product_variant_id, upper(trim(o.type))
-    HAVING COUNT(*) > 1
-  ) THEN
-    RAISE EXCEPTION
-      'A product variant cannot have multiple options of the same type';
-  END IF;
-
-  RETURN NULL;
-END;
-$$;
-
-CREATE CONSTRAINT TRIGGER ct_variant_option_type_unique
-AFTER INSERT OR UPDATE OR DELETE ON variant_options
-DEFERRABLE INITIALLY DEFERRED
-FOR EACH ROW
-EXECUTE FUNCTION enforce_variant_option_type_unique();
-
-CREATE CONSTRAINT TRIGGER ct_option_type_unique_after_option_change
-AFTER UPDATE ON options
-DEFERRABLE INITIALLY DEFERRED
-FOR EACH ROW
-EXECUTE FUNCTION enforce_variant_option_type_unique();
-
--- Scope-target is a cross-table invariant. Deferred constraint triggers allow
--- the discount and its targets to be written atomically in one transaction.
-CREATE OR REPLACE FUNCTION enforce_discount_scope_targets()
-RETURNS trigger
-LANGUAGE plpgsql
-AS $$
-DECLARE
-  invalid_discount_id uuid;
-BEGIN
-  SELECT d.id
-  INTO invalid_discount_id
-  FROM discounts d
-  WHERE
-    (
-      d.application_scope IN ('ORDER', 'ALL_ITEMS')
-      AND (
-        EXISTS (SELECT 1 FROM discount_categories dc WHERE dc.discount_id = d.id)
-        OR EXISTS (SELECT 1 FROM discount_variants dv WHERE dv.discount_id = d.id)
-      )
-    )
-    OR (
-      d.application_scope = 'CATEGORY'
-      AND (
-        NOT EXISTS (SELECT 1 FROM discount_categories dc WHERE dc.discount_id = d.id)
-        OR EXISTS (SELECT 1 FROM discount_variants dv WHERE dv.discount_id = d.id)
-      )
-    )
-    OR (
-      d.application_scope = 'VARIANT'
-      AND (
-        EXISTS (SELECT 1 FROM discount_categories dc WHERE dc.discount_id = d.id)
-        OR NOT EXISTS (SELECT 1 FROM discount_variants dv WHERE dv.discount_id = d.id)
-      )
-    )
-  LIMIT 1;
-
-  IF invalid_discount_id IS NOT NULL THEN
-    RAISE EXCEPTION
-      'Discount % has targets inconsistent with application_scope',
-      invalid_discount_id;
-  END IF;
-
-  RETURN NULL;
-END;
-$$;
-
-CREATE CONSTRAINT TRIGGER ct_discount_scope_targets
-AFTER INSERT OR UPDATE ON discounts
-DEFERRABLE INITIALLY DEFERRED
-FOR EACH ROW
-EXECUTE FUNCTION enforce_discount_scope_targets();
-
-CREATE CONSTRAINT TRIGGER ct_discount_category_targets
-AFTER INSERT OR UPDATE OR DELETE ON discount_categories
-DEFERRABLE INITIALLY DEFERRED
-FOR EACH ROW
-EXECUTE FUNCTION enforce_discount_scope_targets();
-
-CREATE CONSTRAINT TRIGGER ct_discount_variant_targets
-AFTER INSERT OR UPDATE OR DELETE ON discount_variants
-DEFERRABLE INITIALLY DEFERRED
-FOR EACH ROW
-EXECUTE FUNCTION enforce_discount_scope_targets();

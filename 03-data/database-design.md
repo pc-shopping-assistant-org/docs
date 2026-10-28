@@ -1,36 +1,40 @@
 # Database Design
 
+Mỗi service có database PostgreSQL riêng và tự quản lý schema bằng Flyway (`src/main/resources/db/migration` của từng service). Migration là nguồn sự thật; tài liệu này giải thích các quyết định thiết kế, còn danh sách bảng/cột nằm ở [db.dbml](../02-architecture/db.dbml). Khóa ngoại giữa các service chỉ là tham chiếu logic, không có FK ở database.
+
 ## Database checks
 
-`note` trong DBML chỉ dùng cho mô tả. Các điều kiện dưới đây phải được triển khai thành PostgreSQL `CHECK` constraint trong migration:
+`note` trong DBML chỉ dùng để mô tả. Các điều kiện chính được triển khai thành `CHECK` constraint trong migration:
 
 ```sql
 CHECK (rating BETWEEN 1 AND 5)
 CHECK (product_variants.quantity >= 0)
-CHECK (employees.salary >= 0)
+CHECK (product_variants.price >= 0)
+CHECK (product_variants.warranty_months > 0)
 CHECK (cart_items.quantity > 0)
 CHECK (order_items.quantity > 0)
-CHECK (list_price >= 0)
-CHECK (unit_price >= 0)
-CHECK (amount >= 0)
-CHECK (
-  (status = 'PAID' AND paid_at IS NOT NULL)
-  OR (status IN ('PENDING', 'FAILED') AND paid_at IS NULL)
-)
-CHECK (shipping_methods.fee >= 0)
+CHECK (order_items.unit_price >= 0)
+CHECK (order_items.discount_amount >= 0)
+CHECK (order_items.discount_amount <= quantity * unit_price)
 CHECK (orders.shipping_fee >= 0)
-CHECK (discount_amount >= 0)
-CHECK (item_discount >= 0)
-CHECK (start_at < end_at)
-CHECK (min_order_amount >= 0)
-CHECK (application_scope IN ('ORDER', 'ALL_ITEMS', 'CATEGORY', 'VARIANT'))
+CHECK (orders.discount_amount >= 0 AND orders.discount_amount <= orders.subtotal_amount)
+CHECK (orders.total_amount = subtotal_amount - discount_amount + shipping_fee)
+CHECK (orders.status <> 'COMPLETED' OR delivered_at IS NOT NULL)
+CHECK (shipping_methods.fee >= 0)
+CHECK (payments.amount >= 0)
+CHECK (payments.status NOT IN ('PAID', 'REFUNDED') OR paid_at IS NOT NULL)
+CHECK (discounts.start_at < end_at)
+CHECK (discounts.min_order_amount >= 0)
+CHECK (discounts.application_scope IN ('ORDER', 'ALL_ITEMS', 'CATEGORY'))
+CHECK (product_reviews.edited_at IS NULL
+       OR edited_at BETWEEN created_at AND created_at + interval '30 days')
 ```
 
-Discount value phải phụ thuộc type:
+Giá trị giảm phụ thuộc loại giảm:
 
 ```sql
 CHECK (
-  (discount_type = 'PERCENT' AND value > 0 AND value <= 100)
+  (discount_type = 'PERCENT' AND value BETWEEN 1 AND 100)
   OR (discount_type = 'FIXED' AND value > 0)
 )
 ```
@@ -39,173 +43,132 @@ CHECK (
 
 `accounts` là source of truth cho đăng nhập và identity:
 
-- `email` và `phone` là unique tại `accounts`;
-- `password_hash` lưu credential đã hash;
-- `google_subject` là nullable unique provider identity cho Google Login; chỉ
-  lưu sau khi backend verify ID token và không tự tạo account thiếu profile;
-- `role_id` xác định role;
-- `status` (`ACTIVE`, `LOCKED`, ...) điều khiển quyền đăng nhập.
+- `email` unique; `phone` unique nhưng nullable (tài khoản tạo từ Google chưa có số điện thoại);
+- `password_hash` lưu credential đã hash, nullable với tài khoản chỉ dùng Google;
+- `google_subject` là mã `sub` nullable, unique khi có giá trị; chỉ lưu sau khi backend verify ID token, và tài khoản tạo từ Google luôn có kèm profile `customers`;
+- `role_id` xác định vai trò (`ROLE_CUSTOMER`, `ROLE_EMPLOYEE`, `ROLE_ADMIN`);
+- `status` (`ACTIVE`, `INACTIVE`, `LOCKED`, `DELETED`) điều khiển quyền đăng nhập.
 
-`customers` và `employees` là profile 1–1, dùng `account_id` vừa là primary key vừa là foreign key tới `accounts.id`. Hai bảng profile không duplicate email/phone. Khi account bị `LOCKED`, profile vẫn được giữ nguyên.
+`customers`, `employees` và `admins` là profile 1–1, dùng `account_id` vừa là primary key vừa là foreign key tới `accounts.id`. Các bảng profile không duplicate email/phone. Khi account bị khóa hoặc xóa mềm, profile vẫn được giữ nguyên.
 
-Thông tin việc làm như `salary` và `joined_at` thuộc `employees`; credential và trạng thái khóa vẫn thuộc `accounts`.
-
-Customer không có `point` vì MVP chưa có loyalty domain hoặc rule tích điểm.
+Customer không có `point` vì chưa có loyalty domain hoặc rule tích điểm. Bảng `employees` hiện không lưu lương hay ngày vào làm.
 
 ## File and media ownership
 
-`files` là registry chung cho metadata của file; entity khác chỉ giữ foreign key tới `files.id`. Storage identity duy nhất là `(storage_provider, storage_key)`.
+`files` (Media Service) là registry chung cho metadata của file; entity khác chỉ giữ `file_id` (tham chiếu logic). Storage identity duy nhất là `(storage_provider, storage_key)`.
 
 `public_url` là optional cache/public address, không phải identity của file. Với signed URL có thời hạn, application phải sinh lại từ `storage_key` thay vì lưu làm source of truth.
 
 Các quan hệ media chính:
 
-- `employees.avatar_file_id` và `customers.avatar_file_id`;
+- `employees.avatar_file_id`, `customers.avatar_file_id` và `admins.avatar_file_id`;
 - `brands.image_file_id`;
-- `product_images.file_id` cho gallery của từng product variant.
+- `product_images.image_file_id` cho gallery của product;
+- `product_variants.image_file_id` cho ảnh riêng của variant (tùy chọn).
 
 ## Product image invariant
 
-Mỗi product variant có tối đa một ảnh chính đang active. `product_variants` không giữ thêm một cột ảnh riêng để tránh hai nguồn cùng mô tả ảnh đại diện. Invariant được enforce bằng partial unique index:
+Gallery thuộc cấp product (`product_images.product_id`). Mỗi product có tối đa một ảnh chính, enforce bằng partial unique index:
 
 ```sql
-CREATE UNIQUE INDEX ux_variant_main_image
-ON product_images (product_variant_id)
-WHERE is_main = true AND status = 'ACTIVE';
+CREATE UNIQUE INDEX uk_product_images_main
+ON product_images (product_id)
+WHERE is_main = true;
 ```
+
+Variant có thể có thêm một ảnh riêng ở `product_variants.image_file_id`; variant không có ảnh riêng thì hiển thị ảnh chính của product.
 
 ## Customer addresses
 
-Một customer có thể lưu nhiều địa chỉ giao hàng trong `customer_addresses`, ví dụ nhà riêng, công ty hoặc nhà bố mẹ.
-
-`customers` không lưu một cột `address` duy nhất. Địa chỉ được quản lý như một collection riêng, với `is_default` để chọn địa chỉ mặc định cho lần đặt hàng tiếp theo.
-
-Ở database triển khai bằng PostgreSQL, nên dùng partial unique index để bảo đảm mỗi customer chỉ có một địa chỉ mặc định:
+Một customer có thể lưu nhiều địa chỉ giao hàng trong `customer_addresses`, ví dụ nhà riêng hoặc công ty. `customers` không lưu một cột `address` duy nhất; `is_default` chọn địa chỉ mặc định. Mỗi customer chỉ có một địa chỉ mặc định:
 
 ```sql
-CREATE UNIQUE INDEX ux_customer_default_address
+CREATE UNIQUE INDEX uk_customer_addresses_default
 ON customer_addresses (customer_id)
 WHERE is_default = true;
 ```
 
 ## Order delivery snapshot
 
-Khi tạo order, hệ thống copy thông tin giao hàng vào:
-
-- `orders.recipient_name`
-- `orders.recipient_phone`
-- `orders.delivery_address`
-
-Các cột snapshot này là `NOT NULL` vì một order hợp lệ phải có thông tin giao hàng tại thời điểm đặt hàng. Order không giữ FK bắt buộc tới `customer_addresses` để hiển thị địa chỉ hiện tại.
-
-Nếu customer sửa hoặc xóa địa chỉ sau này, dữ liệu giao hàng của order cũ vẫn không thay đổi.
-
-Đây là duplication có chủ đích để bảo toàn lịch sử nghiệp vụ, không phải vi phạm normalization.
+Khi tạo order, hệ thống copy thông tin giao hàng vào `orders.recipient_name`, `recipient_phone` và `delivery_address`. Các cột này `NOT NULL` vì một order hợp lệ phải có thông tin giao hàng tại thời điểm đặt. Order không giữ FK tới `customer_addresses`, nên sửa hoặc xóa địa chỉ sau này không đổi order cũ. Đây là duplication có chủ đích để bảo toàn lịch sử, không vi phạm normalization.
 
 ## Cart
 
-Cart được lưu trong PostgreSQL để giữ trạng thái giỏ hàng ổn định giữa các request và thiết bị.
+Cart nằm trong PostgreSQL để giữ giỏ hàng ổn định giữa các request và thiết bị.
 
-- Cart đã đăng nhập liên kết với `customer_id`.
-- Cart khách vãng lai dùng `session_token`.
-- Cart phải có chính xác một owner: `customer_id` cho customer đã đăng nhập hoặc `session_token` cho guest.
-- Chỉ cho phép một cart `ACTIVE` trên mỗi customer và một cart `ACTIVE` trên mỗi session:
-
-```sql
-CREATE UNIQUE INDEX ux_carts_active_customer
-ON carts (customer_id)
-WHERE status = 'ACTIVE' AND customer_id IS NOT NULL;
-
-CREATE UNIQUE INDEX ux_carts_active_session
-ON carts (session_token)
-WHERE status = 'ACTIVE' AND session_token IS NOT NULL;
-```
-- `cart_items` dùng primary key kép `(cart_id, variant_id)`, vì một variant chỉ xuất hiện một lần trong cùng cart.
-- Thay đổi quantity là update item hiện tại, không tạo thêm dòng trùng variant.
-- Khi tạo order thành công, cart chuyển sang `CONVERTED` và không được dùng lại như cart active.
+- Chỉ khách đã đăng nhập mới có cart; không có giỏ cho khách vãng lai.
+- Mỗi customer có đúng một cart (`carts.customer_id` unique). Cart không có trạng thái; đặt hàng xong thì xóa các `cart_items`, dòng cart giữ lại để dùng cho lần sau.
+- `cart_items` dùng primary key kép `(cart_id, variant_id)` vì một variant chỉ xuất hiện một lần trong cart.
+- Thêm cùng variant là cộng dồn vào dòng hiện có; sửa quantity là update dòng đó, không tạo dòng trùng.
 
 ## Order and payment state separation
 
-`orders.status` dùng state machine của đơn hàng:
+`orders.status` dùng state machine của đơn hàng (xem [order-lifecycle](../01-business/workflows/order-lifecycle.md)):
 
 ```text
 PENDING_PAYMENT -> PENDING_CONFIRMATION -> CONFIRMED -> SHIPPING -> COMPLETED
-                                          \-> CANCELLED
+Các trạng thái chưa COMPLETED có thể sang CANCELLED theo quyền của từng tác nhân
 ```
 
-COD bắt đầu ở `PENDING_CONFIRMATION`; online bắt đầu ở `PENDING_PAYMENT`. Vì database default không biết phương thức thanh toán, application phải set `PENDING_PAYMENT` tường minh cho checkout online.
+COD bắt đầu ở `PENDING_CONFIRMATION`; online bắt đầu ở `PENDING_PAYMENT`. Vì database default không biết phương thức thanh toán, application đặt `PENDING_PAYMENT` tường minh cho đơn online. Mọi lần đổi trạng thái ghi một dòng vào `order_status_history` (trạng thái trước/sau, người đổi, lý do) trong cùng transaction.
 
-`payments.status` chỉ dùng `PENDING`, `PAID` và `FAILED`. Không dùng payment status để thay thế order status.
+`payments.status` gồm `PENDING`, `PAID`, `FAILED`, `CANCELLED` và `REFUNDED`. Không dùng payment status để thay thế order status.
 
 ## Payment methods and attempts
 
-Phương thức thanh toán là dữ liệu danh mục trong `payment_methods`, không lưu dạng chuỗi tự do trên payment. Các code mẫu gồm `COD`, `STRIPE_CARD` và `BANK_TRANSFER`.
+Phương thức thanh toán là dữ liệu danh mục trong `payment_methods`, không lưu dạng chuỗi tự do trên payment. Hiện có `COD` và `VNPAY` đang dùng; `ONLINE_CARD` cũ đã `INACTIVE`. `orders.payment_method_id` lưu phương thức khách đã chọn.
 
 Mỗi dòng `payments` là một payment attempt của order:
 
-- `payment_method_id` bắt buộc trỏ tới một payment method đang dùng được.
-- `amount` bắt buộc lưu số tiền của attempt; không suy ra từ order tại thời điểm đọc.
-- `provider_transaction_code` lưu mã giao dịch từ provider nếu có.
-- Một order có thể có nhiều attempt `FAILED` trước khi có một attempt `PAID`.
-- `amount` không được âm và không được thay đổi sau khi attempt đã được ghi nhận.
-- `paid_at` chỉ được set khi attempt chuyển sang `PAID`.
-- Với cùng một order, chỉ một attempt được xem là thanh toán thành công; việc bảo đảm invariant này nằm ở application transaction hoặc database constraint.
+- `payment_method_id` bắt buộc trỏ tới một payment method;
+- `amount` bắt buộc lưu số tiền của attempt, không suy ra từ order lúc đọc, và không âm;
+- `provider_transaction_code` (unique) lưu mã giao dịch từ cổng thanh toán nếu có;
+- `idempotency_key` chống tạo trùng payment cho cùng một đơn;
+- `customer_id` là bản sao khách của đơn để lọc, không phải gọi sang Order Service;
+- `paid_at` bắt buộc có khi `PAID` hoặc `REFUNDED`;
+- một order có thể có nhiều attempt `FAILED` hoặc `CANCELLED` trước khi có một attempt `PAID`.
 
-PostgreSQL enforce tối đa một attempt `PAID` cho mỗi order bằng partial unique index:
+PostgreSQL enforce tối đa một attempt `PAID` cho mỗi order:
 
 ```sql
-CREATE UNIQUE INDEX ux_payments_one_paid_per_order
+CREATE UNIQUE INDEX uk_payments_order_paid
 ON payments (order_id)
 WHERE status = 'PAID';
 ```
 
 ## Discount scope and targets
 
-Discount định nghĩa rõ `discount_type` (`PERCENT`, `FIXED`) và `application_scope` (`ORDER`, `ALL_ITEMS`, `CATEGORY`, `VARIANT`). Không dùng cột `scope` dạng chuỗi mơ hồ.
+Discount có `discount_type` (`PERCENT`, `FIXED`) và `application_scope` (`ORDER`, `ALL_ITEMS`, `CATEGORY`). Trạng thái lưu chỉ gồm `ACTIVE`, `INACTIVE` (bị khóa) và `DELETED`; chưa bắt đầu, đang chạy hay hết hạn được tính từ `start_at`/`end_at` lúc đọc.
 
-Target được normalize theo scope:
+Target chỉ có một bảng: `discount_categories(discount_id, category_id)` với primary key kép (`category_id` là tham chiếu logic sang Catalog Service).
 
-- `discount_categories(discount_id, category_id)` với primary key kép;
-- `discount_variants(discount_id, variant_id)` với primary key kép.
+`code` có thể `NULL` cho promotion tự động. Mã duy nhất không phân biệt hoa thường trong các discount chưa xóa (`upper(code)`), nên mã của discount đã xóa dùng lại được; mã chỉ hợp lệ với scope `ORDER` (service kiểm tra, không có ràng buộc ở DB).
 
-`code` có thể `NULL` cho promotion tự động không cần coupon code. Khi `application_scope` là `CATEGORY` hoặc `VARIANT`, application phải ghi target tương ứng; không dùng bảng target variant để giả lập category.
+Scope-target là cross-table invariant, không thể enforce bằng một `CHECK`:
 
-Scope-target là cross-table invariant, không thể enforce bằng một `CHECK` trên `discounts`:
+| `application_scope` | Category targets |
+|---|---:|
+| `ORDER` | 0 |
+| `ALL_ITEMS` | 0 |
+| `CATEGORY` | >= 1 |
 
-| `application_scope` | Category targets | Variant targets |
-|---|---:|---:|
-| `ORDER` | 0 | 0 |
-| `ALL_ITEMS` | 0 | 0 |
-| `CATEGORY` | >= 1 | 0 |
-| `VARIANT` | 0 | >= 1 |
-
-Khi tạo hoặc cập nhật discount, service phải ghi discount cùng target trong một transaction. Database enforce invariant bằng deferred constraint trigger trên `discounts`, `discount_categories` và `discount_variants`; trạng thái trung gian được phép tồn tại trong transaction nhưng phải hợp lệ tại thời điểm commit.
+Service ghi discount cùng target trong một transaction. Database enforce bằng deferred constraint trigger trên `discounts` và `discount_categories`; trạng thái trung gian được phép trong transaction nhưng phải hợp lệ khi commit.
 
 ## Product pricing
 
-`product_variants.list_price` là giá niêm yết duy nhất của variant. Không lưu `price_sale` vì đó là giá dẫn xuất từ promotion.
-
-Effective selling price được tính tại thời điểm áp dụng discount:
+`product_variants.price` là giá bán hiện hành duy nhất của variant. Không lưu `price_sale` vì đó là giá dẫn xuất từ promotion. Giá hiệu lực được tính lúc áp dụng discount:
 
 ```text
-list_price = 20.000.000
-discount   = 10%
-effective  = 18.000.000
+price     = 20.000.000
+discount  = 10%
+effective = 18.000.000
 ```
 
-Khi checkout, giá thực tế dùng cho từng dòng phải được snapshot vào `order_items.unit_price`; thay đổi list price hoặc promotion về sau không làm thay đổi order cũ.
-
-## Product suppliers
-
-Supplier là master data độc lập. Quan hệ với product được normalize qua `product_suppliers(product_id, supplier_id)` thay vì đặt `supplier_id` trực tiếp trên `products`, vì một product có thể được nhập từ nhiều supplier và một supplier có thể cung cấp nhiều product.
-
-Không được hard-delete hoặc chuyển supplier sang `DELETED` khi vẫn còn dòng liên kết trong `product_suppliers`. Application phải kiểm tra invariant này trong cùng transaction; foreign key chặn hard-delete khi quan hệ vẫn tồn tại.
+Khi checkout, giá và số tiền giảm của từng dòng được snapshot vào `order_items` (`unit_price`, `discount_amount`); đổi giá hay promotion về sau không làm đổi order cũ.
 
 ## Inventory scope
 
-Inventory của MVP chỉ lưu một stock tổng trên `product_variants.quantity`. Không có `inventory_policy`, reservation, backorder hay stock movement.
-
-Khi đặt hàng, hệ thống chỉ cho phép quantity mua không vượt stock hiện có. Các flow `CONTINUE` và `BACKORDER` không thuộc phạm vi vì chưa có model fulfillment tương ứng.
+Tồn kho chỉ có một số tổng ở `product_variants.quantity`; không có backorder hay stock movement. Tồn kho bị trừ khi Catalog Service nhận lệnh giữ kho của đơn (đủ tất cả dòng hoặc không dòng nào) và được cộng lại khi đơn bị hủy hoặc thanh toán thất bại. Đặt hàng chỉ được khi số lượng không vượt tồn kho hiện có.
 
 ## Transaction money snapshot
 
@@ -218,71 +181,56 @@ subtotal   = sum(item_net)
 total      = subtotal - order_discount + shipping_fee
 ```
 
-Trong schema, `order_discount` chính là `orders.discount_amount`.
+Ánh xạ cột: `item_discount` là `order_items.discount_amount` (cả dòng, không vượt `item_gross`); `subtotal` là `orders.subtotal_amount` (đã trừ giảm theo dòng); `order_discount` là `orders.discount_amount`; `total` là `orders.total_amount`. Database có CHECK bảo đảm `total_amount = subtotal_amount - discount_amount + shipping_fee`.
 
-Snapshot tương ứng:
-
-- `order_items.unit_price` và `item_discount` là input đã snapshot cho từng dòng;
-- `orders.subtotal_amount`, `discount_amount`, `shipping_fee`, `total_amount`.
-
-`orders.discount_amount` là phần giảm ở order voucher, còn `order_items.item_discount` là phần giảm ở item promotion. Các giá trị tài chính này được ghi nhận tại thời điểm tạo order và không bị tính lại từ catalog hoặc discount hiện tại. Việc lưu snapshot là yêu cầu bảo toàn lịch sử giao dịch, không phải vi phạm 3NF.
+Các giá trị này được ghi lúc tạo order và không tính lại từ catalog hay discount hiện tại. `order_items` còn snapshot `product_name`, `sku` và `variant_label` của variant. Lưu snapshot là yêu cầu bảo toàn lịch sử giao dịch, không phải vi phạm 3NF.
 
 ## Order item history
 
-`order_items` không có trạng thái `DELETED` và không được hard-delete khỏi order history. MVP giữ `ACTIVE` và `CANCELLED` để biểu diễn khả năng hủy một phần item; nếu không triển khai partial-item cancellation, có thể bỏ luôn cột status ở migration sau.
+`order_items` không bị hard-delete khỏi order history và không có cột trạng thái; hủy là hủy cả đơn. Mỗi variant chỉ xuất hiện một lần trong cùng order (`UNIQUE (order_id, product_variant_id)`).
 
 ## Shipping method and fee snapshot
 
-Phương thức giao hàng được normalize vào `shipping_methods` với `code`, `name`,
-`fee` và `status`. `shipping_methods.fee` là tariff hiện hành, tính bằng đơn
-vị tiền nhỏ nhất giống các cột tiền khác.
+Phương thức giao hàng nằm trong `shipping_methods` với `code`, `name`, `fee` và `status`. `fee` là tariff hiện hành (VND). Khi tạo order, application lưu `orders.shipping_method_id` và `orders.shipping_fee` (copy từ `shipping_methods.fee` lúc checkout). `shipping_fee` là snapshot, không tính lại; đổi phí giao nhanh từ 30.000 lên 40.000 chỉ cần sửa `shipping_methods.fee`, order cũ vẫn giữ 30.000.
 
-Khi tạo order, application lưu:
+## Invoice
 
-- `orders.shipping_method_id`: phương thức đã chọn;
-- `orders.shipping_fee`: phí giao hàng tại thời điểm checkout, copy từ
-  `shipping_methods.fee`.
-
-`shipping_fee` là snapshot, không được tính lại từ giá hiện tại của
-`shipping_methods`. Vì vậy nếu phí giao nhanh thay đổi từ 30.000 lên 40.000,
-chỉ cần cập nhật `shipping_methods.fee`; order cũ vẫn giữ đúng 30.000.
+Hóa đơn không có bảng riêng: hóa đơn là một order `COMPLETED`. `orders.invoice_number` (unique, dạng `INV-` + 10 ký tự) được sinh lúc tạo order; ngày hóa đơn là `orders.delivered_at`.
 
 ## Product review ownership
 
-`product_reviews.order_item_id` là FK `UNIQUE` tới `order_items.id`. Từ đó có thể suy ra:
+`product_reviews.order_item_id` là tham chiếu `UNIQUE` tới `order_items.id` (Order Service), nên mỗi dòng đơn chỉ có một đánh giá. Review lưu thêm `product_id` (FK cùng database) và `customer_id` để liệt kê đánh giá theo sản phẩm và hiển thị tên người đánh giá mà không phải gọi Order Service; hai giá trị này được ghi lúc tạo và khớp với order item đã được kiểm tra. Review chỉ được tạo khi order tương ứng `COMPLETED`.
 
-```text
-review -> order_item -> order -> customer
-review -> order_item -> product_variant -> product
-```
-
-Review chỉ được tạo khi order tương ứng đã `COMPLETED`. Không lưu thêm `customer_id` hoặc `product_id` trên review vì hai giá trị này đã xác định qua quan hệ hiện có và sẽ tạo redundancy.
+Mỗi review sửa được một lần duy nhất trong 30 ngày (`edited_at`, NULL là chưa sửa).
 
 ## Variant options
 
-`options.name` là unique toàn cục để mỗi option có một tên định danh duy nhất.
+`options` lưu cặp `(name, value)` duy nhất (ví dụ "Màu sắc" = "Xanh"); `variant_options` có primary key kép `(product_variant_id, option_id)`.
 
-Một variant chỉ được gắn tối đa một option chưa bị xóa cho mỗi type. Vì `type` nằm ở bảng `options`, invariant này được enforce bằng deferred constraint trigger PostgreSQL trên cả `variant_options` và thay đổi của `options`, ngoài unique key `(product_variant_id, option_id)`.
+Một variant chỉ được có tối đa một option cho mỗi `name` (so sánh sau khi trim và không phân biệt hoa thường). Vì `name` nằm ở bảng `options`, invariant này được enforce bằng deferred constraint trigger trên `variant_options` và khi đổi tên option.
 
 ## Discount application layers
 
-Phiên bản đồ án chỉ cho phép đúng hai tầng giảm giá:
+Chỉ cho phép đúng hai tầng giảm giá:
 
-- `order_items.item_discount_id`: tối đa một item promotion cho mỗi order item;
+- `order_items.discount_id`: tối đa một item promotion cho mỗi dòng;
 - `orders.order_discount_id`: tối đa một order voucher cho mỗi order.
 
-Hai tầng có thể cộng dồn. Không cho phép nhiều voucher trên cùng order hoặc nhiều promotion trên cùng order item. Các invariant này được biểu diễn bằng một FK đơn ở mỗi entity và phải được kiểm tra trong application transaction.
-
-Giá trị order được tính theo thứ tự:
+Hai tầng cộng dồn. Không cho nhiều voucher trên cùng order hoặc nhiều promotion trên cùng dòng. Invariant được biểu diễn bằng một cột đơn ở mỗi entity và kiểm tra trong application transaction. Giá trị order tính theo thứ tự:
 
 ```text
-item effective price = list_price - item promotion
-order subtotal       = sum(item effective price * quantity)
-total                = order subtotal - order voucher + shipping_fee
+item net   = unit_price * quantity - item promotion
+subtotal   = sum(item net)
+total      = subtotal - order voucher + shipping_fee
 ```
+
+## Messaging tables
+
+Catalog, Order và Payment có bảng `outbox_events` (sự kiện/lệnh chờ gửi, ghi cùng transaction nghiệp vụ) và `inbox_events` (id sự kiện đã xử lý, khử trùng lặp). Xem [service-communication](../02-architecture/service-communication.md).
 
 ## Invariants
 
 - `customer_addresses.customer_id` phải trỏ tới customer tồn tại.
-- Một customer có tối đa một địa chỉ mặc định, được bảo đảm bằng partial unique index và xử lý transaction khi đổi địa chỉ mặc định.
-- `orders.delivery_address`, `orders.recipient_name` và `orders.recipient_phone` là snapshot immutable sau khi order được tạo, ngoại trừ flow điều chỉnh đơn được phân quyền rõ ràng.
+- Một customer có tối đa một địa chỉ mặc định, bảo đảm bằng partial unique index và xử lý transaction khi đổi địa chỉ mặc định.
+- `orders.delivery_address`, `recipient_name` và `recipient_phone` là snapshot bất biến sau khi order được tạo.
+- Mỗi order có tối đa một payment `PAID`.

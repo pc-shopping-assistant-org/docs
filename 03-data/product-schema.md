@@ -8,21 +8,21 @@ Product
 ```
 
 - `products.category_id` là category chính duy nhất của product.
-- `categories.parent_id` tạo taxonomy phân cấp.
+- `categories.parent_id` tạo taxonomy phân cấp; mỗi category có một loại phần cứng (`hardware_types`).
 - `product_variants` chứa các SKU bán được và thông tin thay đổi theo variant như SKU, tồn kho tổng `quantity` và giá.
-- `product_images` chứa gallery theo variant; mỗi variant có tối đa một ảnh main đang `ACTIVE`.
-- `product_suppliers` biểu diễn quan hệ nhiều-nhiều giữa product và supplier.
-- MVP không có reservation, backorder hoặc stock movement.
+- `product_images` là gallery cấp product; mỗi product có tối đa một ảnh chính. Variant có thể có thêm một ảnh riêng ở `product_variants.image_file_id`.
+- Specifications của product là `jsonb`, phải khớp mẫu thuộc tính của category (`category_attributes`, kế thừa từ category cha).
+- Không có reservation, backorder hay stock movement riêng; chỉ một số tồn kho tổng.
 - Collection/tag là lớp phân loại merchandising riêng trong tương lai, không dùng `categories` để thay thế.
 
 ## Product variant
 
-`product_variants.list_price` là giá niêm yết của một variant. Đây là source of truth duy nhất cho giá trước khuyến mãi.
+`product_variants.price` là giá bán hiện hành của một variant. Đây là source of truth duy nhất cho giá trước khuyến mãi.
 
 Không lưu `price_sale`. Giá bán hiệu lực là dữ liệu được tính tại thời điểm đọc/checkout:
 
 ```text
-effective_price = apply_discount(list_price, active_discount)
+effective_price = apply_discount(price, active_discount)
 ```
 
-Khi tạo order, giá hiệu lực được copy vào `order_items.unit_price` để bảo toàn lịch sử giao dịch.
+Khi tạo order, giá và số tiền giảm của từng dòng được copy vào `order_items.unit_price` và `order_items.discount_amount` để bảo toàn lịch sử giao dịch.
