@@ -16,6 +16,13 @@ request; image build/deployment are in progress. No live model quality/latency c
 Serving/training protocol: `agent-task-admission-v3`; old artifacts need regeneration
 and relevant labels reviewed. Pending interpreter redesign remains ISSUE-150.
 
+Provider follow-up (ISSUE-160): AI `cedb944` adds typed LangChain Gemini wrapper
+classification; infra forwards the global request timeout. **922 unit + 96
+PostgreSQL tests** and **39 infra tests** pass. Production 1.0.3 logged a 400
+GoogleInvalidRequestError; replay of its saved request returned 503 high demand.
+The original 400 detail is unavailable, so that cause is not claimed resolved.
+AI 1.0.5 rollout is in progress; no provider/model change has been made.
+
 ## Current refactor — ISSUE-149
 
 [Conversational agent plan](conversational-agent-refactor-plan.md): P0–P3 implemented;

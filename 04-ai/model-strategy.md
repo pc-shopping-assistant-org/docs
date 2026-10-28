@@ -58,6 +58,11 @@ Mỗi actual extraction/agent/explanation/repair call phải durable-reserve tr�
 SDK retries disabled hoặc instrument từng attempt. UNKNOWN vẫn consumed; không exactly-once
 hoặc hard billing guarantee.
 
+Gemini errors bọc bởi LangChain cũng được phân loại theo typed upstream status:
+429/5xx/504 đi qua recovery hiện có; 400/401/403 không retry. Không suy status từ
+chuỗi error. Infra truyền `AI_REQUEST_TIMEOUT_SECONDS` từ `.env.docker` (mặc định
+60 giây); cấu hình Settings chạy ngoài Compose vẫn có default riêng.
+
 Refusal/schema failure dùng bounded repair hoặc explicit failure. Cancellation được
 propagate/drain. Không publish unvalidated partial model text để che lỗi provider.
 
