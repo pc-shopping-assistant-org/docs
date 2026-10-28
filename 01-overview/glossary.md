@@ -22,18 +22,18 @@
 | Thuật ngữ                           | Diễn giải                                                                                                                  |
 | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | Khách hàng                          | Người dùng cuối xem/tìm sản phẩm, thao tác giỏ hàng, đặt hàng, thanh toán, xem lịch sử, đánh giá sản phẩm và dùng chatbot. |
-| Quản lý cửa hàng                    | Tác nhân quản trị sản phẩm, danh mục, khuyến mãi, đơn hàng, thanh toán, khách hàng, nhà cung cấp và thông tin cá nhân.     |
+| Nhân viên (Employee)                | Quản lý sản phẩm, biến thể, danh mục, thương hiệu, khách hàng, khuyến mãi, đơn hàng, hóa đơn và thanh toán. |
+| Quản trị viên (Admin)               | Quản lý tài khoản nhân viên, xem tổng quan và thống kê; không bao gồm quyền của nhân viên. |
 | Sản phẩm (Product)                  | Mặt hàng điện tử được kinh doanh trên hệ thống.                                                                            |
 | Biến thể sản phẩm (Product Variant) | Phiên bản cụ thể của một sản phẩm, có thể khác nhau theo màu sắc, RAM, bộ nhớ, kết nối, SKU, giá và số lượng.              |
 | Danh mục (Category)                 | Nhóm phân loại sản phẩm.                                                                                                   |
 | Nhãn hiệu (Brand)                   | Thương hiệu của sản phẩm.                                                                                                  |
-| Nhà cung cấp (Supplier)             | Đơn vị cung cấp sản phẩm/biến thể cho cửa hàng.                                                                            |
 | Giỏ hàng (Cart)                     | Danh sách sản phẩm người dùng chuẩn bị mua, cho phép thêm, sửa số lượng và xóa.                                            |
 | Đơn hàng (Order)                    | Giao dịch đặt mua được tạo từ giỏ hàng cùng thông tin giao hàng, thanh toán và khuyến mãi nếu có.                          |
-| Mã giảm giá / Khuyến mãi            | Cơ chế giảm giá được quản lý bởi cửa hàng và có điều kiện áp dụng.                                                         |
-| Thanh toán (Payment)                | Quá trình thực hiện và theo dõi giao dịch thanh toán của đơn hàng.                                                         |
+| Mã giảm giá / Khuyến mãi            | Cơ chế giảm giá theo dòng hàng hoặc theo đơn (voucher có mã hoặc tự động), do cửa hàng quản lý và có điều kiện áp dụng.                                                         |
+| Thanh toán (Payment)                | Giao dịch thanh toán của đơn hàng, bằng COD hoặc VNPAY (online).                                                         |
 | Đánh giá sản phẩm (Review)          | Đánh giá của khách hàng sau khi mua sản phẩm.                                                                              |
-| OTP                                 | Mã xác minh dùng trong các luồng như đổi/quên mật khẩu; report cũng đề cập OTP cho một số quy trình xác thực.              |
+| OTP                                 | Mã 6 số gửi qua email (hiệu lực 5 phút), dùng khi đăng ký, quên mật khẩu và đổi mật khẩu.              |
 
 ## Thuật ngữ trải nghiệm
 

@@ -53,34 +53,42 @@ Order detail responses expose `payments` as the complete payment-attempt
 history (creation order). There is no singular `payment` compatibility field;
 clients must read the attempt history from `payments`.
 
-The canonical payment-method catalog is `COD`, `STRIPE_CARD` and
-`BANK_TRANSFER`. Order and Stripe intent requests accept only these catalog
-codes; unsupported or legacy provider names are rejected during request
-validation.
+The payment-method catalog is `COD` and `VNPAY`. The legacy `ONLINE_CARD`
+method still exists in the table but is `INACTIVE`, so order requests naming it
+or any other unknown code are rejected during validation.
 
-For Stripe webhooks, a configured webhook secret makes `Stripe-Signature`
-mandatory. Unsigned JSON is accepted only for the local mock flow when no
-secret is configured.
+VNPAY results arrive through the public callbacks `GET /payments/vnpay/ipn`
+and `GET /payments/vnpay/return`. Both verify the HMAC signature and the paid
+amount before touching a payment, and share one handler so receiving both is
+harmless. An unsigned or mismatched callback never changes a payment.
 
-The backend publishes the OpenAPI document at `/v3/api-docs` and the interactive
-Swagger UI at `/swagger-ui.html`. Both documentation routes are public; actual
-API authorization remains enforced by the backend security configuration.
+Routes are exposed through the gateway either by service prefix (for example
+`/identity-service/auth/login`, which the gateway strips before forwarding) or,
+for the storefront's public routes, directly (`/auth/**`, `/cart/**`,
+`/orders/**`, `/payments/**`, `/product-variants/**`). Actual authorization
+(public, `ROLE_CUSTOMER`, `ROLE_EMPLOYEE`, `ROLE_ADMIN`) is enforced by each
+service's security configuration; there is no role hierarchy.
 
-`POST /api/v1/auth/google` accepts `{ "idToken": "..." }` from Google Identity
-Services. The backend verifies the token and links the stable Google `sub` to an
-existing local account before issuing the normal JWT pair. A missing link is
-returned with the static `GOOGLE_ACCOUNT_NOT_LINKED` message key; the endpoint
-does not create an account implicitly.
+`POST /auth/google` accepts `{ "idToken": "..." }` from Google Identity
+Services. The backend verifies the token, then links the stable Google `sub` to
+the local account with the same verified email or, when there is none, creates a
+`ROLE_CUSTOMER` account without password or phone, before issuing the normal JWT
+pair. The Google picture is copied to the Media Service in the background. The
+user summary carries `hasPassword`; `POST /auth/change-password` accepts no
+current password for an account that has no password yet.
 
-`POST /api/v1/auth/logout` is the exception to the otherwise public auth route
-group: it requires the current Bearer access token. Logout writes an
-account-level `tokens-revoked-before` marker for the configured refresh-token
-lifetime, which invalidates every token issued before the logout cutoff second
-for that account. The optional
-body `{"refreshToken":"..."}` additionally blacklists the supplied refresh
-token explicitly. Tokens are retained in Redis only for their remaining
-lifetime, and Redis is deployed with AOF persistence in the local compose
-stack. The backend fails closed for logout, refresh and access-token
-authentication when Redis cannot read/write revocation state. If production
-Redis data is lost, rotate `JWT_SECRET_KEY` before restoring traffic to
-invalidate all outstanding JWTs.
+`POST /auth/logout` is the exception to the otherwise public auth route group:
+it requires the current Bearer access token and takes no body. Logout writes an
+account-level `revoked-before:account:<id>` marker to Redis for the configured
+refresh-token lifetime. The API gateway rejects every token issued before that
+cutoff second for the account, so all other services reject it too. Locking,
+deactivating or deleting an account writes the same marker. Redis is deployed
+with AOF persistence in the local and server compose stacks. The backend fails
+closed for logout, refresh and access-token authentication when Redis cannot
+read or write revocation state.
+
+Access tokens are RS256 JWTs signed by the identity service; other services
+verify them against its JWKS (`/.well-known/jwks.json`). If production Redis
+data is lost and cannot be restored, rotate `JWT_PRIVATE_KEY`, `JWT_PUBLIC_KEY`
+and `JWT_KEY_ID` and restart the backend before restoring traffic, which
+invalidates every outstanding JWT.

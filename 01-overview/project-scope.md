@@ -8,9 +8,9 @@
 - Hỏi lại khi yêu cầu chưa đủ rõ.
 - Giải thích recommendation dựa trên dữ liệu truy xuất được.
 
-## Out of scope for the first MVP
+## Out of scope for the first MVP của AI assistant
 
-- Đặt hàng hoặc thanh toán.
+- Đặt hàng hoặc thanh toán ngay trong cuộc hội thoại với AI; việc này do nền tảng bán hàng (giỏ hàng, đặt hàng, thanh toán COD/VNPAY) đảm nhiệm, AI chỉ tư vấn.
 - Cam kết tồn kho và giao hàng theo thời gian thực.
 - Benchmark phần cứng tự chạy trên máy người dùng.
 - Fine-tuning model trước khi có baseline và evaluation.

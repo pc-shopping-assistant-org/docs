@@ -1,7 +1,9 @@
 // =====================================================================
 // DBDiagram.io Schema Definition (DBML)
 // Project: E-Commerce System (ECM)
-// Generated from schema.sql
+// Generated from the Flyway-migrated service databases (6 databases, 1 diagram)
+// Cross-service references are logical only: no FK exists between databases.
+// outbox_events / inbox_events exist in catalog, order and payment; shown once per service as <service>_outbox_events.
 // =====================================================================
 
 Table roles {
@@ -13,98 +15,86 @@ Table roles {
 Table accounts {
   id uuid [pk, default: `uuidv7()`]
   email varchar(255) [not null, unique]
-  phone varchar(15) [not null, unique]
-  google_subject varchar(255) [unique, note: 'Nullable verified Google sub; unique for linked accounts']
-  password_hash varchar(255) [not null]
-  role_id uuid [not null, ref: > roles.id]
+  phone varchar(15) [unique]
+  google_subject varchar(255) [unique]
+  password_hash varchar(255)
+  role_id uuid [not null]
   status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, LOCKED, DELETED']
-  created_at timestamp [not null, default: `current_timestamp`]
-  updated_at timestamp
+  created_at timestamptz [not null, default: `now()`]
 }
 
 Table employees {
-  account_id uuid [pk, ref: - accounts.id]
+  account_id uuid [pk]
   first_name varchar(100) [not null]
   last_name varchar(100) [not null]
-  avatar_file_id uuid [ref: > files.id]
+  avatar_file_id uuid
   address varchar(255)
   gender varchar(10) [not null, note: 'MALE, FEMALE']
-  salary bigint [not null, default: 0]
   birthday date
-  joined_at date [not null, default: `current_date`]
-  created_at timestamp [not null, default: `current_timestamp`]
-  updated_at timestamp
+  created_at timestamptz [not null, default: `now()`]
+}
 
-  checks {
-    `salary >= 0`
-  }
+Table admins {
+  account_id uuid [pk]
+  first_name varchar(100) [not null]
+  last_name varchar(100) [not null]
+  avatar_file_id uuid
+  address varchar(255)
+  gender varchar(10) [not null, note: 'MALE, FEMALE']
+  birthday date
+  created_at timestamptz [not null, default: `now()`]
 }
 
 Table customers {
-  account_id uuid [pk, ref: - accounts.id]
+  account_id uuid [pk]
   first_name varchar(100) [not null]
   last_name varchar(100) [not null]
-  avatar_file_id uuid [ref: > files.id]
+  avatar_file_id uuid
   gender varchar(10) [note: 'MALE, FEMALE, OTHER']
   birthday date
-  created_at timestamp [not null, default: `current_timestamp`]
-  updated_at timestamp
+  created_at timestamptz [not null, default: `now()`]
 }
 
 Table customer_addresses {
   id uuid [pk, default: `uuidv7()`]
-  customer_id uuid [not null, ref: > customers.account_id, note: 'References the customer profile key, which is accounts.id']
+  customer_id uuid [not null]
   recipient_name varchar(100) [not null]
   phone varchar(15) [not null]
   address_line varchar(500) [not null]
   is_default boolean [not null, default: false]
-  created_at timestamp [not null, default: `current_timestamp`]
-  updated_at timestamp
-
-  indexes {
-    // Partial unique default-address index is defined in 03-data/database-constraints.sql.
-    (customer_id, is_default)
-  }
-}
-
-Table brands {
-  id uuid [pk, default: `uuidv7()`]
-  name varchar(255) [not null, unique]
-  seo_name varchar(255) [not null, unique]
-  description text
-  image_file_id uuid [ref: > files.id]
-  status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
-  created_at timestamp [not null, default: `current_timestamp`]
+  created_at timestamptz [not null, default: `now()`]
 }
 
 Table hardware_types {
   id uuid [pk, default: `uuidv7()`]
-  code varchar(30) [not null, unique, note: 'Stable machine code consumed by catalog/AI']
+  code varchar(30) [not null, unique]
   name_vi varchar(100) [not null]
   name_en varchar(100) [not null]
   status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
   display_order int [not null, default: 0]
-  created_at timestamp [not null, default: `current_timestamp`]
+  created_at timestamptz [not null, default: `now()`]
+}
 
-  checks {
-    `display_order >= 0`
-  }
+Table brands {
+  id uuid [pk, default: `uuidv7()`]
+  name varchar(255) [not null]
+  seo_name varchar(255) [not null]
+  description text
+  image_file_id uuid
+  status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
+  created_at timestamptz [not null, default: `now()`]
 }
 
 Table categories {
   id uuid [pk, default: `uuidv7()`]
-  name varchar(255) [not null, unique]
-  seo_name varchar(255) [not null, unique]
-  hardware_type_id uuid [not null, ref: > hardware_types.id, note: 'Master-data reference; OTHER represents the generic Khác category']
-  description text
-  display_order int [not null, default: 0, note: 'Lower values appear first; ties fall back to name']
+  name varchar(255) [not null]
+  seo_name varchar(255) [not null]
   parent_id uuid
   status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
-  created_at timestamp [not null, default: `current_timestamp`]
-
-  checks {
-    `display_order >= 0`
-  }
+  created_at timestamptz [not null, default: `now()`]
+  description text
+  display_order int [not null, default: 0]
+  hardware_type_id uuid [not null]
 }
 
 Table attribute_definitions {
@@ -117,334 +107,403 @@ Table attribute_definitions {
   aliases jsonb
   filterable boolean [not null, default: false]
   comparable boolean [not null, default: false]
-  created_at timestamp [not null, default: `current_timestamp`]
+  created_at timestamptz [not null, default: `now()`]
 }
 
 Table category_attributes {
   id uuid [pk, default: `uuidv7()`]
-  category_id uuid [not null, ref: > categories.id]
-  attribute_id uuid [not null, ref: > attribute_definitions.id]
+  attribute_id uuid [not null]
   required boolean [not null, default: false]
   display_order int [not null, default: 0]
-  created_at timestamp [not null, default: `current_timestamp`]
+  created_at timestamptz [not null, default: `now()`]
+  category_id uuid [not null]
 
   indexes {
     (category_id, attribute_id) [unique]
   }
 }
 
-Table suppliers {
-  id uuid [pk, default: `uuidv7()`]
-  name varchar(255) [not null, unique]
-  email varchar(255) [unique]
-  phone varchar(15)
-  address varchar(255)
-  description text
-  status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
-  created_at timestamp [not null, default: `current_timestamp`]
-  updated_at timestamp
-}
-
 Table products {
   id uuid [pk, default: `uuidv7()`]
   name varchar(255) [not null]
-  seo_name varchar(255) [not null, unique]
+  seo_name varchar(255) [not null]
   brand_id uuid
-  category_id uuid [not null, ref: > categories.id, note: 'Primary category only; merchandising collections/tags are separate concepts']
+  category_id uuid [not null]
   specifications jsonb
   description text
   status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
-  created_at timestamp [not null, default: `current_timestamp`]
-  created_by uuid
-  updated_at timestamp
+  created_at timestamptz [not null, default: `now()`]
+  created_by uuid [not null]
+  updated_at timestamptz
   updated_by uuid
 }
 
 Table product_variants {
   id uuid [pk, default: `uuidv7()`]
-  product_id uuid [not null, ref: > products.id]
-  list_price bigint [not null]
+  product_id uuid [not null]
+  price bigint [not null]
   quantity int [not null, default: 0]
-  sku varchar(100) [not null, unique]
+  sku varchar(100) [not null]
   model varchar(100)
   description text
   warranty_months int [not null]
-  barcode varchar(100) [unique]
+  barcode varchar(100)
   release_at date
   status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
-  created_at timestamp [not null, default: `current_timestamp`]
-  created_by uuid [not null, ref: > employees.account_id]
-  updated_at timestamp
+  created_at timestamptz [not null, default: `now()`]
+  created_by uuid [not null]
+  updated_at timestamptz
   updated_by uuid
-
-  checks {
-    `list_price >= 0`
-    `quantity >= 0`
-    `warranty_months > 0`
-  }
-}
-
-Table product_suppliers {
-  product_id uuid [not null, ref: > products.id]
-  supplier_id uuid [not null, ref: > suppliers.id]
-  created_at timestamp [not null, default: `current_timestamp`]
-
-  indexes {
-    (product_id, supplier_id) [pk]
-  }
+  image_file_id uuid
 }
 
 Table product_images {
   id uuid [pk, default: `uuidv7()`]
-  name varchar(255)
-  product_variant_id uuid [not null, ref: > product_variants.id]
-  file_id uuid [not null, ref: > files.id]
+  product_id uuid [not null]
+  image_file_id uuid [not null]
   is_main boolean [not null, default: false]
-  status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
-  created_at timestamp [not null, default: `current_timestamp`]
+  created_at timestamptz [not null, default: `now()`]
 
   indexes {
-    (product_variant_id, file_id) [unique]
-  }
-
-  // Partial unique index is defined in 03-data/database-constraints.sql:
-  // one ACTIVE image with is_main=true per product variant
-}
-
-Table files {
-  id uuid [pk, default: `uuidv7()`]
-  storage_provider varchar(30) [not null, note: 'LOCAL, S3, CLOUDINARY, ...']
-  storage_key varchar(500) [not null]
-  original_name varchar(255) [not null]
-  mime_type varchar(100) [not null]
-  size_bytes bigint [not null]
-  public_url varchar(2048)
-  status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, DELETED']
-  created_at timestamp [not null, default: `current_timestamp`]
-
-  indexes {
-    (storage_provider, storage_key) [unique]
-  }
-
-  checks {
-    `size_bytes >= 0`
-  }
-}
-
-Table product_reviews {
-  id uuid [pk, default: `uuidv7()`]
-  order_item_id uuid [not null, unique, ref: > order_items.id]
-  rating int [not null, note: '1 to 5']
-  comment text
-  status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
-  created_at timestamp [not null, default: `current_timestamp`]
-
-  checks {
-    `rating BETWEEN 1 AND 5`
+    (product_id, image_file_id) [unique]
   }
 }
 
 Table options {
   id uuid [pk, default: `uuidv7()`]
-  type varchar(50) [not null, note: 'Loại: Màu sắc, Dung lượng, RAM...']
-  name varchar(100) [not null, unique]
-  value text [not null, note: 'Giá trị tương ứng']
-  status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
-  created_at timestamp [not null, default: `current_timestamp`]
+  name varchar(100) [not null]
+  value varchar(255) [not null]
+  created_at timestamptz [not null, default: `now()`]
 
+  indexes {
+    (name, value) [unique]
+  }
 }
 
 Table variant_options {
-  id uuid [pk, default: `uuidv7()`]
-  product_variant_id uuid [not null, ref: > product_variants.id]
-  option_id uuid [not null, ref: > options.id]
-  status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
-  created_at timestamp [not null, default: `current_timestamp`]
+  product_variant_id uuid [pk]
+  option_id uuid [pk]
+  created_at timestamptz [not null, default: `now()`]
 
   indexes {
-    (product_variant_id, option_id) [unique]
+    (product_variant_id, option_id) [pk]
   }
+}
 
-  // A deferred database trigger must reject a second non-deleted option whose
-  // normalized options.type (trim + uppercase) already exists for this variant.
+Table product_reviews {
+  id uuid [pk, default: `uuidv7()`]
+  order_item_id uuid [not null, unique]
+  rating int [not null]
+  comment text
+  status varchar(15) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
+  created_at timestamptz [not null, default: `now()`]
+  product_id uuid [not null]
+  customer_id uuid [not null]
+  edited_at timestamptz
+}
+
+Table catalog_outbox_events {
+  id uuid [pk, default: `uuidv7()`]
+  aggregate_type varchar(50) [not null]
+  aggregate_id uuid [not null]
+  event_type varchar(100) [not null]
+  channel varchar(10) [not null, note: 'KAFKA, RABBITMQ']
+  destination varchar(255) [not null]
+  payload jsonb [not null]
+  status varchar(20) [not null, default: 'PENDING', note: 'PENDING, PUBLISHED, FAILED']
+  trace_context varchar(100)
+  created_at timestamptz [not null, default: `now()`]
+  published_at timestamptz
+}
+
+Table catalog_inbox_events {
+  event_id uuid [pk]
+  consumer_name varchar(100) [not null]
+  processed_at timestamp [not null, default: `now()`]
 }
 
 Table discounts {
   id uuid [pk, default: `uuidv7()`]
-  code varchar(50) [unique, note: 'Nullable: promotion may be automatic and have no coupon code']
+  code varchar(50)
   title varchar(255) [not null]
   discount_type varchar(10) [not null, note: 'PERCENT, FIXED']
   value int [not null]
-  application_scope varchar(20) [not null, note: 'ORDER, ALL_ITEMS, CATEGORY, VARIANT']
-  start_at timestamp [not null]
-  end_at timestamp [not null]
+  application_scope varchar(20) [not null, note: 'ORDER, ALL_ITEMS, CATEGORY']
   min_order_amount bigint [not null, default: 0]
+  start_at timestamptz [not null]
+  end_at timestamptz [not null]
   description text
   created_by uuid
   updated_by uuid
-  created_at timestamp [not null, default: `current_timestamp`]
-  updated_at timestamp
-  status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, EXPIRED, DISABLED, DELETED']
-
-  checks {
-    `start_at < end_at`
-    `min_order_amount >= 0`
-    `application_scope IN ('ORDER', 'ALL_ITEMS', 'CATEGORY', 'VARIANT')`
-    `((discount_type = 'PERCENT' AND value > 0 AND value <= 100) OR (discount_type = 'FIXED' AND value > 0))`
-  }
-}
-
-Table shipping_methods {
-  id uuid [pk, default: `uuidv7()`]
-  code varchar(50) [not null, unique, note: 'STANDARD, EXPRESS, SAME_DAY']
-  name varchar(100) [not null]
-  fee bigint [not null, default: 0, note: 'Current tariff in minor currency units; copied to orders.shipping_fee at checkout']
-  status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE']
-  created_at timestamp [not null, default: `current_timestamp`]
-  updated_at timestamp
-
-  checks {
-    `fee >= 0`
-  }
-}
-
-Table orders {
-  id uuid [pk, default: `uuidv7()`]
-  customer_id uuid [note: 'References customers.account_id when order belongs to a registered customer']
-  order_discount_id uuid [note: 'At most one order voucher']
-  shipping_method_id uuid [not null, ref: > shipping_methods.id]
-  subtotal_amount bigint [not null]
-  discount_amount bigint [not null, default: 0]
-  shipping_fee bigint [not null]
-  total_amount bigint [not null]
-  order_time timestamp [not null, default: `current_timestamp`]
-  note text
-  // Intentional order-time snapshot; do not replace with a live address FK.
-  delivery_address varchar(500) [not null]
-  recipient_name varchar(100) [not null]
-  recipient_phone varchar(15) [not null]
-  delivered_at timestamp
-  created_at timestamp [not null, default: `current_timestamp`]
-  created_by uuid
-  updated_at timestamp
-  updated_by uuid
-  status varchar(30) [not null, default: 'PENDING_CONFIRMATION', note: 'PENDING_PAYMENT, PENDING_CONFIRMATION, CONFIRMED, SHIPPING, COMPLETED, CANCELLED']
-
-  checks {
-    `subtotal_amount >= 0`
-    `discount_amount >= 0`
-    `shipping_fee >= 0`
-    `total_amount >= 0`
-  }
-}
-
-Table order_items {
-  id uuid [pk, default: `uuidv7()`]
-  order_id uuid [not null, ref: > orders.id]
-  product_variant_id uuid [not null, ref: > product_variants.id]
-  quantity int [not null]
-  unit_price bigint [not null]
-  item_discount_id uuid [note: 'At most one item promotion']
-  item_discount bigint [not null, default: 0]
-  status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, CANCELLED']
-  created_at timestamp [not null, default: `current_timestamp`]
-
-  checks {
-    `quantity > 0`
-    `unit_price >= 0`
-    `item_discount >= 0`
-  }
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz
+  status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE, DELETED']
 }
 
 Table discount_categories {
-  discount_id uuid [not null, ref: > discounts.id]
-  category_id uuid [not null, ref: > categories.id]
+  discount_id uuid [pk]
+  category_id uuid [pk]
 
   indexes {
     (discount_id, category_id) [pk]
   }
 }
 
-Table discount_variants {
-  discount_id uuid [not null, ref: > discounts.id]
-  variant_id uuid [not null, ref: > product_variants.id]
-
-  indexes {
-    (discount_id, variant_id) [pk]
-  }
-}
-
 Table carts {
   id uuid [pk, default: `uuidv7()`]
-  customer_id uuid [note: 'References customers.account_id when cart belongs to a registered customer']
-  session_token varchar(255)
-  status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, CONVERTED, ABANDONED, EXPIRED']
-  created_at timestamp [not null, default: `current_timestamp`]
-  updated_at timestamp
-
-  checks {
-    `((customer_id IS NOT NULL) <> (session_token IS NOT NULL))`
-  }
+  customer_id uuid [not null, unique]
+  created_at timestamptz [not null, default: `now()`]
 }
 
 Table cart_items {
-  cart_id uuid [not null, ref: > carts.id]
-  variant_id uuid [not null, ref: > product_variants.id]
+  cart_id uuid [pk]
+  variant_id uuid [pk]
   quantity int [not null]
 
   indexes {
     (cart_id, variant_id) [pk]
   }
+}
 
-  checks {
-    `quantity > 0`
+Table shipping_methods {
+  id uuid [pk, default: `uuidv7()`]
+  code varchar(50) [not null, unique]
+  name varchar(100) [not null]
+  fee bigint [not null, default: 0]
+  status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE']
+  created_at timestamptz [not null, default: `now()`]
+}
+
+Table orders {
+  id uuid [pk, default: `uuidv7()`]
+  customer_id uuid [not null]
+  order_discount_id uuid
+  shipping_method_id uuid [not null]
+  subtotal_amount bigint [not null]
+  discount_amount bigint [not null, default: 0]
+  shipping_fee bigint [not null]
+  total_amount bigint [not null]
+  note text
+  delivery_address varchar(500) [not null]
+  recipient_name varchar(100) [not null]
+  recipient_phone varchar(15) [not null]
+  delivered_at timestamptz
+  created_at timestamptz [not null, default: `now()`]
+  created_by uuid
+  updated_at timestamptz
+  updated_by uuid
+  status varchar(30) [not null, default: 'PENDING_CONFIRMATION', note: 'PENDING_PAYMENT, PENDING_CONFIRMATION, CONFIRMED, SHIPPING, COMPLETED, CANCELLED']
+  idempotency_key varchar(100) [unique]
+  payment_method_id uuid [not null]
+  invoice_number varchar(50) [not null, unique]
+}
+
+Table order_items {
+  id uuid [pk, default: `uuidv7()`]
+  order_id uuid [not null]
+  product_variant_id uuid [not null]
+  quantity int [not null]
+  unit_price bigint [not null]
+  discount_id uuid
+  discount_amount bigint [not null, default: 0]
+  created_at timestamptz [not null, default: `now()`]
+  product_name varchar(255) [not null]
+  sku varchar(100) [not null]
+  variant_label varchar(500)
+
+  indexes {
+    (order_id, product_variant_id) [unique]
   }
+}
+
+Table order_status_history {
+  id uuid [pk, default: `uuidv7()`]
+  order_id uuid [not null]
+  from_status varchar(30) [note: 'PENDING_PAYMENT, PENDING_CONFIRMATION, CONFIRMED, SHIPPING, COMPLETED, CANCELLED']
+  to_status varchar(30) [not null, note: 'PENDING_PAYMENT, PENDING_CONFIRMATION, CONFIRMED, SHIPPING, COMPLETED, CANCELLED']
+  changed_by uuid
+  reason text
+  created_at timestamptz [not null, default: `now()`]
+}
+
+Table order_outbox_events {
+  id uuid [pk, default: `uuidv7()`]
+  aggregate_type varchar(50) [not null]
+  aggregate_id uuid [not null]
+  event_type varchar(100) [not null]
+  channel varchar(10) [not null, note: 'KAFKA, RABBITMQ']
+  destination varchar(255) [not null]
+  payload jsonb [not null]
+  status varchar(20) [not null, default: 'PENDING', note: 'PENDING, PUBLISHED, FAILED']
+  created_at timestamptz [not null, default: `now()`]
+  published_at timestamptz
+  trace_context varchar(100)
+}
+
+Table order_inbox_events {
+  event_id uuid [pk]
+  consumer_name varchar(100) [not null]
+  processed_at timestamptz [not null, default: `now()`]
 }
 
 Table payment_methods {
   id uuid [pk, default: `uuidv7()`]
-  code varchar(50) [not null, unique, note: 'COD, STRIPE_CARD, BANK_TRANSFER']
+  code varchar(50) [not null, unique]
   name varchar(100) [not null]
   status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, INACTIVE']
-  created_at timestamp [not null, default: `current_timestamp`]
-  updated_at timestamp
+  created_at timestamptz [not null, default: `now()`]
 }
 
 Table payments {
   id uuid [pk, default: `uuidv7()`]
-  order_id uuid [not null, ref: > orders.id]
-  payment_method_id uuid [not null, ref: > payment_methods.id]
+  order_id uuid [not null]
+  payment_method_id uuid [not null]
   amount bigint [not null]
-  paid_at timestamp
+  paid_at timestamptz
   provider_transaction_code varchar(100) [unique]
-  created_at timestamp [not null, default: `current_timestamp`]
+  created_at timestamptz [not null, default: `now()`]
   created_by uuid
-  updated_at timestamp
+  updated_at timestamptz
   updated_by uuid
-  status varchar(20) [not null, default: 'PENDING', note: 'PENDING, PAID, FAILED']
+  status varchar(20) [not null, default: 'PENDING', note: 'PENDING, PAID, FAILED, CANCELLED, REFUNDED']
+  idempotency_key varchar(100) [unique]
+  customer_id uuid [not null]
+}
 
-  checks {
-    `amount >= 0`
-    `((status = 'PAID' AND paid_at IS NOT NULL) OR (status IN ('PENDING', 'FAILED') AND paid_at IS NULL))`
+Table payment_outbox_events {
+  id uuid [pk, default: `uuidv7()`]
+  aggregate_type varchar(50) [not null]
+  aggregate_id uuid [not null]
+  event_type varchar(100) [not null]
+  channel varchar(10) [not null, note: 'KAFKA, RABBITMQ']
+  destination varchar(255) [not null]
+  payload jsonb [not null]
+  status varchar(20) [not null, default: 'PENDING', note: 'PENDING, PUBLISHED, FAILED']
+  created_at timestamp [not null, default: `now()`]
+  published_at timestamp
+  trace_context varchar(100)
+}
+
+Table payment_inbox_events {
+  event_id uuid [pk]
+  consumer_name varchar(100) [not null]
+  processed_at timestamptz [not null, default: `now()`]
+}
+
+Table files {
+  id uuid [pk, default: `uuidv7()`]
+  storage_provider varchar(30) [not null]
+  storage_key varchar(500) [not null]
+  original_name varchar(255) [not null]
+  mime_type varchar(100) [not null]
+  size_bytes bigint [not null]
+  public_url varchar(2048)
+  status varchar(20) [not null, default: 'ACTIVE', note: 'ACTIVE, DELETED']
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    (storage_provider, storage_key) [unique]
   }
 }
 
-
-// =====================================================================
-// NULLABLE FOREIGN KEY REFERENCES (tách riêng vì dbdiagram.io ref > yêu cầu NOT NULL)
-// =====================================================================
+// Foreign keys inside a service database
+Ref: accounts.role_id > roles.id
+Ref: admins.account_id > accounts.id
+Ref: cart_items.cart_id > carts.id
+Ref: categories.hardware_type_id > hardware_types.id
 Ref: categories.parent_id > categories.id
+Ref: category_attributes.attribute_id > attribute_definitions.id
+Ref: category_attributes.category_id > categories.id
+Ref: customer_addresses.customer_id > customers.account_id
+Ref: customers.account_id > accounts.id
+Ref: discount_categories.discount_id > discounts.id
+Ref: employees.account_id > accounts.id
+Ref: order_items.order_id > orders.id
+Ref: order_status_history.order_id > orders.id
+Ref: orders.shipping_method_id > shipping_methods.id
+Ref: payments.payment_method_id > payment_methods.id
+Ref: product_images.product_id > products.id
+Ref: product_reviews.product_id > products.id
+Ref: product_variants.product_id > products.id
 Ref: products.brand_id > brands.id
-Ref: products.created_by > employees.account_id
-Ref: products.updated_by > employees.account_id
-Ref: product_variants.updated_by > employees.account_id
+Ref: products.category_id > categories.id
+Ref: variant_options.option_id > options.id
+Ref: variant_options.product_variant_id > product_variants.id
+
+// Logical references between services (no FK in the databases)
+Ref: admins.avatar_file_id > files.id
+Ref: brands.image_file_id > files.id
+Ref: cart_items.variant_id > product_variants.id
+Ref: carts.customer_id > customers.account_id
+Ref: customers.avatar_file_id > files.id
+Ref: discount_categories.category_id > categories.id
 Ref: discounts.created_by > employees.account_id
 Ref: discounts.updated_by > employees.account_id
+Ref: employees.avatar_file_id > files.id
+Ref: order_items.discount_id > discounts.id
+Ref: order_items.product_variant_id > product_variants.id
+Ref: order_status_history.changed_by > employees.account_id
+Ref: orders.created_by > employees.account_id
 Ref: orders.customer_id > customers.account_id
 Ref: orders.order_discount_id > discounts.id
-Ref: orders.created_by > employees.account_id
+Ref: orders.payment_method_id > payment_methods.id
 Ref: orders.updated_by > employees.account_id
-Ref: order_items.item_discount_id > discounts.id
-Ref: carts.customer_id > customers.account_id
 Ref: payments.created_by > employees.account_id
+Ref: payments.customer_id > customers.account_id
+Ref: payments.order_id > orders.id
 Ref: payments.updated_by > employees.account_id
+Ref: product_images.image_file_id > files.id
+Ref: product_reviews.customer_id > customers.account_id
+Ref: product_reviews.order_item_id > order_items.id
+Ref: product_variants.created_by > employees.account_id
+Ref: product_variants.image_file_id > files.id
+Ref: product_variants.updated_by > employees.account_id
+Ref: products.created_by > employees.account_id
+Ref: products.updated_by > employees.account_id
+
+TableGroup Identity_Service {
+  roles
+  accounts
+  employees
+  admins
+  customers
+  customer_addresses
+}
+TableGroup Catalog_Service {
+  hardware_types
+  brands
+  categories
+  attribute_definitions
+  category_attributes
+  products
+  product_variants
+  product_images
+  options
+  variant_options
+  product_reviews
+  catalog_outbox_events
+  catalog_inbox_events
+}
+TableGroup Promotion_Service {
+  discounts
+  discount_categories
+}
+TableGroup Order_Service {
+  carts
+  cart_items
+  shipping_methods
+  orders
+  order_items
+  order_status_history
+  order_outbox_events
+  order_inbox_events
+}
+TableGroup Payment_Service {
+  payment_methods
+  payments
+  payment_outbox_events
+  payment_inbox_events
+}
+TableGroup Media_Service {
+  files
+}
