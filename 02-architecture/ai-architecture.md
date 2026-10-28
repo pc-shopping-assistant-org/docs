@@ -132,7 +132,7 @@ nối SSE không ảnh hưởng graph.
 ### LangGraph — điều phối một lượt ReAct
 
 Graph bắt đầu từ accepted checkpoint của conversation, xử lý lượt mới và chạy vòng
-lặp có giới hạn số lần gọi model/tool và thời gian: bind task/pending reply → model
+lặp có giới hạn số lần gọi model/tool và thời gian: load context/pending reply → model
 chọn action → validate → gọi tool, đề xuất sửa requirement hoặc trả lời. Checkpoint
 lưu tiến trình để recovery; graph không tự quyết checkpoint nào được publish.
 
@@ -150,10 +150,12 @@ Budget/workload, capacity/unit và CLEAR có thể xử lý trước hardware I/
 được tải khi cần resolve SKU hoặc khi BUILD đã đủ prerequisite; sau merge, graph
 kiểm tra lại điều kiện này. Chưa tải candidates không chứng minh thiếu metadata.
 
-Task registration và requirement change dùng hai contract/provider riêng:
+Task registration và requirement change dùng hai contract riêng:
 `TaskDraftBatch` chỉ đề xuất task từ message; `RequirementDraft` chỉ đề xuất
 requirement items. Task registration quyết định việc cần làm; requirement
-resolution không thể thêm, thay hoặc xóa task. `Draft` dạng gộp chỉ còn để đọc
+resolution không thể thêm, thay hoặc xóa task. Agent gửi task declaration cùng
+action đầu tiên; application resolve/admit trước execution, không gọi extractor
+riêng cho lượt mới. Hội thoại thường chỉ cần một model call. `Draft` dạng gộp chỉ còn để đọc
 artifact V1 đã lưu qua compatibility boundary, không phải runtime graph.
 
 ### ReAct capability — chọn hành động trong giới hạn
@@ -270,12 +272,15 @@ thái bằng `GET /api/v1/conversations/{id}/runs/{run_id}`.
 
 ```mermaid
 flowchart LR
-  START([Accepted state + tin nhắn mới]) --> BIND[Gắn task và xử lý pending reply]
+  START([Accepted state + tin nhắn mới]) --> BIND[Load context và pending đã chấp nhận]
   BIND -->|Đã đủ thông tin| AGENT[Model đề xuất action]
   BIND -->|Cần hỏi tiếp| ASK[Lưu proposal/câu hỏi chờ user]
   BIND -->|Pending requirement đã resolve| WORK[Cập nhật working state của run]
   WORK --> AGENT
-  AGENT --> CHECK[Validate schema và policy theo state]
+  AGENT --> ADMIT{Có task declaration mới?}
+  ADMIT -->|Có, cùng response| TASK[Application validate source và resolve subjects]
+  ADMIT -->|Không| CHECK[Validate schema và policy theo state]
+  TASK --> CHECK
   CHECK -->|Repair| AGENT
   CHECK -->|CALL_TOOL| TOOL[Dispatcher gọi service typed]
   TOOL --> LEDGER[Lưu tool outcome đã validate]

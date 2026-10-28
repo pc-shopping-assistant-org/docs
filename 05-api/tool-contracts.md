@@ -35,6 +35,13 @@ build_pc cần known budget/use-case, supported/resolved requirements và canoni
 
 ## Trusted context
 
+Native `register_tasks` nhận `QuotedTaskBatch`: tối đa 8 tasks với kind
+BUILD/COMPARE/ANSWER/EXPLAIN_SAVED_BUILD, quote nguyên văn; COMPARE có 2–5
+subject quotes. Chỉ expose khi application mở registration. Agent gửi declaration
+cùng một action; application bind source offsets/resolve identity trước execution.
+Đây là control, không thêm business tool hay API HTTP mới. Một response chứa
+nhiều business actions vẫn không hợp lệ.
+
 Current ToolContext: account/conversation/run IDs, canonical requirements,
 bounded catalog, read_catalog_allowed, execution_allowed.
 Runtime extension: execution incarnation/generation, cancel/deadline, attempt boundary,

@@ -1,7 +1,20 @@
 # Implementation status
 
-Updated: **2026-10-23**. Current delivery evidence, not an architecture tutorial.
+Updated: **2026-10-28**. Current delivery evidence, not an architecture tutorial.
 Start at [AI documentation](README.md).
+
+## Agent task admission — ISSUE-159
+
+Implemented locally: new turns reach ReAct directly. Native `register_tasks`
+shares the first business action response; application retains source/identity
+validation and completion authority. Greetings use one call, catalog lookup plus
+answer uses two instead of three. Pending task bindings remain intact.
+Verified: **917 unit + 96 PostgreSQL integration tests**; native HTTP tests cover
+actual model-dispatch counts, retry, publication and multi-turn history using
+scripted providers. AI `4683417` published to main and release/v1.0.4 on owner
+request; image build/deployment are in progress. No live model quality/latency claim.
+Serving/training protocol: `agent-task-admission-v3`; old artifacts need regeneration
+and relevant labels reviewed. Pending interpreter redesign remains ISSUE-150.
 
 ## Current refactor — ISSUE-149
 

@@ -24,23 +24,28 @@ Wire schema phải map explicit; null/refusal/truncation/malformed không trở 
 Validation toàn response trước resolve/merge; không stream partial draft vào state.
 Model trả quote nguyên văn; application tính source offsets trước khi tạo draft nội bộ.
 
-Task extraction chỉ đăng ký requested tasks. Requirement extraction được dùng khi
+Task declaration đi qua native `register_tasks` cùng action đầu tiên của agent;
+runtime không gọi task-extraction model trước ReAct. Contract `TaskDraftBatch`
+vẫn riêng với requirements; head extraction cũ chỉ còn cho offline training/tests.
+Requirement extraction được dùng khi
 proposal cần chứng minh explicit user source, không mandatory prefix mọi turn.
 
 ## Native tool calling
 
 Adapter bind schemas của allowed subset và project complete ledger pairs thành
-AIMessage/ToolMessage. Tối đa một accepted call mỗi response.
+AIMessage/ToolMessage. Tối đa một action mỗi response, có thể kèm task declaration.
 
-- Tắt parallel calls khi integration hỗ trợ; vẫn kiểm tra multi-call.
-- Reject malformed/multiple/mixed action response; repair không làm hỏng last valid transcript.
+- Cho phép provider trả cặp registration + action khi registration đang mở;
+  application admit tuần tự trước execution. Không mở parallel business tools.
+- Reject malformed/multiple action response; repair không làm hỏng last valid transcript.
 - Gemini signature giữ opaque theo call cho serialization/reopen.
 - Không parse text/`exec` để fake tool-calling capability.
 - Text thường thành candidate response. Native controls `propose_requirements`,
   `ask_clarification`, `submit_result` được normalize nội bộ; JSON action envelope
   cũ bị reject, không fallback. Model chọn refs, application xác định outcome.
 
-Protocol `text-native-controls-v2` được dùng chung bởi serving và training export.
+Protocol `agent-task-admission-v3` được dùng chung bởi serving và training export.
+Artifact cũ cần regenerate/retrain để học declaration cùng action; không tự sửa pilot labels.
 Control acknowledgements là checkpointed transitions, không business ToolResults;
 projection giữ matched pairs và thứ tự cùng business ledger.
 
