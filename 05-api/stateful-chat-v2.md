@@ -9,6 +9,12 @@ of conversations with accepted V1 execution checkpoints.
 Frontend assistant chat uses V2 exclusively, including product attachments and
 proposal confirmation. It requires configured V2; there is no legacy fallback.
 
+`answer` remains a string. The frontend renders assistant text as Markdown/GFM
+in streaming and completed answers; user messages remain literal. Tables and code
+scroll inside their own containers. Raw HTML is ignored, unsafe links are filtered,
+and model image URLs are not loaded. Typed product/build cards stay separate;
+Markdown rendering does not grant factual authority to generated prose.
+
 Examples/tutorial: [First steps](../04-ai/getting-started.md).
 Verification nằm trong [status](../04-ai/stateful-implementation-status.md), không phải API contract.
 
