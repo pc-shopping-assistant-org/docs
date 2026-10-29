@@ -35,12 +35,10 @@ build_pc cần known budget/use-case, supported/resolved requirements và canoni
 
 ## Trusted context
 
-Native `register_tasks` nhận `QuotedTaskBatch`: tối đa 8 tasks với kind
-BUILD/COMPARE/ANSWER/EXPLAIN_SAVED_BUILD, quote nguyên văn; COMPARE có 2–5
-subject quotes. Chỉ expose khi application mở registration. Agent gửi declaration
-cùng một action; application bind source offsets/resolve identity trước execution.
-Đây là control, không thêm business tool hay API HTTP mới. Một response chứa
-nhiều business actions vẫn không hợp lệ.
+Không có `register_tasks` trong native runtime. Agent gửi `tool_calls[]` trực tiếp;
+application bind/validate task completion từ các calls và canonical outcomes.
+Independent business reads được chạy theo batch có giới hạn; state-changing control
+chạy riêng. Mỗi native call luôn có matching result; không drop một phần response.
 
 Current ToolContext: account/conversation/run IDs, canonical requirements,
 bounded catalog, read_catalog_allowed, execution_allowed.
@@ -144,7 +142,7 @@ input/catalog hashes and algorithm/pruning/policy versions. Outcomes FEASIBLE /
 INFEASIBLE / SEARCH_INCOMPLETE must match declared completion/coverage/pruning and
 termination. Metadata validation alone is not proof of actual search correctness.
 
-`NativeFlexibleModel` accepts plain text or one native call; no JSON action envelope.
+`NativeFlexibleModel` accepts plain text or bounded native calls; no JSON action envelope.
 Native controls are `propose_requirements`, `ask_clarification`, `submit_result`.
 The last selects evidence/build refs by task index; it cannot supply outcome/status.
 One selection with `task_index=null` is a grounded response without completing the
@@ -153,6 +151,15 @@ Control schemas and availability live in `react/control_actions.py`; selection
 contract is `react/submissions.py`. RepairFeedback restricts corrective actions;
 invalid protocol returns no decision, not a fake answer. Control acknowledgements
 are checkpointed separately from business ToolResults, with matched provider pairs.
+
+Model-facing protocol `compact-native-tools-v5` uses `react/model_contracts.py`.
+Proposal: `items[{subject,predicate,value,unit?,quote,...}]`, optional source_text only
+for agent suggestions requiring consent. Example budget: subject SETUP, predicate
+budget, target GOAL, value 25000000, unit VND, operator LTE, exact user quote.
+Application binds offsets and resolves/validates once before working merge; no second
+LLM requirement extraction. Submit: `results[{text,refs,build_ref?,calls,...}]`;
+`quotes`/`review` are available only with readable web evidence. Defaults may be
+omitted. Internal domain/evidence/receipt contracts keep their full validation.
 
 FinalAnswerAction also accepts `supporting_tool_call_ids` for failed/empty outcomes
 with no fact refs. Internal `FlexibleAnswer(schema_version=2)` has outcome/reason,

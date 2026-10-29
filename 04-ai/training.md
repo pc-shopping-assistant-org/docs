@@ -125,21 +125,24 @@ Provider dùng lại native contracts. Dataset giữ nhãn nội bộ `TaskDraft
 `RequirementDraft`; export chuyển sang `QuotedTaskBatch` và
 `QuotedRequirementDraft` đúng schema runtime. Offset chỉ được tính sau khi model
 trả quote. Adapter train từ export cũ không tương thích với protocol v2.
-ReAct dùng protocol `agent-task-admission-v3`: response hội thoại là text; proposal,
+ReAct dùng protocol `compact-native-tools-v5`: response hội thoại là text; proposal,
 clarification và result selection là native function calls. `FlexibleDecision` chỉ
 là nhãn nội bộ; không export JSON envelope/full union vào prompt. Export và serving
 dùng cùng request projection/parser; application suy ra outcome từ canonical results.
-Lượt nghiệp vụ mới dùng cặp `register_tasks` + một action trong cùng target message;
-snapshot phải mở registration và task quotes phải khớp user message. Serving/export
-cùng bật provider multi-call cho cặp này, không cho nhiều business actions.
+Target business action có thể chứa mảng native tool calls. Serving/export cùng bật
+parallel tool calls; application giữ giới hạn batch và policy cho từng call.
+Export map nhãn canonical sang compact wire giống serving, kiểm tra từng target
+against schema thực sự expose trong state đó. Proposal dùng items phẳng/value/unit/quote;
+submit dùng refs/calls và chỉ có quotes/review khi readable web evidence cho phép.
+Artifacts v3/v4 phải re-export/review, không âm thầm approve hoặc sửa nhãn.
 Head TASK_EXTRACTION độc lập vẫn đọc được cho offline evaluation, không còn là
 bước bắt buộc của runtime. Pilot hiện có chưa được relabel cho protocol mới.
 
 Export ghi `react_protocol` trong manifest. Artifacts/adapter train bằng JSON protocol
 cũ phải regenerate/retrain trước dùng protocol mới; không tự overwrite weights hay
-approve labels. Pilot `react-13/14/15` còn DRAFT, cần reviewer sửa context/nhãn: typed
-clarification hiện không có business task để bind. Export chặn các action không được
-expose thay vì âm thầm đổi intent thành text.
+approve labels. Pilot vẫn giữ trạng thái review gốc. Clarification có thể được expose
+nhưng application phải kiểm tra đúng thông tin thiếu; schema hợp lệ không chứng minh
+ý định đúng. Export chặn các action không được expose.
 
 `prepare_qwen_request` là projection chung cho serving và training: schema JSON đầy
 đủ của **structured extraction heads** đi vào system message, còn tool/control schema

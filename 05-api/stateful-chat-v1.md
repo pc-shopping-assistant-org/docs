@@ -40,6 +40,7 @@ not shared paths.
 | GET /conversations/{id}/messages | Page of messages /200 | AI_MESSAGES_LISTED |
 | POST /conversations/{id}/runs | Versioned request → RunViewV1 /202 | AI_RUN_ACCEPTED |
 | GET /conversations/{id}/runs/{run_id} | RunViewV1 /200 | AI_RUN_RETRIEVED |
+| GET /conversations/{id}/runs/{run_id}/result | Final persisted COMPLETED/ERROR event /200; null /202 while executing | Original event key; AI_RUN_RETRIEVED while pending |
 | POST /conversations/{id}/runs/{run_id}/cancel | Current RunViewV1 /202 | AI_RUN_CANCEL_REQUESTED |
 | GET /conversations/{id}/runs/{run_id}/events | text/event-stream | AI_CHAT_STREAM_* per frame |
 
@@ -101,6 +102,12 @@ terminal event; duplicate submit does not re-emit START. Stream does not execute
 
 DELTA is not provider-token streaming. On disconnect poll saved result rather than
 admitting a new run to fetch an answer.
+The frontend keeps its composer pending and polls `/runs/{run_id}/result` once per
+second after an interrupted stream. This reads the same run's immutable final event,
+including its products/build/proposal, rather than the latest conversation state.
+Owner authorization is unchanged. Missing retained events return 410
+`AI_STREAM_INTERRUPTED`; polling neither executes nor cancels a run. Leaving the page
+stops the browser subscription. There is still one admission and one SSE per turn.
 
 ## Archived V1 request — not served
 

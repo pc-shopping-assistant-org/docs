@@ -87,9 +87,13 @@ artifact chưa merge; không apply budget trước rồi làm mất phần pin c
 ## Consent
 
 Application phân biệt explicit user change với agent-authored proposal.
-Một independent extractor có thể kiểm tra draft thực sự được user message hỗ trợ;
-resolved matching receipt mới cho working merge. Đây vẫn là model-based semantic
-assessment, không deterministic guarantee về intent.
+`propose_requirements` là lần diễn giải user message duy nhất. Model gửi items phẳng
+và quote; application tính offset, resolve đơn vị/SKU và validate trước working merge.
+Không gọi lại requirement extractor để diễn giải cùng câu. Receipt
+`source-bound-draft-v2` bind run, message, base hash và draft; publication replay kiểm
+tra lại receipt. Receipt `explicit-draft-match-v1` chỉ còn để đọc checkpoint cũ.
+Quote hợp lệ không chứng minh mọi ý nghĩa model gán là đúng; unsupported/ambiguous
+vẫn phải hỏi lại hoặc từ chối, không tự điền yêu cầu.
 
 Agent-origin/inferred changes cần confirmation bound:
 

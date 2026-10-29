@@ -12,7 +12,7 @@ Load accepted context → Agent
                                                │
                   ┌────────────────────────────┼───────────────────────┐
                   ▼                            ▼                       ▼
-              CALL_TOOL               PROPOSE_REQUIREMENTS     ASK_CLARIFICATION
+              CALL_TOOLS[]            PROPOSE_REQUIREMENTS     ASK_CLARIFICATION
               Policy/dispatch         Resolve/confirm/merge     Persist pending
                   │                            │                       │
                   └──── Observe → Agent ◄───────┘                 WAITING_INPUT
@@ -27,15 +27,14 @@ Requirement resolution không là mandatory prefix của mọi câu hỏi. Agent
 đọc catalog/web trước khi đủ thông tin build. Nó không được đổi BUILD/COMPARE thành
 ANSWER chỉ để kết thúc sớm.
 
-Lượt mới không gọi task extractor trước agent. Khi có yêu cầu nghiệp vụ, agent
-gửi `register_tasks` cùng một action trong cùng response. Application đối chiếu
-quote, resolve subjects rồi mới chạy action; không cần model call ở giữa.
+Lượt mới vào agent trực tiếp, không task extractor hoặc `register_tasks`.
+Model có thể trả nhiều native tool calls trong cùng response. Application kiểm tra
+từng call; các lượt đọc độc lập chạy song song trên cùng working state.
 Hội thoại thường trả text ngay. Task/pending đã chấp nhận tiếp tục dùng binding cũ.
 Các interpreter chọn/sửa pending hiện có vẫn giữ nguyên; backlog agent-first cho
 nhánh này nằm ở ISSUE-150.
 
-Task registration có thể trả danh sách rỗng cho hội thoại/kiến thức chung. Internal
-RESPOND tạo response cho lượt hiện tại, không công nhận business completion.
+Internal RESPOND tạo response cho lượt hiện tại, không công nhận business completion.
 Khi có pending, agent có thể giải thích context và publish response trong khi giữ
 nguyên task/proposal; application revalidate việc bảo toàn này trước CAS.
 
@@ -46,7 +45,7 @@ không giữ coroutine chờ user.
 
 | Action | Effect |
 | --- | --- |
-| `CALL_TOOL` | Một typed tool invocation |
+| `CALL_TOOLS` | Mảng typed invocations; checkpoint cũ `CALL_TOOL` vẫn đọc được |
 | `PROPOSE_REQUIREMENTS` | Draft được application resolve/validate; không tự merge |
 | `ASK_CLARIFICATION` | Hỏi đúng thông tin thiếu hoặc confirmation |
 | `FINAL_ANSWER` | Candidate phải qua grounding/completion trước publish |
@@ -56,24 +55,35 @@ Model response không cấp owner, revision, checkpoint selector hay trusted tas
 V2 action schemas: [tool reference](../05-api/tool-contracts.md).
 
 Model trả text thường cho hội thoại, hoặc native function call. Control functions
-`register_tasks`, `propose_requirements`, `ask_clarification`, `submit_result` được normalize thành
+`propose_requirements`, `ask_clarification`, `submit_result` được normalize thành
 internal actions; không phải business ToolResult. `submit_result` chỉ chọn refs;
 application suy ra outcome từ canonical ledger. `task_index=null` trả grounded
 response cho lượt này mà không hoàn tất task pending. Model không xuất JSON
 FlexibleDecision; union này chỉ còn là representation nội bộ/đọc dữ liệu đã lưu.
 
-**Source evidence:** model chỉ trả quote nguyên văn khi đăng ký task, trích xuất
+Protocol `compact-native-tools-v5` giữ wire nhỏ: proposal dùng items phẳng với
+`value`, optional `unit`, `quote`; application chuyển thành domain draft và validate.
+Không chạy extractor lần hai. Submit dùng `refs`/`calls`; web quote/review fields
+chỉ expose sau readable web evidence. Ordinary clarification có thể là text.
+Serving/training dùng chung projection; không đưa toàn bộ domain JSON schema vào tools.
+
+**Source evidence:** model chỉ trả quote nguyên văn khi trích xuất
 requirements, chọn/sửa pending hoặc đề xuất requirements trong ReAct. Application
 tìm quote trong đúng user message (hoặc `source_text` của proposal) rồi tính
 `start/end` trước khi ghi state. Quote thiếu hoặc trùng vị trí bị từ chối; model
 không được tự cung cấp offset. Checkpoint cũ vẫn đọc theo contract nội bộ có span.
 
 Native tool calling dùng OpenAI/Gemini/Qwen adapters; không text parser/`exec`.
-Chỉ bind allowed subset. Một response có tối đa một business/control action;
-riêng `register_tasks` được đi kèm action đầu tiên khi application cho phép đăng ký.
-Đây là admission trước action, không phải chạy hai business tools song song.
-Projection giữ cả hai native calls trong cùng AIMessage và đủ ToolMessages.
-Các batch nhiều business actions hoặc declaration sai source bị reject.
+Chỉ bind allowed subset. Mặc định tối đa **4 calls/batch, 8 calls/run**.
+Search hai sản phẩm có thể chạy cùng lượt; search rồi đọc URL mới tìm thấy cần lượt
+sau. Requirement controls chạy riêng, merge xong mới build. Optimizer chạy tuần tự.
+Mỗi call có result COMPLETED/REJECTED/FAILED riêng và ToolMessage khớp call_id;
+lỗi dependency ở một call không làm mất kết quả những call khác.
+Native task writes giữ kết quả đã hoàn tất khi batch bị ngắt. Recovery dùng đúng
+checkpoint được coordinator cho phép, không lấy latest/orphan của thread.
+Ledger giữ nguyên dữ liệu; projection model tối đa 12 KB/result, toàn request
+(prompt, schemas, history, observations) tối đa 128 KB, window nguyên nhóm call/result.
+Đây là giới hạn byte bảo thủ, không phải phép đếm token hay cam kết billing.
 Repair hữu hạn dùng static feedback và durable attempt mới.
 
 Gemini provider signature được giữ opaque theo call cho protocol recovery, không

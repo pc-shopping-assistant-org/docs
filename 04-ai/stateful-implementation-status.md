@@ -1,27 +1,48 @@
 # Implementation status
 
-Updated: **2026-10-28**. Current delivery evidence, not an architecture tutorial.
+Updated: **2026-10-30**. Current delivery evidence, not an architecture tutorial.
 Start at [AI documentation](README.md).
 
-## Agent task admission — ISSUE-159
+## Current local changes — ISSUE-161/162
 
-Implemented locally: new turns reach ReAct directly. Native `register_tasks`
-shares the first business action response; application retains source/identity
-validation and completion authority. Greetings use one call, catalog lookup plus
-answer uses two instead of three. Pending task bindings remain intact.
-Verified: **917 unit + 96 PostgreSQL integration tests**; native HTTP tests cover
-actual model-dispatch counts, retry, publication and multi-turn history using
-scripted providers. AI `4683417` published to main and release/v1.0.4 on owner
-request; image build/deployment are in progress. No live model quality/latency claim.
-Serving/training protocol: `agent-task-admission-v3`; old artifacts need regeneration
-and relevant labels reviewed. Pending interpreter redesign remains ISSUE-150.
+Publication requested by owner on 2026-10-30: AI `51df007` to main and existing
+release/v1.0.5; frontend includes the fix on main and existing release/v1.0.2.
+Image versions are unchanged. Workflows/server rollout are not monitored at the
+owner's request; the production snapshot below describes the earlier inspected runtime.
 
-Provider follow-up (ISSUE-160): AI `cedb944` adds typed LangChain Gemini wrapper
-classification; infra forwards the global request timeout. **922 unit + 96
-PostgreSQL tests** and **39 infra tests** pass. Production 1.0.3 logged a 400
-GoogleInvalidRequestError; replay of its saved request returned 503 high demand.
-The original 400 detail is unavailable, so that cause is not claimed resolved.
-AI 1.0.5 rollout is in progress; no provider/model change has been made.
+Protocol `compact-native-tools-v5` exposes compact wire DTOs, preserving complete
+domain validation. User proposals are interpreted once; quote binding, resolution,
+working merge and publication receipt replay stay application-owned. Ordinary
+clarifications can be text. Web/review submit fields require readable web evidence.
+Training export uses the same advertised schemas; old labels are not auto-approved.
+
+Pinned Qwen3-8B template, greeting plus all 14 definitions: 5,045 → 3,558 prompt
+tokens; tool overhead 4,704 → 3,179. Proposal definition 1,109 → 557. These are
+full-registry ceilings without history/results, not every runtime request. The
+reported GPU OOM was not reproduced; no training/model-quality claim is made.
+
+Interrupted SSE now reads the admitted run's durable `/result` outcome while the
+composer stays pending. No SSE reconnect, resubmission, cancellation or forced unlock.
+Completed outcome retains exact run/revision/products/build/proposal. Original
+production transport failure remains unproven; frontend premature release is covered
+by regression tests. Another production run exhausted ReAct validation; raw provider
+response is unavailable, so its exact invalid action is not claimed identified.
+
+Verified locally: **1,035 AI unit/PostgreSQL tests**, Ruff/mypy212/lock167;
+**214 frontend tests** after integrating current origin/main, typecheck/OpenAPI checks;
+pre-merge lint passed. No browser verification of these changes or live v5
+model-quality evaluation. Publishing source is separate from verified deployment.
+
+## Running production — ISSUE-159/160
+
+AI 1.0.5 / `da9a552` uses native bounded tool-call arrays without `register_tasks`.
+Independent reads run as a batch; provider pairs, signatures and recovery stay intact.
+Its serving protocol is v4, not the uncommitted v5 above. Production model was changed
+to `gemini-3.1-flash-lite` after direct checks found 3.8-flash high-demand 503 and
+2.5-flash unavailable. A live two-search native batch succeeded; intermittent provider
+5xx remain possible. Typed wrapper status classification uses existing recovery.
+The original historical 400 detail remains unavailable. Pending interpreter redesign
+and broader live quality evaluation remain deferred.
 
 ## Current refactor — ISSUE-149
 
@@ -48,8 +69,8 @@ Settings construction and OpenAPI inspection are offline; they do not prove read
 
 Managed graph, typed tools, canonical requirements/compiler/verifier, deterministic
 optimizer, accepted-head publication, bounded dialogue and basic SSE are implemented.
-Task registration and requirement extraction use separate `TaskDraftBatch` and
-`RequirementDraft` contracts; combined V1 `Draft` is restricted to persisted-data
+Task and requirement domain contracts remain separate; native tools drive runtime
+task admission. Combined V1 `Draft` is restricted to persisted-data
 compatibility reads. T5 focused gate: 75 unit + 48 PostgreSQL tests. Final audit:
 867 unit + 93 PostgreSQL integration tests; Ruff, mypy and lock checks pass. No
 live provider/GPU run is implied.
