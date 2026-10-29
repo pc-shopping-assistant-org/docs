@@ -15,6 +15,13 @@ scroll inside their own containers. Raw HTML is ignored, unsafe links are filter
 and model image URLs are not loaded. Typed product/build cards stay separate;
 Markdown rendering does not grant factual authority to generated prose.
 
+The assistant URL stores `?conversationId=<uuid>` immediately after creation,
+before run completion. Refresh reloads owner-authorized messages and the latest
+published typed result. An admitted pending run resumes delivery via `/result`
+polling without resubmission or SSE reconnect. Starting a new chat removes the
+conversation reference. Older history messages are restored as text; the latest
+published turn restores its product cards, build and proposal from the saved result.
+
 Examples/tutorial: [First steps](../04-ai/getting-started.md).
 Verification nằm trong [status](../04-ai/stateful-implementation-status.md), không phải API contract.
 
