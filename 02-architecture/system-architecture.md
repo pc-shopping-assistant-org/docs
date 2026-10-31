@@ -37,8 +37,6 @@ graph TD
     OS -.->|Kafka: order.cancelled| Pay
 ```
 
-Chi tiết từng luồng nằm ở [service-communication.md](service-communication.md).
-
 ## Service và phạm vi (scope)
 
 | Service | Scope |
@@ -51,5 +49,3 @@ Chi tiết từng luồng nằm ở [service-communication.md](service-communica
 | **Media Service** | Lưu trữ và phục vụ file (ảnh sản phẩm, avatar, logo...) |
 | **Search Service** | Tìm kiếm/lọc sản phẩm trên Elasticsearch |
 | **Sync Service** | Đọc `catalog.changed` (CDC của Catalog DB) và dựng lại document trong Elasticsearch; không có bảng riêng |
-
-Mỗi service có database riêng; khóa ngoại giữa các service chỉ là tham chiếu logic, không có FK ở DB. Bảng `outbox_events` và `inbox_events` có ở Catalog, Order và Payment (xem service-communication.md).
