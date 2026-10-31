@@ -105,7 +105,7 @@ sequenceDiagram
         end
     else Không giữ được (hết hàng)
         Cat-->>O: Kafka: stock.reserve-failed
-        O->>O: status = CANCELLED (lý do ghi vào lịch sử)
+        O->>O: status = CANCELLED
     end
 ```
 

@@ -30,7 +30,7 @@ graph TD
     Sync -.->|HTTP: dựng document| CatS
 
     %% Checkout Saga (Order Service điều phối)
-    OS -.->|RabbitMQ: giữ / trả tồn kho| CatS
+    OS -.->|RabbitMQ: trừ / trả tồn kho| CatS
     CatS -.->|Kafka: stock.reserved / reserve-failed| OS
     OS -->|HTTP: tạo payment| Pay
     Pay -.->|Kafka: payment.completed / failed| OS
