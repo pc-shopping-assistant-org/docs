@@ -24,6 +24,9 @@ chưa có quality dimensions. Selected owned/pinned không được loại.
 Một build có normalized dimension scores, weights và contributions.
 Sáu profiles × ba objectives PERFORMANCE/BALANCED/UPGRADE_FRIENDLY có weight configurations.
 Positive-weight metric thiếu evidence → invalid score, không midpoint default.
+Invalid score chỉ loại objective khỏi ranking. Cấu hình đã được chứng minh tương
+thích/trong budget vẫn có thể trả `UNRANKED`, không score/objective giả. Fallback
+chọn spending rồi stable identity trong tập đã duyệt; không dùng giá thay benchmark.
 
 Current source có `cost_efficiency`, khác khái niệm ngân sách chưa dùng.
 Cost efficiency lấy CPU/GPU normalized performance trên effective spending; không FPS guarantee.

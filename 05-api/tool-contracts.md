@@ -26,6 +26,11 @@ không authorization.
 | research_driver | component_name <=300; software_type VGA_DRIVER/BIOS_UPDATE/CHIPSET_DRIVER/RGB_CONTROL; optional operating_system/version <=100; max_sources 1..2 | ResearchResult: official-only support pages; no install/download |
 
 Không expose objective mà application không hỗ trợ; extra arguments bị reject.
+
+Build hợp lệ nhưng chưa xếp hạng vẫn là kết quả `BUILT`, không phải `INFEASIBLE`:
+public build có `objective=null`, `ranking_status=UNRANKED`; internal build không
+có objective score. `ranking_status` có thể vắng trên ranked snapshots cũ và được
+hiểu là RANKED. Giá/parts vẫn grounded, câu trả lời phải nêu chưa đủ dữ liệu xếp hạng.
 Budget/revision/requirements, candidates/prices/stock và prior build lấy trusted context,
 không model args. Read/compare dùng product ID; optimizer dùng variant/SKU.
 

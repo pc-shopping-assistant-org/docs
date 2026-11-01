@@ -90,8 +90,21 @@ thay cho policy snapshot lịch sử.
 
 MAUT normalize metrics và weights cho sáu profiles × ba objectives PERFORMANCE,
 BALANCED, UPGRADE_FRIENDLY. ScoreBreakdown gồm raw_value, normalized_score,
-weight và contribution. Metric có positive weight nhưng thiếu evidence làm build
-invalid, không gán điểm trung bình ngầm.
+weight và contribution. Metric có positive weight nhưng thiếu evidence làm
+objective đó không chấm điểm được; không loại cấu hình đã qua kiểm tra tương thích
+và ngân sách, không gán điểm trung bình ngầm.
+
+Nếu không có ranked result, engine giữ một `FeasibleBuild`: chọn chi phí mua thấp
+hơn trong các cấu hình hợp lệ đã duyệt, hòa giá thì dùng stable component identities.
+Không gọi đây là tối ưu hiệu năng hoặc rẻ nhất toàn catalog. Result dùng
+`ranking_status=UNRANKED`, `objective=null`, `objective_score=null`; không có evidence
+điểm tổng giả. Khi đủ dữ liệu, ranked objectives và cách chọn hiện tại được giữ nguyên.
+Algorithm `deterministic-enumeration-v4`, recommendation policy `v2` ghi vào provenance
+để không reuse kết quả cũ dưới semantics mới.
+
+Thiếu TDP/công suất hoặc thông số tương thích bắt buộc vẫn không được xác nhận.
+Owned/pinned, stock và purchase budget không bị nới lỏng. iGPU/stock cooler có đủ
+thông số vật lý vẫn dùng được khi thiếu benchmark; không suy FPS từ khả năng lắp ráp.
 
 Scoring dimensions hiện gồm `cost_efficiency` và các upgrade metrics
 `platform_longevity`, `ram_slots`, `psu_headroom`. Không có `budget_saving` riêng.

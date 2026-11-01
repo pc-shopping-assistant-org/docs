@@ -13,6 +13,14 @@ Có hai đường:
 Read/compare dùng product IDs. Variant/SKU IDs thuộc optimizer/purchased parts,
 không thay product IDs chỉ vì cùng model name.
 
+## Independent of PC builds
+
+Giải thích và so sánh đọc product catalog, không tải hardware snapshot và không gọi
+optimizer. Thiếu benchmark/TDP hoặc một build đang chờ không chặn lượt đọc sản phẩm
+đính kèm. Application giữ nguyên requirements, saved build và pending proposal;
+lượt đọc chỉ công bố câu trả lời mới. Confirmation sau đó vẫn dùng binding gốc và
+conversation revision hiện tại.
+
 ## Handle ambiguity
 
 > “So sánh RTX5070Ti ASUS và MSI.”
@@ -32,6 +40,9 @@ không suy spec từ brand hoặc tên SKU.
 
 Qualitative explanation liên kết selected evidence, không biến thành benchmark guarantee.
 Web quote bổ sung tham khảo nhưng không thay canonical comparison evidence.
+Model có thể chọn canonical tool call hoặc refs, kể cả `explanation_refs`.
+Application resolve chúng về cùng ledger trước khi kiểm tra completion; không yêu cầu
+model lặp lại cùng reference trong nhiều fields. Ref không tồn tại vẫn bị từ chối.
 
 ## Continue the conversation
 

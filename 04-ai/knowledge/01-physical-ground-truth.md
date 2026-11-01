@@ -28,8 +28,8 @@ không fake commerce SKU và không thay selected owned/pinned parts.
 
 | Choice | Required evidence | Additional spending |
 | --- | --- | --- |
-| iGPU | Capability, graphics score và power metadata | 0 VND |
-| Stock cooler | Included cooler, height/score và thermal metadata | 0 VND; see gap below |
+| iGPU | Capability và power metadata; graphics score chỉ dùng ranking | 0 VND |
+| Stock cooler | Included cooler, height và thermal metadata; score không là điều kiện vật lý | 0 VND; see gap below |
 
 Identity derive từ stable parent CPU identity; public output phải label integrated,
 không tạo purchased variant ID.

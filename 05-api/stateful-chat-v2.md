@@ -22,6 +22,14 @@ polling without resubmission or SSE reconnect. Starting a new chat removes the
 conversation reference. Older history messages are restored as text; the latest
 published turn restores its product cards, build and proposal from the saved result.
 
+Transport failures (including `NET_CHANGED` mapped to 502) retry the identical
+admission POST: same `request_id`, body and revision. The server returns the existing
+run before checking the now-current conversation revision. Changed bodies still
+conflict. Once admitted, the client opens SSE once; interruption falls back to GET
+`/result`. Transient 502/503/504 delivery errors keep the composer pending until a
+terminal result or client abort. Business/authentication errors are not retried.
+Creating an empty conversation is not an idempotent POST and is not retried.
+
 Examples/tutorial: [First steps](../04-ai/getting-started.md).
 Verification nằm trong [status](../04-ai/stateful-implementation-status.md), không phải API contract.
 

@@ -53,6 +53,9 @@ mở rộng chưa enabled; cần trusted recovery policy, không sửa status/lo
 
 Không tự cancel run. Poll GET run, rồi đọc accepted result/history. Reconnect
 automatic/token stream ngoài scope; đừng gửi lại body với request ID mới chỉ để lấy result.
+FE retry transport bằng đúng admission body/request ID nếu response POST bị mất;
+đã có run thì chỉ theo dõi run đó qua GET. Không mở SSE mới. Mất mạng không phải
+bằng chứng execution đã dừng, nên composer giữ pending trong lúc chờ kết quả.
 
 ## Web page unreadable or facts UNKNOWN
 

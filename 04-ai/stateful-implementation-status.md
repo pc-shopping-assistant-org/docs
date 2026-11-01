@@ -1,7 +1,45 @@
 # Implementation status
 
-Updated: **2026-10-31**. Current delivery evidence, not an architecture tutorial.
+Updated: **2026-11-01**. Current delivery evidence, not an architecture tutorial.
 Start at [AI documentation](README.md).
+
+## Local read journeys and transport fixes — 2026-11-01
+
+ISSUE-171/172: product attachments bypass pending-build execution without changing
+accepted requirements/build/proposal. Unattached side questions use saved choices;
+current hardware is loaded only for a real SKU selection or amendment. Canonical
+call IDs and explanation refs resolve through one shared result-selection function.
+Tests cover 24 read variants, lazy SKU resolution and scalar amendment without
+hardware, plus native read→confirm→build.
+Final local gate:1081 core/native PostgreSQL tests; Ruff/mypy212/lock167 pass.
+
+FE retries the exact idempotent admission after transport failure and follows the
+same run through transient result/history failures. One SSE subscription; no SSE
+reconnect, new request ID, automatic cancellation or premature composer unlock.
+Network failure during response-body consumption is normalized by the shared API
+client as well as failure before headers.233 FE tests, typecheck/lint/OpenAPI and
+production build pass locally.
+
+Live Gemini + canonical HTTP catalog: explanation and comparison completed. A
+separate build turn timed out upstream twice before reaching the optimizer. This
+does not establish full live build readiness. [Evidence and limits](live-flow-check-2026-11-01.md).
+Public snapshot100 still returns503; inspected server catalog revision `b1b6927`
+predates the bounded media resolver in published backend `13d25bb`.
+Owner-authorized publication2026-11-01: AI main `b69fab1`, release/v1.0.5
+`dfb0179`; FE main `a0c1d78`, release/v1.0.2 `72f58d3`; backend `9e5859a`
+pins the published AI commit on main/release/v1.0.1. Versions are unchanged.
+Infra rerun requested by owner after image builds; deployment results are not
+monitored at the owner's request. The live evidence below predates this rollout.
+
+## Local optimizer change — 2026-11-01
+
+ISSUE-169: compatible/within-budget builds survive missing ranking metadata as
+`UNRANKED`, with null objective/score and an explicit explanation. Ranked selection
+is unchanged when supported; physical/power metadata remains mandatory. Native
+PostgreSQL verifies build publication, reopen and saved-build explanation.
+Verified1054 core/native tests, Ruff/mypy212/lock167; nullable public-build schema
+and FE reference types updated. No commit/push/deploy. Catalog enrichment remains
+deferred (ISSUE-168); full legacy OpenAPI snapshot cleanup is ISSUE-170.
 
 Live smoke on2026-10-31: [report](live-flow-check-2026-10-31.md). Catalog/URL/F5
 verified; 2,391 server SKUs ACTIVE with stock10. Full build flow did not pass:
@@ -10,8 +48,9 @@ The new explicit demo-stock seed is local source, not a deployed application cha
 
 Local fixes follow that baseline: bounded media requests, catalog/storage/decimal
 measurement mapping, catalog-scale ledger capacity, Gemini requirement inputs and
-canonical build submission. FE retries transient GET-result delivery only; no
-extra admission or SSE reconnect. Latest evidence and remaining data requirements:
+canonical build submission. That published baseline used bounded GET-result retry;
+the local transport changes above extend admission/delivery recovery. No SSE
+reconnect. Earlier evidence and remaining data requirements:
 [core verification](live-flow-check-2026-10-31.md#core-fixes-after-the-baseline).
 Published2026-11-01: AI `a0e089b` and FE `ee58c5b` are on main and their existing
 release branches; backend `13d25bb` integrates the refactored shared media helper.
