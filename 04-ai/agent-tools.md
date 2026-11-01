@@ -3,6 +3,11 @@
 ReAct ở đây là vòng **chọn action → gọi tool → quan sát → chọn tiếp** trong LangGraph.
 Agent được linh hoạt khám phá; application giữ requirements và kết quả đúng contract.
 
+Model stream public text qua draft DELTA trong khi execution tiếp tục. Tool JSON và
+reasoning không đi ra UI. Draft không phải accepted state; grounding/completion và
+CAS vẫn quyết định kết quả cuối. COMPLETED thay draft bằng answer cùng product cards
+từ canonical ledger. Xem [SSE contract](../05-api/stateful-chat-v1.md#sse-contract).
+
 Đã đọc [Architecture](../02-architecture/ai-architecture.md)? Trang này đi sâu vào vòng agent.
 
 ## Agent lifecycle

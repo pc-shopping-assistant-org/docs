@@ -12,15 +12,29 @@ proposal confirmation. It requires configured V2; there is no legacy fallback.
 `answer` remains a string. The frontend renders assistant text as Markdown/GFM
 in streaming and completed answers; user messages remain literal. Tables and code
 scroll inside their own containers. Raw HTML is ignored, unsafe links are filtered,
-and model image URLs are not loaded. Typed product/build cards stay separate;
-Markdown rendering does not grant factual authority to generated prose.
+and model image URLs are not loaded. Canonical product cards appear after the
+paragraph mentioning their full name; unmatched cards follow the answer. Their IDs,
+prices and images come from typed results, never Markdown. Build summaries remain
+typed UI. Markdown rendering does not grant factual authority to generated prose.
 
 The assistant URL stores `?conversationId=<uuid>` immediately after creation,
 before run completion. Refresh reloads owner-authorized messages and the latest
 published typed result. An admitted pending run resumes delivery via `/result`
 polling without resubmission or SSE reconnect. Starting a new chat removes the
-conversation reference. Older history messages are restored as text; the latest
-published turn restores its product cards, build and proposal from the saved result.
+conversation reference. Message history includes `selected_product_ids` for user
+attachments and canonical `products` for assistant turns. The latest published turn
+also restores its build and proposal from the saved result.
+
+The assistant uses a fixed-height workspace: only the transcript scrolls; the
+composer stays visible. The `+` menu opens a product-selection dialog. Selected
+products form a horizontal thumbnail strip above the input and remain visible in
+the sent message. Removing a composer attachment does not edit older messages.
+
+Draft DELTAs render immediately; `replace` starts a new draft or installs the final
+validated answer. Disconnect recovery reads the same run via `/result`; the UI
+offers **Check result** without reloading the page or submitting a second run.
+Terminal errors distinguish model timeout/unavailability from processing failure
+and offer an explicit retry with the original message and attachments.
 
 Transport failures (including `NET_CHANGED` mapped to 502) retry the identical
 admission POST: same `request_id`, body and revision. The server returns the existing

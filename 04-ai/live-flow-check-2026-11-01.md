@@ -77,3 +77,14 @@ Không claim “hết mọi bug” hoặc100% use-case. Owner đã yêu cầu pu
 AI `13fc491`, FE `a9b9af2`, backend `357e583`; nhánh release giữ nguyên các version
 AI1.0.5, web1.0.2, backend1.0.1. Infra main có wiring mới (`b04d6bd`).
 Chưa chạy infra/deploy hoặc xác nhận các image mới đã được publish thành công.
+
+## Recheck đồng bộ chỉ mục — 14:52 UTC
+
+POST qua web/BFF, đăng nhập admin thật: HTTP200 sau76,93s;
+`indexed=2391, removed=0, failed=0`. Gateway trước đó trả503 vì chưa tìm thấy
+sync-service vừa restart trong Eureka. Lượt kiểm tra này không tái hiện lỗi đó.
+
+Embedding vẫn404: server chạy AI1.0.5 (`5fc143b`), endpoint mới nằm trong
+AI1.0.6 (`94b799a`). Keyword index dựng lại thành công; chưa có bằng chứng semantic
+index đã sẵn sàng. ISSUE-175 ghi riêng readiness/version mismatch. Không đổi code,
+env hay chạy thêm deploy trong lần chẩn đoán này.

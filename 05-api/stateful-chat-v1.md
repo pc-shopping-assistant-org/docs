@@ -88,9 +88,9 @@ public offset or automatic reconnect/retry. Disconnect does not cancel run.
 | Event | Payload/meaning | Message |
 | --- | --- | --- |
 | START | Durable admission/run identity | AI_CHAT_STREAM_STARTED |
-| DELTA | Final validated answer text, whitespace preserved | AI_CHAT_STREAM_DELTA |
+| DELTA | Incremental public model text (`is_draft: true`), or validated final answer; `replace: true` replaces the current draft | AI_CHAT_STREAM_DELTA |
 | COMPLETED | Published TurnResult and revision; V2 contains public flexible state | AI_CHAT_STREAM_COMPLETED |
-| ERROR | Static error code/details; no grounded completion | AI_CHAT_STREAM_FAILED |
+| ERROR | Static error code and optional `reason`: `MODEL_TIMEOUT`, `MODEL_UNAVAILABLE`, `PROCESSING_FAILED`; no grounded completion | AI_CHAT_STREAM_FAILED |
 
 Each event binds conversation_id/run_id/positive sequence.
 WAITING_INPUT result can complete delivery but not the original build task.
@@ -100,8 +100,11 @@ START shares admission transaction; final DELTA/COMPLETED share CAS publication.
 Event-write failure rolls back publication. Retryable intermediate failure emits no
 terminal event; duplicate submit does not re-emit START. Stream does not execute graph.
 
-DELTA is not provider-token streaming. On disconnect poll saved result rather than
-admitting a new run to fetch an answer.
+Provider chunks are buffered briefly into draft DELTAs. Reasoning blocks, tool
+arguments, IDs and requirement drafts are not public text. Drafts do not publish
+conversation state. The final DELTA uses `replace: true`; COMPLETED carries the
+validated result and canonical cards. Stale/cancelled execution cannot append drafts.
+On disconnect poll saved result rather than admitting a new run to fetch an answer.
 The frontend keeps its composer pending and polls `/runs/{run_id}/result` once per
 second after an interrupted stream. This reads the same run's immutable final event,
 including its products/build/proposal, rather than the latest conversation state.
