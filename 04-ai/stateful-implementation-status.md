@@ -13,7 +13,11 @@ measurement mapping, catalog-scale ledger capacity, Gemini requirement inputs an
 canonical build submission. FE retries transient GET-result delivery only; no
 extra admission or SSE reconnect. Latest evidence and remaining data requirements:
 [core verification](live-flow-check-2026-10-31.md#core-fixes-after-the-baseline).
-Changes are not committed, pushed or deployed.
+Published2026-11-01: AI `a0e089b` and FE `ee58c5b` are on main and their existing
+release branches; backend `13d25bb` integrates the refactored shared media helper.
+Infra seed wrapper `cc6ac2b` is on main only. No infra deployment was invoked.
+After integration:202 common/catalog tests and230 FE tests pass; data gate168
+remains open. Earlier local-only notes below describe the original test session.
 
 ## Current local changes — ISSUE-161/162
 
