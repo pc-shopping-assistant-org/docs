@@ -1,69 +1,79 @@
-# Kiểm tra ba hành trình AI — 2026-11-01
+# Kiểm tra luồng AI — 2026-11-01
 
-Sau audit, owner yêu cầu publish/rerun infra: AI `b69fab1` / release `dfb0179`,
-FE `a0c1d78` / release `72f58d3`, backend submodule pin `9e5859a`. Không nâng
-version; rollout được yêu cầu sau image publication, không theo dõi kết quả deploy.
-Các kết quả runtime dưới đây là trước rollout, không chứng minh bản mới đã chạy trên server.
+Source hiện tại đã qua browser với đăng nhập thật và Gemini thật. Đây là kiểm tra
+local có đọc catalog trên server; không phải xác nhận production đã chạy bản sửa.
 
-Source local, PostgreSQL local/native checkpointer, Gemini thật và catalog HTTP
-trên server. Principal đăng nhập là fixture; không phải browser hoặc production
-deployment verification. Không sửa catalog hoặc deploy trong lần kiểm tra.
+## Môi trường
 
-| Hành trình | Kết quả thực tế |
+- FE local: Next.js, BFF và cookie đăng nhập thật.
+- AI local: source hiện tại, PostgreSQL/checkpointer/executor thật, Gemini 3.1 Flash Lite.
+- Catalog/identity/media: HTTP trên server; chỉ đọc dữ liệu, không sửa catalog.
+- Search-service: build JAR từ source mới, chạy local với Elasticsearch9.4.5 và Redis8.6.
+  Index test chứa30 sản phẩm public được đọc từ catalog thật.
+- Chưa cấu hình endpoint bge-m3 thật. kNN được kiểm tra với Elasticsearch thật và
+  vector fixture1024 chiều; không dùng kết quả đó để đánh giá chất lượng embedding.
+
+## Kết quả
+
+| Hành trình | Kết quả |
 | --- | --- |
-| Giải thích Logitech G431 | COMPLETED; lấy giá catalog, ghi rõ thiếu thông số |
-| So sánh G431 / G Pro X | COMPLETED sau sửa canonical evidence selection |
-| Build PC 25 triệu gaming Full HD | Chưa pass live: Gemini timeout cả hai execution attempts trước optimizer |
+| Tìm tai nghe Logitech dưới2 triệu | Hoàn tất; gửi và nhận SSE qua BFF |
+| Hỏi tiếp so sánh G431/G333 | Hoàn tất, giữ đúng conversation |
+| Đính kèm G431/G Pro X để so sánh | Hoàn tất, có bảng thông số và product cards |
+| Mở quick-view | Đọc detail/ảnh/giá từ catalog thật; link sang trang sản phẩm |
+| Hỏi thêm từ product card | Hoàn tất, thông số render Markdown thay vì Python dict |
+| F5 URL chứa conversationId | Khôi phục đủ5 lượt chat; không tạo conversation mới |
+| Tìm Logitech dưới1,5 triệu, còn hàng | Chạy qua AI → search-service source mới → ES/Redis → canonical catalog |
+| Build PC gaming25 triệu từ catalog thật | Optimizer chạy; trả SEARCH_INCOMPLETE do thiếu physical/power metadata |
+| So sánh ngay sau build chưa hoàn tất | Hoàn tất trên cùng conversation, không bị BUSY |
 
-Lỗi so sánh đã tái hiện: Gemini chọn `explanation_refs` nhưng không lặp lại `refs`.
-Code cũ không đưa chúng vào canonical selection, hết vòng repair. Test regression
-trước sửa: 4 failed; sau sửa: cả calls-only và explanation-refs-only đều qua.
-Không dùng prose trong `text` làm catalog facts.
+Build thành công cũng đã được chạy với model thật và fixture8 linh kiện có đủ
+physical metadata, bỏ performance_score CPU/GPU: UNRANKED, tổng21.650.000 VND;
+sau đó giải thích saved build và so sánh đều hoàn tất. Đây là fixture optimizer,
+không chứng minh catalog thật đã đủ dữ liệu.
 
-Gemini 3.1 Flash Lite cũng trả 503 trong phiên này; managed recovery đã chạy lại
-đúng run. Đây là lỗi upstream, khác lỗi validation trên. Không coi việc retry có
-chạy là bằng chứng hành trình build thành công.
+NET_CHANGED/admission mất response/SSE ngắt được kiểm tra bằng regression tests
+của frontend và native persistence; không giả nhận đã tái tạo lỗi mạng OS trong browser.
 
-Kiểm tra xác định: 24 ca giải thích/so sánh fresh và khi build pending đều chạy mà
-optimizer/hardware loader được đặt chế độ gọi là fail; accepted requirements và
-pending artifact được giữ nguyên. Bao gồm câu hỏi không đính kèm khi đang chờ đơn
-vị hoặc chọn SKU. Hai ca bổ sung xác minh chỉ tải hardware sau lựa chọn SKU thật,
-không tải khi sửa dung lượng; không tự merge trước confirmation. Native PostgreSQL kiểm tra hỏi sản phẩm giữa
-proposal và confirmation, rồi build và đọc lại snapshot. FE có test mất response admission, mất SSE và
-mất mạng kéo dài, không tạo request ID hoặc SSE subscription mới.
+## Lỗi đã sửa
 
-Build tương thích nhưng thiếu ranking metadata được công bố `UNRANKED`, objective
-và score null. Các thông số vật lý/điện vẫn bắt buộc; thiếu chúng khác thiếu benchmark.
-Catalog enrichment vẫn hoãn ở ISSUE-168. Source chưa push/deploy.
+- Search giá/tồn kho phải khớp cùng ACTIVE SKU; sửa cả ES và catalog fallback.
+- Semantic-only kNN không OR với một query chỉ lọc rồi trả sản phẩm không liên quan.
+- Lọc hãng/giá/tồn kho không cần bịa keyword; search-service nhận filter-only.
+- Canonical detail phải xác nhận lại brand/category, trạng thái và giá.
+- Mỗi HTTP call có durable IO reservation; semantic fallback giữ nguyên keyword.
+- Một canonical result duy nhất có thể được chọn khi model bỏ refs/calls;
+  nhiều result vẫn cần lựa chọn rõ ràng.
+- Gemini có cap generation2048 và reasoning levellow nếu SDK profile hỗ trợ.
+  Probe trước đây trả503; probe và các hành trình lần này đã nhận response thành công.
+- FE bỏ badge còn hàng không có bằng chứng, không đổi giánull thành0; sửa
+  translation quick-view, bảng so sánh V2 và canonical spec Markdown.
+- Embedding HTTP clients có connect/read timeout3s/10s để search/sync có thể fallback.
 
-Final local gate: `uv run pytest -q tests integration_tests` **1081 passed**;
-Ruff/mypy212/lock167 pass. FE `yarn test:run` **233 passed**; typecheck/lint,
-OpenAPI check và production build pass. Chưa kiểm chứng bản sửa trong browser.
+## Kiểm chứng
 
-HTTP snapshot100 trên server vẫn503. Image catalog đang chạy revision `b1b6927`,
-ancestor của backend `13d25bb`; source cũ gọi media bằng toàn bộ IDs trong một GET.
-Bản sửa batching100 đã có trong backend13d25bb nhưng chưa nằm trong image đang
-chạy. Không tự rollout để biến kiểm tra source thành thay đổi production.
+- AI:1105 tests gồm PostgreSQL integration, Ruff/mypy212/lock167 pass.
+- FE:241 tests, typecheck/lint, OpenAPI snapshots và production build pass.
+- Backend:65 tests Maven common/search/sync pass; native ES/Redis kiểm tra mapping,
+  lexical/kNN/filter-only, same-SKU filters và cache. HTTP search từ JAR pass.
+- Infra:40 tests pass. Không start/deploy stack trên server.
 
-## Completion audit / lần kiểm tra tiếp
+Lệnh native search (chỉ dùng ES test tại127.0.0.1:19201, Redis tại19202):
 
-| Yêu cầu | Bằng chứng | Kết luận |
-| --- | --- | --- |
-| Đọc sản phẩm độc lập build | 24 ca đọc; optimizer/hardware loader gọi là fail | PASS core |
-| Giữ accepted state | Cùng các ca trên giữ nguyên cả historical public build, requirements và pending artifact | PASS core |
-| Build fail rồi tiếp tục đọc | Native HTTP/SQL/executor: FAILED_TERMINAL → giải thích/so sánh COMPLETED trên cùng conversation/revision | PASS native |
-| NET_CHANGED không tạo trùng | FE mất headers/body/SSE + native admission retry trước/sau publish | PASS local |
-| Build không có điểm benchmark | Real optimizer, verifier, publication, PostgreSQL reopen | PASS native; UNRANKED |
-| Build với model thật | Cả Gemini3.1 Flash Lite và3.8 Flash trả503 ngay model call đầu, kể cả hardware fixture được ghi rõ là fixture | Chưa verify được |
+```bash
+mvn -B -ntp -pl search-service,sync-service -am -Dpcshop.search.native=true test
+```
 
-REST probe tối thiểu tới Gemini3.1 Flash Lite, không tools/history, chỉ “Reply
-only: OK”, cũng trả503 UNAVAILABLE/high demand. Vì vậy chưa có bằng chứng để
-quy lỗi này cho schema tools hoặc optimizer. Không đổi model server hay tăng retry.
-Live build gate còn mở; không dùng test fixtures để claim real-catalog readiness.
+## Giới hạn còn lại
 
-**Goal: BLOCKED tại live verification.** Lần recheck sau audit vẫn nhận503 từ cả
-Gemini minimal REST probe và snapshot100. Cùng trở ngại lặp lại qua ba goal turns;
-không còn thay đổi core cần làm để vượt hai dependency failures này. Tiếp tục khi
-provider nhận request được và catalog đã chạy bản có media batching/snapshot200.
-Sau đó chạy lại build → đọc snapshot → giải thích/so sánh trên cùng conversation.
-Chưa claim full end-to-end, chưa push/deploy hoặc tự điền metadata thiếu.
+1. ISSUE-168: catalog thật còn thiếu physical/power metadata; không tự điền để
+   ép optimizer ra build. Thiếu benchmark không làm mất build đã chứng minh tương thích.
+2. Chưa đánh giá relevance của endpoint bge-m3 thật; cần provision endpoint và
+   reindex trước khi gọi semantic search là đã nghiệm thu.
+3. Plain text/qualitative explanation vẫn cần factuality eval. Ref hợp lệ không
+   chứng minh mọi nhận định trong văn bản đúng; ISSUE-117 đã ghi ranh giới này.
+
+Không claim “hết mọi bug” hoặc100% use-case. Owner đã yêu cầu push để tự test:
+AI `13fc491`, FE `a9b9af2`, backend `357e583`; nhánh release giữ nguyên các version
+AI1.0.5, web1.0.2, backend1.0.1. Infra main có wiring mới (`b04d6bd`).
+Chưa chạy infra/deploy hoặc xác nhận các image mới đã được publish thành công.

@@ -115,7 +115,7 @@ ToolMessage được project theo model-step order. Resume không chạy lại t
 
 | Tool | Used for |
 | --- | --- |
-| `search_catalog` | Tìm canonical products |
+| `search_catalog` | BM25 + semantic retrieval, lọc brand/category/giá/tồn kho, đối chiếu catalog |
 | `get_product_details` | Đọc detail/evidence một product |
 | `compare_products` | So sánh 2–5 products |
 | `build_pc` | Tạo mới/điều chỉnh từ trusted requirements qua optimizer/verifier |
@@ -126,6 +126,19 @@ ToolMessage được project theo model-step order. Resume không chạy lại t
 | `research_workload` | Search + đọc yêu cầu hoặc benchmark game/application với điều kiện user đã cung cấp |
 | `research_pc_build` | Nghiên cứu từng linh kiện trong build hiện tại/đã lưu; báo nguồn đọc được và phần còn thiếu |
 | `research_driver` | Tìm/đọc trang driver, BIOS, chipset hoặc RGB của đúng hãng; không tải/cài phần mềm |
+
+`search_catalog` gửi `query` tới BM25 và `semantic_query` tới kNN của search-service,
+gộp product IDs bằng RRF (`k=60`), rồi đọc catalog canonical để xác nhận ACTIVE,
+brand/category và giá/tồn kho trên **cùng SKU**. Elasticsearch chỉ chọn candidates;
+catalog mới cung cấp facts. Mỗi HTTP call có durable IO reservation riêng.
+Nếu không cấu hình `AI_SEARCH_API_URL` hoặc index không có kết quả, fallback catalog
+giữ nguyên keyword; không đổi semantic query thành danh sách sản phẩm bất kỳ.
+Embedding chưa cấu hình/không sẵn sàng ở search-service thì dùng lexical fallback;
+Redis cache tối đa500 kết quả/query+filters, TTL5 phút. Canonical revalidation vẫn chạy.
+
+`submit_result` có thể chọn `refs`, `calls`, `build_ref` hoặc explanation refs.
+Nếu chỉ có đúng một canonical catalog/detail/comparison/build result đã hoàn tất,
+application có thể tự chọn nó; nhiều result vẫn cần lựa chọn rõ ràng.
 
 Research tools trả evidence từ trang thực sự đã đọc. Snippet không thành evidence.
 Pipeline tra registry hãng trước, review domain theo chủ đề sau; lọc cả result/final
