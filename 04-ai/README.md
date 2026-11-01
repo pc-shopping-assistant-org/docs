@@ -54,7 +54,8 @@ version gốc, không là fallback runtime. Khả năng đã có và backlog: [i
 Không dùng các trang này để học kiến trúc:
 
 - [Roadmap](stateful-chat-implementation-plan.md): việc còn lại và gates.
-- [Conversational agent refactor](conversational-agent-refactor-plan.md): hội thoại theo state, task lifecycle, model protocol và phase gates đang triển khai.
+- [Agent-first pending replies](pending-agent-first-plan.md): plan bỏ các model calls chọn/sửa pending chạy trước agent; chờ review.
+- [Conversational agent refactor](conversational-agent-refactor-plan.md): response/task lifecycle và native protocol đã triển khai; live eval được hoãn.
 - [Task/requirement separation](task-requirement-separation-plan.md): contract boundary, compatibility và verification record.
 - [Current status](stateful-implementation-status.md): khả năng thực tế và verification.
 - [Core audit](core-audit.md): phạm vi core đã được kiểm chứng.

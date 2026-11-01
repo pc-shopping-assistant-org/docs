@@ -3,6 +3,8 @@
 Các checks này bao phủ modeled metadata, không chứng nhận mọi khả năng lắp ráp.
 Nguồn: [compatibility.py](../../../ai-service/src/ai_service/capabilities/pc_builder/compatibility.py).
 Catalog thiếu data không được suy specs từ tên.
+Kích thước mm nhận cả số nguyên và số lẻ (ví dụ333.5 mm); giữ nguyên độ chính xác,
+không làm tròn để ép vừa case. Mã catalog SSD/HDD map vào STORAGE và giữ media gốc.
 
 ## Modeled checks
 

@@ -1,7 +1,19 @@
 # Implementation status
 
-Updated: **2026-10-30**. Current delivery evidence, not an architecture tutorial.
+Updated: **2026-10-31**. Current delivery evidence, not an architecture tutorial.
 Start at [AI documentation](README.md).
+
+Live smoke on2026-10-31: [report](live-flow-check-2026-10-31.md). Catalog/URL/F5
+verified; 2,391 server SKUs ACTIVE with stock10. Full build flow did not pass:
+Gemini errors, browser network changes and snapshot/media integration remain open.
+The new explicit demo-stock seed is local source, not a deployed application change.
+
+Local fixes follow that baseline: bounded media requests, catalog/storage/decimal
+measurement mapping, catalog-scale ledger capacity, Gemini requirement inputs and
+canonical build submission. FE retries transient GET-result delivery only; no
+extra admission or SSE reconnect. Latest evidence and remaining data requirements:
+[core verification](live-flow-check-2026-10-31.md#core-fixes-after-the-baseline).
+Changes are not committed, pushed or deployed.
 
 ## Current local changes — ISSUE-161/162
 

@@ -61,11 +61,18 @@ application suy ra outcome từ canonical ledger. `task_index=null` trả ground
 response cho lượt này mà không hoàn tất task pending. Model không xuất JSON
 FlexibleDecision; union này chỉ còn là representation nội bộ/đọc dữ liệu đã lưu.
 
-Protocol `compact-native-tools-v5` giữ wire nhỏ: proposal dùng items phẳng với
+Protocol `compact-native-tools-v6` giữ wire nhỏ: proposal dùng items phẳng với
 `value`, optional `unit`, `quote`; application chuyển thành domain draft và validate.
 Không chạy extractor lần hai. Submit dùng `refs`/`calls`; web quote/review fields
 chỉ expose sau readable web evidence. Ordinary clarification có thể là text.
 Serving/training dùng chung projection; không đưa toàn bộ domain JSON schema vào tools.
+
+`predicate` chỉ là tên thuộc tính (`budget`, `use_case`, `capacity`), tách khỏi
+`subject`. Chuỗi số nguyên có `unit` được chuyển thành quantity bằng code; số
+không có đơn vị không tự đổi thành capacity/giá. `build_pc` không nhận objective:
+application tự tải catalog và chọn policy, không cần search từng linh kiện trước.
+Khi sửa yêu cầu, `target_id` lấy từ state hiện tại. GOAL/REQUIREMENT scope được
+bind theo ID đã tồn tại; ID không tồn tại vẫn reject, thiếu ID vẫn hỏi làm rõ.
 
 **Source evidence:** model chỉ trả quote nguyên văn khi trích xuất
 requirements, chọn/sửa pending hoặc đề xuất requirements trong ReAct. Application
@@ -85,6 +92,18 @@ Ledger giữ nguyên dữ liệu; projection model tối đa 12 KB/result, toàn
 (prompt, schemas, history, observations) tối đa 128 KB, window nguyên nhóm call/result.
 Đây là giới hạn byte bảo thủ, không phải phép đếm token hay cam kết billing.
 Repair hữu hạn dùng static feedback và durable attempt mới.
+
+Build result chỉ đưa outcome đã đối chiếu, cấu hình được chọn và diagnostics cho
+model. Candidates/pool IDs nằm trong ledger để replay, không nhét vào prompt.
+Chọn `build_ref` hợp lệ đủ để application lấy evidence ref tương ứng. Một build đã
+bắt đầu không được bỏ completion check bằng cách chuyển sang text thường; repair
+yêu cầu `submit_result` khi optimizer đã có kết quả. `SEARCH_INCOMPLETE` không được
+diễn giải thành thiếu ngân sách hay vô nghiệm.
+
+Capacity hiện tại: tối đa 3.000 mapped variants, 30 trang ×100 sản phẩm; vẫn dùng
+48 IO attempts/run. Checkpoint tối đa16 MB, canonical build result tối đa8 MB;
+tool khác vẫn128 KB và model observation vẫn12 KB. Đây là giới hạn V1 đã test với
+2.391 SKU; vượt giới hạn phải fail rõ, không cắt candidates âm thầm.
 
 Gemini provider signature được giữ opaque theo call cho protocol recovery, không
 là tool args/public output. Không gửi hidden reasoning ra frontend.

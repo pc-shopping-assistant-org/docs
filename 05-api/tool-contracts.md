@@ -16,7 +16,7 @@ không authorization.
 | search_catalog | query nonblank <=1000 chars; strict limit 1..20, default 10 | CatalogResult: <=20 ProductEvidence |
 | get_product_details | product_id UUID | DetailsResult: ProductEvidence |
 | compare_products | distinct product_ids 2..5; optional question <=1000 chars | ComparisonResult: đúng requested subjects |
-| build_pc | objective optional BuildObjective | BuildResult: server build_ref, BuildReceipt, SatisfactionReport |
+| build_pc | Empty object; application loads candidates and chooses policy | BuildResult: server build_ref, BuildReceipt, SatisfactionReport |
 | search_web | query <=1000 chars; limit 1..10 | SearchWebResult: title/url/snippet, không citation evidence |
 | read_web_page | url <=2000 chars; offset >=0; max_chars 1..16000 (default 12000) | ReadWebPageResult: bounded content, next_offset/total_chars, source hash và segment evidence ref |
 | research_hardware | model <=300 chars; focus enum; optional question <=500; max_sources 1..2 | ResearchResult: một section với search metadata và pages đã đọc |
@@ -25,7 +25,7 @@ không authorization.
 | research_pc_build | optional current-run build_ref UUID; optional distinct slots <=8; question <=500 | ResearchResult: từng core part, canonical build_source_ref và per-subject source status |
 | research_driver | component_name <=300; software_type VGA_DRIVER/BIOS_UPDATE/CHIPSET_DRIVER/RGB_CONTROL; optional operating_system/version <=100; max_sources 1..2 | ResearchResult: official-only support pages; no install/download |
 
-Current objective non-null bị reject tới khi versioned policy support.
+Không expose objective mà application không hỗ trợ; extra arguments bị reject.
 Budget/revision/requirements, candidates/prices/stock và prior build lấy trusted context,
 không model args. Read/compare dùng product ID; optimizer dùng variant/SKU.
 
@@ -152,7 +152,7 @@ contract is `react/submissions.py`. RepairFeedback restricts corrective actions;
 invalid protocol returns no decision, not a fake answer. Control acknowledgements
 are checkpointed separately from business ToolResults, with matched provider pairs.
 
-Model-facing protocol `compact-native-tools-v5` uses `react/model_contracts.py`.
+Model-facing protocol `compact-native-tools-v6` uses `react/model_contracts.py`.
 Proposal: `items[{subject,predicate,value,unit?,quote,...}]`, optional source_text only
 for agent suggestions requiring consent. Example budget: subject SETUP, predicate
 budget, target GOAL, value 25000000, unit VND, operator LTE, exact user quote.
