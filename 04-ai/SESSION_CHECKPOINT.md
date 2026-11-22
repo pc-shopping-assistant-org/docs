@@ -1,5 +1,35 @@
 # Resume checkpoint — 2026-10-23
 
+## Current handoff — 2026-11-01
+
+Core fixes and verification: [live/core report](live-flow-check-2026-10-31.md).
+AI `a0e089b`, FE `ee58c5b`; backend integrates media batching with the new
+`helper/MediaFileResolver`, pins AI and adds explicit `--seed-demo-stock`.
+Main/release keep existing image versions; no infra deployment in this session.
+After upstream backend refactor:14 common +188 catalog tests pass, including
+PostgreSQL seed checks. AI1046 and FE230 tests passed before publication.
+Remaining production data gate: ISSUE-168 (physical/scoring metadata), not stock.
+The plans below are historical/pending work, not instructions to resume automatically.
+
+## Historical implementation — 2026-10-28
+
+- ISSUE-159: removed eager runtime task extraction. Agent may emit native
+  `register_tasks` with one action; application admits the declaration first.
+- Dialogue: one model call. Catalog request + grounded answer: two calls rather
+  than three; native HTTP/PostgreSQL test verifies dispatch counts and retry.
+- 917 unit + 96 PostgreSQL tests pass. Serving/export/evaluation share protocol
+  `agent-task-admission-v3`. Existing training artifacts/pilot need review/re-export.
+- AI 4683417 pushed to main and release/v1.0.4 on owner request; rollout pending.
+  Build-PC stays paused. ISSUE-150 pending-reply plan stays
+  separate; it has not been implemented by this slice.
+
+## Next review — agent-first pending replies
+
+- [Plan](pending-agent-first-plan.md), ISSUE-150: **chờ review, chưa implement**.
+- Baseline781d2d2: pending “SSD 1” + “SSD khác RAM như thế nào?” gọi unit-choice → amendment → agent:3 model calls/0 tools. Scripted graph probe, không live model/latency proof.
+- Mục tiêu: ordinary pending messages đến agent trước; native typed controls reuse existing validators/receipts. Explicit FE replies giữ fast path; không thêm classifier model.
+- Trước sửa phải đọc T0 compatibility gate; không tự resume plan cũ, sửa code, commit/push/deploy theo yêu cầu chỉ-lập-plan này.
+
 ## Current review — conversational agent refactor
 
 - [Plan](conversational-agent-refactor-plan.md), `ISSUE-149`: P0–P3 implementation complete; owner explicitly deferred live eval and authorized this push.

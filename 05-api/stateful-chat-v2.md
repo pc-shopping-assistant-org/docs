@@ -9,6 +9,41 @@ of conversations with accepted V1 execution checkpoints.
 Frontend assistant chat uses V2 exclusively, including product attachments and
 proposal confirmation. It requires configured V2; there is no legacy fallback.
 
+`answer` remains a string. The frontend renders assistant text as Markdown/GFM
+in streaming and completed answers; user messages remain literal. Tables and code
+scroll inside their own containers. Raw HTML is ignored, unsafe links are filtered,
+and model image URLs are not loaded. Canonical product cards appear after the
+paragraph mentioning their full name; unmatched cards follow the answer. Their IDs,
+prices and images come from typed results, never Markdown. Build summaries remain
+typed UI. Markdown rendering does not grant factual authority to generated prose.
+
+The assistant URL stores `?conversationId=<uuid>` immediately after creation,
+before run completion. Refresh reloads owner-authorized messages and the latest
+published typed result. An admitted pending run resumes delivery via `/result`
+polling without resubmission or SSE reconnect. Starting a new chat removes the
+conversation reference. Message history includes `selected_product_ids` for user
+attachments and canonical `products` for assistant turns. The latest published turn
+also restores its build and proposal from the saved result.
+
+The assistant uses a fixed-height workspace: only the transcript scrolls; the
+composer stays visible. The `+` menu opens a product-selection dialog. Selected
+products form a horizontal thumbnail strip above the input and remain visible in
+the sent message. Removing a composer attachment does not edit older messages.
+
+Draft DELTAs render immediately; `replace` starts a new draft or installs the final
+validated answer. Disconnect recovery reads the same run via `/result`; the UI
+offers **Check result** without reloading the page or submitting a second run.
+Terminal errors distinguish model timeout/unavailability from processing failure
+and offer an explicit retry with the original message and attachments.
+
+Transport failures (including `NET_CHANGED` mapped to 502) retry the identical
+admission POST: same `request_id`, body and revision. The server returns the existing
+run before checking the now-current conversation revision. Changed bodies still
+conflict. Once admitted, the client opens SSE once; interruption falls back to GET
+`/result`. Transient 502/503/504 delivery errors keep the composer pending until a
+terminal result or client abort. Business/authentication errors are not retried.
+Creating an empty conversation is not an idempotent POST and is not retried.
+
 Examples/tutorial: [First steps](../04-ai/getting-started.md).
 Verification nằm trong [status](../04-ai/stateful-implementation-status.md), không phải API contract.
 

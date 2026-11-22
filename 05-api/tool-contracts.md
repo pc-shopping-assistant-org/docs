@@ -16,7 +16,7 @@ không authorization.
 | search_catalog | query nonblank <=1000 chars; strict limit 1..20, default 10 | CatalogResult: <=20 ProductEvidence |
 | get_product_details | product_id UUID | DetailsResult: ProductEvidence |
 | compare_products | distinct product_ids 2..5; optional question <=1000 chars | ComparisonResult: đúng requested subjects |
-| build_pc | objective optional BuildObjective | BuildResult: server build_ref, BuildReceipt, SatisfactionReport |
+| build_pc | Empty object; application loads candidates and chooses policy | BuildResult: server build_ref, BuildReceipt, SatisfactionReport |
 | search_web | query <=1000 chars; limit 1..10 | SearchWebResult: title/url/snippet, không citation evidence |
 | read_web_page | url <=2000 chars; offset >=0; max_chars 1..16000 (default 12000) | ReadWebPageResult: bounded content, next_offset/total_chars, source hash và segment evidence ref |
 | research_hardware | model <=300 chars; focus enum; optional question <=500; max_sources 1..2 | ResearchResult: một section với search metadata và pages đã đọc |
@@ -25,7 +25,12 @@ không authorization.
 | research_pc_build | optional current-run build_ref UUID; optional distinct slots <=8; question <=500 | ResearchResult: từng core part, canonical build_source_ref và per-subject source status |
 | research_driver | component_name <=300; software_type VGA_DRIVER/BIOS_UPDATE/CHIPSET_DRIVER/RGB_CONTROL; optional operating_system/version <=100; max_sources 1..2 | ResearchResult: official-only support pages; no install/download |
 
-Current objective non-null bị reject tới khi versioned policy support.
+Không expose objective mà application không hỗ trợ; extra arguments bị reject.
+
+Build hợp lệ nhưng chưa xếp hạng vẫn là kết quả `BUILT`, không phải `INFEASIBLE`:
+public build có `objective=null`, `ranking_status=UNRANKED`; internal build không
+có objective score. `ranking_status` có thể vắng trên ranked snapshots cũ và được
+hiểu là RANKED. Giá/parts vẫn grounded, câu trả lời phải nêu chưa đủ dữ liệu xếp hạng.
 Budget/revision/requirements, candidates/prices/stock và prior build lấy trusted context,
 không model args. Read/compare dùng product ID; optimizer dùng variant/SKU.
 
@@ -35,12 +40,10 @@ build_pc cần known budget/use-case, supported/resolved requirements và canoni
 
 ## Trusted context
 
-Native `register_tasks` nhận `QuotedTaskBatch`: tối đa 8 tasks với kind
-BUILD/COMPARE/ANSWER/EXPLAIN_SAVED_BUILD, quote nguyên văn; COMPARE có 2–5
-subject quotes. Chỉ expose khi application mở registration. Agent gửi declaration
-cùng một action; application bind source offsets/resolve identity trước execution.
-Đây là control, không thêm business tool hay API HTTP mới. Một response chứa
-nhiều business actions vẫn không hợp lệ.
+Không có `register_tasks` trong native runtime. Agent gửi `tool_calls[]` trực tiếp;
+application bind/validate task completion từ các calls và canonical outcomes.
+Independent business reads được chạy theo batch có giới hạn; state-changing control
+chạy riêng. Mỗi native call luôn có matching result; không drop một phần response.
 
 Current ToolContext: account/conversation/run IDs, canonical requirements,
 bounded catalog, read_catalog_allowed, execution_allowed.
@@ -144,7 +147,7 @@ input/catalog hashes and algorithm/pruning/policy versions. Outcomes FEASIBLE /
 INFEASIBLE / SEARCH_INCOMPLETE must match declared completion/coverage/pruning and
 termination. Metadata validation alone is not proof of actual search correctness.
 
-`NativeFlexibleModel` accepts plain text or one native call; no JSON action envelope.
+`NativeFlexibleModel` accepts plain text or bounded native calls; no JSON action envelope.
 Native controls are `propose_requirements`, `ask_clarification`, `submit_result`.
 The last selects evidence/build refs by task index; it cannot supply outcome/status.
 One selection with `task_index=null` is a grounded response without completing the
@@ -153,6 +156,15 @@ Control schemas and availability live in `react/control_actions.py`; selection
 contract is `react/submissions.py`. RepairFeedback restricts corrective actions;
 invalid protocol returns no decision, not a fake answer. Control acknowledgements
 are checkpointed separately from business ToolResults, with matched provider pairs.
+
+Model-facing protocol `compact-native-tools-v6` uses `react/model_contracts.py`.
+Proposal: `items[{subject,predicate,value,unit?,quote,...}]`, optional source_text only
+for agent suggestions requiring consent. Example budget: subject SETUP, predicate
+budget, target GOAL, value 25000000, unit VND, operator LTE, exact user quote.
+Application binds offsets and resolves/validates once before working merge; no second
+LLM requirement extraction. Submit: `results[{text,refs,build_ref?,calls,...}]`;
+`quotes`/`review` are available only with readable web evidence. Defaults may be
+omitted. Internal domain/evidence/receipt contracts keep their full validation.
 
 FinalAnswerAction also accepts `supporting_tool_call_ids` for failed/empty outcomes
 with no fact refs. Internal `FlexibleAnswer(schema_version=2)` has outcome/reason,

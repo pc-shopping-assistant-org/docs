@@ -3,6 +3,8 @@
 Các checks này bao phủ modeled metadata, không chứng nhận mọi khả năng lắp ráp.
 Nguồn: [compatibility.py](../../../ai-service/src/ai_service/capabilities/pc_builder/compatibility.py).
 Catalog thiếu data không được suy specs từ tên.
+Kích thước mm nhận cả số nguyên và số lẻ (ví dụ333.5 mm); giữ nguyên độ chính xác,
+không làm tròn để ép vừa case. Mã catalog SSD/HDD map vào STORAGE và giữ media gốc.
 
 ## Modeled checks
 
@@ -26,8 +28,8 @@ không fake commerce SKU và không thay selected owned/pinned parts.
 
 | Choice | Required evidence | Additional spending |
 | --- | --- | --- |
-| iGPU | Capability, graphics score và power metadata | 0 VND |
-| Stock cooler | Included cooler, height/score và thermal metadata | 0 VND; see gap below |
+| iGPU | Capability và power metadata; graphics score chỉ dùng ranking | 0 VND |
+| Stock cooler | Included cooler, height và thermal metadata; score không là điều kiện vật lý | 0 VND; see gap below |
 
 Identity derive từ stable parent CPU identity; public output phải label integrated,
 không tạo purchased variant ID.

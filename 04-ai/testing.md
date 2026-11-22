@@ -33,6 +33,8 @@ stop evidence, lineage và CAS. Không thay bằng MemorySaver/SQLite để clai
 
 Không reset volume hoặc trỏ test vào production. Authentication/model/catalog
 fixtures trong native tests vẫn không phải live service proof.
+Chạy một integration suite tại một thời điểm trên cùng test DB: managed executors
+claim queue chung. Không chạy live harness song song với các test này trên cùng DB.
 
 ## Static checks
 

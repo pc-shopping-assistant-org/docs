@@ -3,6 +3,11 @@
 ReAct ở đây là vòng **chọn action → gọi tool → quan sát → chọn tiếp** trong LangGraph.
 Agent được linh hoạt khám phá; application giữ requirements và kết quả đúng contract.
 
+Model stream public text qua draft DELTA trong khi execution tiếp tục. Tool JSON và
+reasoning không đi ra UI. Draft không phải accepted state; grounding/completion và
+CAS vẫn quyết định kết quả cuối. COMPLETED thay draft bằng answer cùng product cards
+từ canonical ledger. Xem [SSE contract](../05-api/stateful-chat-v1.md#sse-contract).
+
 Đã đọc [Architecture](../02-architecture/ai-architecture.md)? Trang này đi sâu vào vòng agent.
 
 ## Agent lifecycle
@@ -12,7 +17,7 @@ Load accepted context → Agent
                                                │
                   ┌────────────────────────────┼───────────────────────┐
                   ▼                            ▼                       ▼
-              CALL_TOOL               PROPOSE_REQUIREMENTS     ASK_CLARIFICATION
+              CALL_TOOLS[]            PROPOSE_REQUIREMENTS     ASK_CLARIFICATION
               Policy/dispatch         Resolve/confirm/merge     Persist pending
                   │                            │                       │
                   └──── Observe → Agent ◄───────┘                 WAITING_INPUT
@@ -27,15 +32,14 @@ Requirement resolution không là mandatory prefix của mọi câu hỏi. Agent
 đọc catalog/web trước khi đủ thông tin build. Nó không được đổi BUILD/COMPARE thành
 ANSWER chỉ để kết thúc sớm.
 
-Lượt mới không gọi task extractor trước agent. Khi có yêu cầu nghiệp vụ, agent
-gửi `register_tasks` cùng một action trong cùng response. Application đối chiếu
-quote, resolve subjects rồi mới chạy action; không cần model call ở giữa.
+Lượt mới vào agent trực tiếp, không task extractor hoặc `register_tasks`.
+Model có thể trả nhiều native tool calls trong cùng response. Application kiểm tra
+từng call; các lượt đọc độc lập chạy song song trên cùng working state.
 Hội thoại thường trả text ngay. Task/pending đã chấp nhận tiếp tục dùng binding cũ.
 Các interpreter chọn/sửa pending hiện có vẫn giữ nguyên; backlog agent-first cho
 nhánh này nằm ở ISSUE-150.
 
-Task registration có thể trả danh sách rỗng cho hội thoại/kiến thức chung. Internal
-RESPOND tạo response cho lượt hiện tại, không công nhận business completion.
+Internal RESPOND tạo response cho lượt hiện tại, không công nhận business completion.
 Khi có pending, agent có thể giải thích context và publish response trong khi giữ
 nguyên task/proposal; application revalidate việc bảo toàn này trước CAS.
 
@@ -46,7 +50,7 @@ không giữ coroutine chờ user.
 
 | Action | Effect |
 | --- | --- |
-| `CALL_TOOL` | Một typed tool invocation |
+| `CALL_TOOLS` | Mảng typed invocations; checkpoint cũ `CALL_TOOL` vẫn đọc được |
 | `PROPOSE_REQUIREMENTS` | Draft được application resolve/validate; không tự merge |
 | `ASK_CLARIFICATION` | Hỏi đúng thông tin thiếu hoặc confirmation |
 | `FINAL_ANSWER` | Candidate phải qua grounding/completion trước publish |
@@ -56,25 +60,55 @@ Model response không cấp owner, revision, checkpoint selector hay trusted tas
 V2 action schemas: [tool reference](../05-api/tool-contracts.md).
 
 Model trả text thường cho hội thoại, hoặc native function call. Control functions
-`register_tasks`, `propose_requirements`, `ask_clarification`, `submit_result` được normalize thành
+`propose_requirements`, `ask_clarification`, `submit_result` được normalize thành
 internal actions; không phải business ToolResult. `submit_result` chỉ chọn refs;
 application suy ra outcome từ canonical ledger. `task_index=null` trả grounded
 response cho lượt này mà không hoàn tất task pending. Model không xuất JSON
 FlexibleDecision; union này chỉ còn là representation nội bộ/đọc dữ liệu đã lưu.
 
-**Source evidence:** model chỉ trả quote nguyên văn khi đăng ký task, trích xuất
+Protocol `compact-native-tools-v6` giữ wire nhỏ: proposal dùng items phẳng với
+`value`, optional `unit`, `quote`; application chuyển thành domain draft và validate.
+Không chạy extractor lần hai. Submit dùng `refs`/`calls`; web quote/review fields
+chỉ expose sau readable web evidence. Ordinary clarification có thể là text.
+Serving/training dùng chung projection; không đưa toàn bộ domain JSON schema vào tools.
+
+`predicate` chỉ là tên thuộc tính (`budget`, `use_case`, `capacity`), tách khỏi
+`subject`. Chuỗi số nguyên có `unit` được chuyển thành quantity bằng code; số
+không có đơn vị không tự đổi thành capacity/giá. `build_pc` không nhận objective:
+application tự tải catalog và chọn policy, không cần search từng linh kiện trước.
+Khi sửa yêu cầu, `target_id` lấy từ state hiện tại. GOAL/REQUIREMENT scope được
+bind theo ID đã tồn tại; ID không tồn tại vẫn reject, thiếu ID vẫn hỏi làm rõ.
+
+**Source evidence:** model chỉ trả quote nguyên văn khi trích xuất
 requirements, chọn/sửa pending hoặc đề xuất requirements trong ReAct. Application
 tìm quote trong đúng user message (hoặc `source_text` của proposal) rồi tính
 `start/end` trước khi ghi state. Quote thiếu hoặc trùng vị trí bị từ chối; model
 không được tự cung cấp offset. Checkpoint cũ vẫn đọc theo contract nội bộ có span.
 
 Native tool calling dùng OpenAI/Gemini/Qwen adapters; không text parser/`exec`.
-Chỉ bind allowed subset. Một response có tối đa một business/control action;
-riêng `register_tasks` được đi kèm action đầu tiên khi application cho phép đăng ký.
-Đây là admission trước action, không phải chạy hai business tools song song.
-Projection giữ cả hai native calls trong cùng AIMessage và đủ ToolMessages.
-Các batch nhiều business actions hoặc declaration sai source bị reject.
+Chỉ bind allowed subset. Mặc định tối đa **4 calls/batch, 8 calls/run**.
+Search hai sản phẩm có thể chạy cùng lượt; search rồi đọc URL mới tìm thấy cần lượt
+sau. Requirement controls chạy riêng, merge xong mới build. Optimizer chạy tuần tự.
+Mỗi call có result COMPLETED/REJECTED/FAILED riêng và ToolMessage khớp call_id;
+lỗi dependency ở một call không làm mất kết quả những call khác.
+Native task writes giữ kết quả đã hoàn tất khi batch bị ngắt. Recovery dùng đúng
+checkpoint được coordinator cho phép, không lấy latest/orphan của thread.
+Ledger giữ nguyên dữ liệu; projection model tối đa 12 KB/result, toàn request
+(prompt, schemas, history, observations) tối đa 128 KB, window nguyên nhóm call/result.
+Đây là giới hạn byte bảo thủ, không phải phép đếm token hay cam kết billing.
 Repair hữu hạn dùng static feedback và durable attempt mới.
+
+Build result chỉ đưa outcome đã đối chiếu, cấu hình được chọn và diagnostics cho
+model. Candidates/pool IDs nằm trong ledger để replay, không nhét vào prompt.
+Chọn `build_ref` hợp lệ đủ để application lấy evidence ref tương ứng. Một build đã
+bắt đầu không được bỏ completion check bằng cách chuyển sang text thường; repair
+yêu cầu `submit_result` khi optimizer đã có kết quả. `SEARCH_INCOMPLETE` không được
+diễn giải thành thiếu ngân sách hay vô nghiệm.
+
+Capacity hiện tại: tối đa 3.000 mapped variants, 30 trang ×100 sản phẩm; vẫn dùng
+48 IO attempts/run. Checkpoint tối đa16 MB, canonical build result tối đa8 MB;
+tool khác vẫn128 KB và model observation vẫn12 KB. Đây là giới hạn V1 đã test với
+2.391 SKU; vượt giới hạn phải fail rõ, không cắt candidates âm thầm.
 
 Gemini provider signature được giữ opaque theo call cho protocol recovery, không
 là tool args/public output. Không gửi hidden reasoning ra frontend.
@@ -86,7 +120,7 @@ ToolMessage được project theo model-step order. Resume không chạy lại t
 
 | Tool | Used for |
 | --- | --- |
-| `search_catalog` | Tìm canonical products |
+| `search_catalog` | BM25 + semantic retrieval, lọc brand/category/giá/tồn kho, đối chiếu catalog |
 | `get_product_details` | Đọc detail/evidence một product |
 | `compare_products` | So sánh 2–5 products |
 | `build_pc` | Tạo mới/điều chỉnh từ trusted requirements qua optimizer/verifier |
@@ -97,6 +131,19 @@ ToolMessage được project theo model-step order. Resume không chạy lại t
 | `research_workload` | Search + đọc yêu cầu hoặc benchmark game/application với điều kiện user đã cung cấp |
 | `research_pc_build` | Nghiên cứu từng linh kiện trong build hiện tại/đã lưu; báo nguồn đọc được và phần còn thiếu |
 | `research_driver` | Tìm/đọc trang driver, BIOS, chipset hoặc RGB của đúng hãng; không tải/cài phần mềm |
+
+`search_catalog` gửi `query` tới BM25 và `semantic_query` tới kNN của search-service,
+gộp product IDs bằng RRF (`k=60`), rồi đọc catalog canonical để xác nhận ACTIVE,
+brand/category và giá/tồn kho trên **cùng SKU**. Elasticsearch chỉ chọn candidates;
+catalog mới cung cấp facts. Mỗi HTTP call có durable IO reservation riêng.
+Nếu không cấu hình `AI_SEARCH_API_URL` hoặc index không có kết quả, fallback catalog
+giữ nguyên keyword; không đổi semantic query thành danh sách sản phẩm bất kỳ.
+Embedding chưa cấu hình/không sẵn sàng ở search-service thì dùng lexical fallback;
+Redis cache tối đa500 kết quả/query+filters, TTL5 phút. Canonical revalidation vẫn chạy.
+
+`submit_result` có thể chọn `refs`, `calls`, `build_ref` hoặc explanation refs.
+Nếu chỉ có đúng một canonical catalog/detail/comparison/build result đã hoàn tất,
+application có thể tự chọn nó; nhiều result vẫn cần lựa chọn rõ ràng.
 
 Research tools trả evidence từ trang thực sự đã đọc. Snippet không thành evidence.
 Pipeline tra registry hãng trước, review domain theo chủ đề sau; lọc cả result/final

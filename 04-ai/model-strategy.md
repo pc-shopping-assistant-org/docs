@@ -24,28 +24,32 @@ Wire schema phải map explicit; null/refusal/truncation/malformed không trở 
 Validation toàn response trước resolve/merge; không stream partial draft vào state.
 Model trả quote nguyên văn; application tính source offsets trước khi tạo draft nội bộ.
 
-Task declaration đi qua native `register_tasks` cùng action đầu tiên của agent;
-runtime không gọi task-extraction model trước ReAct. Contract `TaskDraftBatch`
+Runtime không gọi task-extraction model trước ReAct và không expose `register_tasks`.
+Agent chọn native `tool_calls[]` trực tiếp. Contract `TaskDraftBatch`
 vẫn riêng với requirements; head extraction cũ chỉ còn cho offline training/tests.
-Requirement extraction được dùng khi
-proposal cần chứng minh explicit user source, không mandatory prefix mọi turn.
+`propose_requirements` là lần extraction duy nhất cho user requirements; application
+bind quote/resolve/validate rồi cấp receipt. Extractor riêng phục vụ pending
+choice/unit/amendment và offline heads, không diễn giải lại proposal vừa nhận.
 
 ## Native tool calling
 
 Adapter bind schemas của allowed subset và project complete ledger pairs thành
-AIMessage/ToolMessage. Tối đa một action mỗi response, có thể kèm task declaration.
+AIMessage/ToolMessage. Business reads độc lập chạy theo batch có giới hạn.
 
-- Cho phép provider trả cặp registration + action khi registration đang mở;
-  application admit tuần tự trước execution. Không mở parallel business tools.
-- Reject malformed/multiple action response; repair không làm hỏng last valid transcript.
+- Cho phép native tool_calls arrays; application validate từng call và giữ đủ replies.
+- State-changing controls chạy riêng; malformed protocol cần repair.
 - Gemini signature giữ opaque theo call cho serialization/reopen.
 - Không parse text/`exec` để fake tool-calling capability.
 - Text thường thành candidate response. Native controls `propose_requirements`,
   `ask_clarification`, `submit_result` được normalize nội bộ; JSON action envelope
   cũ bị reject, không fallback. Model chọn refs, application xác định outcome.
 
-Protocol `agent-task-admission-v3` được dùng chung bởi serving và training export.
-Artifact cũ cần regenerate/retrain để học declaration cùng action; không tự sửa pilot labels.
+Protocol `compact-native-tools-v5` dùng chung bởi serving và training export.
+Model nhận DTO nhỏ: requirement value là số/text cộng unit tùy chọn, không union
+domain lồng nhau. Domain models/validators đầy đủ vẫn nằm ở application. Tool schema
+bỏ metadata lặp; submit chỉ expose fields web/review khi đã có readable web evidence.
+Clarification hội thoại thường là text, không cần control ở trạng thái trống.
+Artifact cũ cần review/re-export; không tự sửa pilot labels hoặc approve dữ liệu.
 Control acknowledgements là checkpointed transitions, không business ToolResults;
 projection giữ matched pairs và thứ tự cùng business ledger.
 

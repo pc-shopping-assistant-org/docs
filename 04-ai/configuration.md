@@ -22,8 +22,11 @@ vẫn giữ version gốc; các fixture graph lịch sử không được chọn
 | `AI_JWT_JWKS_URL` | JWKS endpoint của identity service |
 | `AI_JWT_ISSUER`, `AI_JWT_AUDIENCE` | Claims phải khớp access JWT |
 | `AI_BACKEND_API_URL` | Catalog API root; adapter thêm `/products` |
+| `AI_SEARCH_API_URL` | Optional search-service root cho BM25/kNN; compose dùng `http://search-service:8086` |
 | `AI_PROVIDER` | `openai`, `gemini` hoặc self-hosted `qwen` |
 | `AI_OPENAI_API_KEY` / `AI_GEMINI_API_KEY` | Key tương ứng provider đã chọn |
+| `AI_GEMINI_MAX_OUTPUT_TOKENS` | Cap generation, mặc định2048; không tăng timeout để chờ output không giới hạn |
+| `AI_GEMINI_REASONING_EFFORT` | Mặc địnhlow; chỉ gửi khi SDK profile của model hỗ trợ level đó |
 | `AI_QWEN_BASE_URL` | Required với Qwen; vLLM API root, ví dụ http://localhost:8001/v1 |
 | `AI_QWEN_MODEL_NAME` | Base ID hoặc adapter alias được vLLM serve |
 | `AI_QWEN_API_KEY` | Optional nếu vLLM yêu cầu authentication |
