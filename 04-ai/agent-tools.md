@@ -136,6 +136,10 @@ ToolMessage được project theo model-step order. Resume không chạy lại t
 gộp product IDs bằng RRF (`k=60`), rồi đọc catalog canonical để xác nhận ACTIVE,
 brand/category và giá/tồn kho trên **cùng SKU**. Elasticsearch chỉ chọn candidates;
 catalog mới cung cấp facts. Mỗi HTTP call có durable IO reservation riêng.
+Với `category`, AI tra `GET /categories` để đổi mã `hardwareType` (ví dụ `MONITOR`)
+hoặc tên danh mục hiện có thành ID đang hoạt động. Nếu một mã có nhiều danh mục,
+AI tìm theo từng `categoryId`, gộp theo product ID và kiểm tra lại danh mục từ catalog.
+Fallback cũng dùng các ID đã resolve. Bộ lọc không nhận diện được trả `CATEGORY_UNRESOLVED`.
 Nếu không cấu hình `AI_SEARCH_API_URL` hoặc index không có kết quả, fallback catalog
 giữ nguyên keyword; không đổi semantic query thành danh sách sản phẩm bất kỳ.
 Embedding chưa cấu hình/không sẵn sàng ở search-service thì dùng lexical fallback;

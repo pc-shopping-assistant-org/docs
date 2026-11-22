@@ -301,6 +301,7 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 ---
 
 ### SC-216 — Streamer nâng cấp từ Gaming 1080p (20tr) lên Streamer Pro (40tr) + Gear (8 lượt)
+
 - **Tiền điều kiện:** Phiên mới trên `/assistant`.
 - **Các bước thực hiện:**
   1. **Lượt 1:** `Mình mới tập chơi game 1080p, muốn build bộ PC tầm 20 triệu.`
@@ -314,6 +315,7 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** Chuyển mượt từ `GAMING_1080P` sang `STREAMING_GAMING`, ưu tiên NVIDIA NVENC + CPU đa nhân, cộng đúng giá phụ kiện.
 
 ### SC-217 — Hội thoại 100% Tiếng Anh trên `/en/assistant` → `/en/build-pc` (8 lượt)
+
 - **Tiền điều kiện:** Chuyển giao diện sang `/en/assistant`.
 - **Các bước thực hiện:**
   1. **Lượt 1:** `Hi, I want to build a 1440p gaming PC around 32 million VND, preferably with an NVIDIA GPU.`
@@ -327,6 +329,7 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** Trả lời tiếng Anh tự nhiên, trích đúng số liệu VND/spec, UI `/en/build-pc` không lẫn nhãn tiếng Việt.
 
 ### SC-218 — Sinh viên Kiến trúc: Từ AutoCAD 2D → Render 3D Blender/Lumion → Tinh chỉnh tản nhiệt (8 lượt)
+
 - **Tiền điều kiện:** Phiên mới.
 - **Các bước thực hiện:**
   1. **Lượt 1:** `Em là sinh viên năm nhất kiến trúc, cần mua PC làm AutoCAD 2D và Photoshop tầm 16 triệu.` (`GRAPHIC_DESIGN_2D`)
@@ -340,6 +343,7 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** Chuyển đúng `GRAPHIC_DESIGN_2D` → `CONTENT_CREATION_3D`, đáp ứng 64GB RAM / 2TB SSD, đối chiếu TDP tản nhiệt với CPU.
 
 ### SC-219 — Editor dựng phim 4K DaVinci Resolve: Tối ưu CPU đa nhân, RAM 64GB & SSD 2TB (8 lượt)
+
 - **Tiền điều kiện:** Phiên mới.
 - **Các bước thực hiện:**
   1. **Lượt 1:** `Mình dựng video 4K bằng DaVinci Resolve Studio và Premiere Pro, ngân sách 36 triệu.` (`VIDEO_EDITING`)
@@ -353,6 +357,7 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** Phối hợp mượt giữa `VIDEO_EDITING`, `search_catalog`, `compare_products`, `research_driver` và `check_build_compatibility`.
 
 ### SC-220 — Pin chính xác 3 linh kiện (CPU + Mainboard + Case) rồi tinh chỉnh qua 8 lượt (8 lượt)
+
 - **Tiền điều kiện:** Lấy sẵn tên 1 CPU AM5, 1 Main B650M, 1 Case mATX từ shop.
 - **Các bước thực hiện:**
   1. **Lượt 1:** `Build PC 30 triệu dùng đúng CPU <tên CPU>, mainboard <tên Main> và vỏ case <tên Case>.`
@@ -366,6 +371,7 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** Tôn trọng chính xác 3 món pin ở Lượt 1–4, gỡ pin đúng slot khi user đổi ý ở Lượt 5–6.
 
 ### SC-221 — Sinh viên ngân sách eo hẹp: Leo thang từ 11tr → 14tr → 17tr + Màn hình rẻ (8 lượt)
+
 - **Tiền điều kiện:** Phiên mới.
 - **Các bước thực hiện:**
   1. **Lượt 1:** `Em là sinh viên chỉ có 11 triệu, cần một bộ PC học tập và giải trí nhẹ.` (`OFFICE_BUDGET`)
@@ -379,6 +385,7 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** Lượt 1–2 dùng iGPU hợp lệ; Lượt 3–5 chuyển lên GPU rời mượt mà; tính toán tổng tiền chính xác.
 
 ### SC-222 — Game thủ Esports 240Hz: So sánh Intel vs AMD → Chốt Build + Chuột siêu nhẹ (8 lượt)
+
 - **Tiền điều kiện:** Phiên mới.
 - **Các bước thực hiện:**
   1. **Lượt 1:** `Mình bắn CS2 và Valorant try-hard ở 1080p màn 240Hz, ngân sách 22 triệu.` (`GAMING_ESPORTS`)
@@ -392,6 +399,7 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** `GAMING_ESPORTS` ưu tiên `cpu_perf`, giữ bottleneck <= 20, tích hợp tìm/so sánh chuột trơn tru.
 
 ### SC-223 — Kỹ sư AI chọn GPU theo VRAM (12GB vs 16GB vs 24GB) & Dual-Profile AI + Dev (8 lượt)
+
 - **Tiền điều kiện:** Phiên mới.
 - **Các bước thực hiện:**
   1. **Lượt 1:** `Mình cần tìm hiểu các card NVIDIA có từ 12GB đến 24GB VRAM hiện đang có hàng ở shop.`
@@ -405,6 +413,7 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** Ưu tiên `gpu_vram` + `cuda_ecosystem`, kiểm tra đúng `m2_slots` của mainboard từ spec thật.
 
 ### SC-224 — Chuyên sâu Tản nhiệt & Airflow: Air Cooler vs AIO 240/360mm (8 lượt)
+
 - **Tiền điều kiện:** Catalog có cả tản khí và AIO 240mm/360mm.
 - **Các bước thực hiện:**
   1. **Lượt 1:** `Tìm giúp mình 2 mẫu tản nhiệt khí tốt và 2 mẫu tản nước AIO 240mm/360mm của shop.`
@@ -418,6 +427,7 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** Kiểm tra chặt `radiator_mm <= max_radiator_mm`, `cooler_height_mm <= max_cooler_height_mm`, `cooler.tdp_watts >= cpu.tdp_watts`.
 
 ### SC-225 — Khách hay quên, hỏi ngược & đổi ý liên tục về cấu hình (8 lượt)
+
 - **Tiền điều kiện:** Phiên mới.
 - **Các bước thực hiện:**
   1. **Lượt 1:** `Build PC 28 triệu chơi game 2K.`
@@ -431,6 +441,7 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** Truy xuất chính xác trạng thái qua nhiều lần quay xe (`revision`), không nhầm lẫn giữa các biến thể.
 
 ### SC-226 — Tận dụng 2 linh kiện đời cũ (RAM DDR4 + SSD SATA 2.5") (8 lượt)
+
 - **Tiền điều kiện:** Catalog có Main DDR4 (LGA1700/AM4) và DDR5.
 - **Các bước thực hiện:**
   1. **Lượt 1:** `Mình có sẵn ở nhà 2 thanh RAM DDR4 16GB (2x8GB) và 1 ổ SSD SATA 2.5 inch 500GB.`
@@ -444,6 +455,7 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** Khóa chặt `RAM` là DDR4 (`owned_parts`), chọn Mainboard đúng chuẩn DDR4 và còn khe M.2.
 
 ### SC-227 — Build Mini-PC / Micro-ATX nhỏ gọn để mang đi công tác (8 lượt)
+
 - **Tiền điều kiện:** Catalog có Main/Case Micro-ATX hoặc Mini-ITX.
 - **Các bước thực hiện:**
   1. **Lượt 1:** `Mình cần một bộ PC thật nhỏ gọn chuẩn Mini-ITX hoặc Micro-ATX để mang theo khi chuyển chỗ ở, ngân sách 26 triệu chơi game và làm việc.`
@@ -457,6 +469,7 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** Tôn trọng ràng buộc hình học `max_gpu_length_mm` & `max_cooler_height_mm`, cảnh báo ngay ở Lượt 7 nếu GPU 320mm vượt giới hạn case.
 
 ### SC-228 — Build "Full White Aesthetic" (Đồng bộ tông trắng từ Case tới Gear) (8 lượt)
+
 - **Tiền điều kiện:** Catalog có các linh kiện màu trắng (`White`).
 - **Các bước thực hiện:**
   1. **Lượt 1:** `Mình muốn build một bộ PC gaming 1440p tầm 35 triệu theo tông màu Trắng (Full White) càng nhiều món trắng càng tốt.`
@@ -470,19 +483,21 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** `semantic_query` ưu tiên sản phẩm màu trắng có thật trong shop, không tự bịa phiên bản "White" nếu shop chỉ bán bản đen.
 
 ### SC-229 — Sửa dần 1 cấu hình tự ghép bị dính 3 lỗi tương thích cùng lúc (8 lượt)
+
 - **Tiền điều kiện:** Chọn 1 danh sách linh kiện thật có 3 lỗi: sai socket/RAM, GPU quá dài, PSU thiếu công suất.
 - **Các bước thực hiện:**
   1. **Lượt 1:** `Kiểm tra giúp mình bộ linh kiện mình tự chọn này có lắp được với nhau không: <CPU Intel>, <Main AM5 DDR5>, <RAM DDR4>, <GPU 3 quạt dài>, <Case nhỏ>, <PSU 450W>, <SSD>, <Cooler>.`
   2. **Lượt 2:** `Chỉ rõ từng lỗi không tương thích trong danh sách trên giúp mình.`
   3. **Lượt 3:** `Đầu tiên, tìm giúp mình mainboard LGA1700 hỗ trợ DDR4 để khớp với CPU và RAM của mình.`
-  4. **Lượt 4:** `Check lại tương thích sau khi đổi sang mainboard mới đó (vẫn giữ Case nhỏ và PSU 450W).` -> *Kỳ vọng vẫn báo lỗi GPU dài & PSU yếu*.
+  4. **Lượt 4:** `Check lại tương thích sau khi đổi sang mainboard mới đó (vẫn giữ Case nhỏ và PSU 450W).` -> _Kỳ vọng vẫn báo lỗi GPU dài & PSU yếu_.
   5. **Lượt 5:** `Tìm giúp mình vỏ case lớn hơn và bộ nguồn 650W/750W phù hợp trong shop.`
-  6. **Lượt 6:** `Kiểm tra lại tương thích toàn bộ 8 món sau khi thay cả Main, Case và Nguồn.` -> *Kỳ vọng `COMPATIBLE`*.
+  6. **Lượt 6:** `Kiểm tra lại tương thích toàn bộ 8 món sau khi thay cả Main, Case và Nguồn.` -> _Kỳ vọng `COMPATIBLE`_.
   7. **Lượt 7:** `Tính tổng giá tiền của cấu hình 8 món đã sửa hoàn chỉnh.`
   8. **Lượt 8:** `Nếu muốn đổi sang dùng RAM DDR5 luôn thì cần đổi những món nào?`
 - **Kỳ vọng:** Bắt đủ mọi lỗi theo từng bước sửa, không bỏ sót lỗi thứ 2/3 khi sửa lỗi thứ 1.
 
 ### SC-230 — Kết hợp Web Research BIOS/Review thế hệ mới trước khi chốt mua ở shop (8 lượt)
+
 - **Tiền điều kiện:** Web search hoạt động.
 - **Các bước thực hiện:**
   1. **Lượt 1:** `Ryzen 7 9800X3D hoặc Ryzen 5 9600X chơi game so với thế hệ 7000 có đáng nâng cấp không?` (`research_hardware`)
@@ -496,6 +511,7 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** Luân chuyển trơn tru qua 6 loại tool khác nhau, tách bạch rõ nguồn web tham khảo và giá/SKU shop.
 
 ### SC-231 — So sánh 2 chiến lược ở cùng mức 15 triệu: iGPU CPU mạnh vs CPU phổ thông + GPU rời (8 lượt)
+
 - **Tiền điều kiện:** Phiên mới.
 - **Các bước thực hiện:**
   1. **Lượt 1:** `Mình có đúng 15 triệu, phân vân giữa build PC dùng CPU iGPU mạnh (không card rời) hay ép mua card rời cũ/giá rẻ.`
@@ -509,10 +525,11 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** Phân tích đúng đánh đổi thực tế, kiểm tra PSU headroom và chiều dài case cho nâng cấp tương lai.
 
 ### SC-232 — User Memory xuyên 2 cuộc hội thoại: Ghi nhớ → Đổi ý ngược lại (8 lượt)
+
 - **Tiền điều kiện:** Đăng nhập tài khoản user có bật `user_memory`.
 - **Các bước thực hiện:**
   1. **Phiên 1 (Lượt 1–3):** Chat 3 lượt nói rõ `"Mình thích dùng CPU AMD, thích case màu trắng và dùng màn hình 2K"`, chốt 1 build.
-  2. **Phiên 2 — Lượt 4:** Mở conversation mới: `Build giúp mình PC 28 triệu chơi game nhé.` -> *Kỳ vọng có thể tận dụng memory (AMD / 2K / trắng)*.
+  2. **Phiên 2 — Lượt 4:** Mở conversation mới: `Build giúp mình PC 28 triệu chơi game nhé.` -> _Kỳ vọng có thể tận dụng memory (AMD / 2K / trắng)_.
   3. **Phiên 2 — Lượt 5:** `À thôi hôm nay mình muốn đổi hoàn toàn sang chip Intel và case màu đen nhé.`
   4. **Phiên 2 — Lượt 6:** `Đổi luôn sang mục tiêu chơi game Esports 1080p 240Hz.`
   5. **Phiên 2 — Lượt 7:** `Kiểm tra lại xem build mới đã dùng đúng chip Intel và case đen chưa.`
@@ -520,6 +537,7 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** Lượt 5–8 **bắt buộc ưu tiên yêu cầu tường minh hiện tại** (Intel, đen, 1080p), không để memory cũ ghi đè.
 
 ### SC-233 — Luồng Proposal Confirmation (`NEEDS_CONFIRMATION`): Từ chối → Đồng ý → Chỉnh tiếp (8 lượt)
+
 - **Tiền điều kiện:** Phiên mới.
 - **Các bước thực hiện:**
   1. **Lượt 1:** `Build PC gaming 25 triệu.`
@@ -533,6 +551,7 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** Lượt 3 không làm tăng sai ngân sách; Lượt 6 xác nhận tăng revision sạch sẽ.
 
 ### SC-234 — Multi-Task nửa khả thi, nửa bất khả thi (Sản phẩm không có + Build khả thi) (8 lượt)
+
 - **Tiền điều kiện:** Phiên mới.
 - **Các bước thực hiện:**
   1. **Lượt 1:** `Làm giúp mình 2 việc: tìm mua RTX 6090 48GB tại shop và build 1 bộ PC văn phòng 12 triệu.`
@@ -546,12 +565,13 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** Lượt 1 không vì RTX 6090 không có mà làm hỏng luôn task build PC văn phòng 12tr; từng vế xử lý độc lập chính xác.
 
 ### SC-235 — Phục hồi sau sự cố gián đoạn `catalog-service` giữa phiên chat (8 lượt)
+
 - **Tiền điều kiện:** Phiên mới đang chạy bình thường.
 - **Các bước thực hiện:**
   1. **Lượt 1:** `Build PC gaming 25 triệu.` (Thành công).
   2. **Lượt 2:** `Tìm giúp mình 2 mẫu màn hình 2K.` (Thành công).
-  3. *(Tắt tạm `catalog-service` hoặc chặn mạng)* **Lượt 3:** `Tìm thêm 2 mẫu bàn phím cơ tầm 2 triệu.` -> *Kỳ vọng báo lỗi dịch vụ danh mục tạm gián đoạn, không bịa*.
-  4. *(Bật lại `catalog-service`)* **Lượt 4:** `Thử tìm lại 2 mẫu bàn phím cơ tầm 2 triệu giúp mình.` -> *Kỳ vọng tìm thành công*.
+  3. _(Tắt tạm `catalog-service` hoặc chặn mạng)_ **Lượt 3:** `Tìm thêm 2 mẫu bàn phím cơ tầm 2 triệu.` -> _Kỳ vọng báo lỗi dịch vụ danh mục tạm gián đoạn, không bịa_.
+  4. _(Bật lại `catalog-service`)_ **Lượt 4:** `Thử tìm lại 2 mẫu bàn phím cơ tầm 2 triệu giúp mình.` -> _Kỳ vọng tìm thành công_.
   5. **Lượt 5:** `Kiểm tra lại bộ PC 25 triệu ở Lượt 1 còn lưu không?`
   6. **Lượt 6:** `Nâng RAM bộ PC 25 triệu lên 32GB.`
   7. **Lượt 7:** `Kiểm tra tương thích.`
@@ -559,6 +579,7 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** Lỗi tạm thời ở Lượt 3 không làm hỏng `saved_build` Lượt 1 hay checkpoint của conversation.
 
 ### SC-236 — Hai Tab song song cùng 1 User chat xen kẽ 8 lượt (Isolation Test) (8 lượt)
+
 - **Tiền điều kiện:** Mở Tab A và Tab B đăng nhập cùng 1 tài khoản, 2 conversation khác nhau.
 - **Các bước thực hiện:**
   1. **Tab A (Lượt 1):** `Build PC Gaming 4K ngân sách 65 triệu.`
@@ -572,6 +593,7 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** Không có bất kỳ sự rò rỉ dữ liệu `saved_build` hoặc `requirements` nào giữa Tab A và Tab B.
 
 ### SC-237 — So sánh cả 3 Objective (`PERFORMANCE` / `BALANCED` / `UPGRADE_FRIENDLY`) trên 35 triệu (8 lượt)
+
 - **Tiền điều kiện:** Phiên mới.
 - **Các bước thực hiện:**
   1. **Lượt 1:** `Build PC gaming 1440p tầm 35 triệu theo hướng cân bằng (BALANCED).`
@@ -585,6 +607,7 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** Cả 3 objective đều cho ra cấu hình hợp lý, giải thích đúng lý do chênh lệch điểm số.
 
 ### SC-238 — Tư vấn Workstation chạy 24/7: Tính công suất điện, độ bền nguồn & kiểm tra tản (8 lượt)
+
 - **Tiền điều kiện:** Phiên mới.
 - **Các bước thực hiện:**
   1. **Lượt 1:** `Mình cần máy trạm chạy mô phỏng tính toán 24/7 cực kỳ ổn định và êm ái, ngân sách 45 triệu.` (`WORKSTATION_SILENT`)
@@ -598,6 +621,7 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** Dùng đúng số liệu `PowerEstimate`, `psu_tier`, `tdp_watts`, kích thước case/cooler thật.
 
 ### SC-239 — Du hành qua 3 trang sản phẩm bằng Floating Widget rồi chốt Build trên `/build-pc` (8 lượt)
+
 - **Tiền điều kiện:** Mở `/products/<slug-CPU>`.
 - **Các bước thực hiện:**
   1. **Lượt 1 (Trang CPU):** Mở Floating Bubble, hỏi: `Con CPU này dùng socket gì và mạnh không?`
@@ -611,6 +635,7 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** Product context chip cập nhật đúng khi chuyển trang, conversation liền mạch giữa Bubble → `/assistant` → `/build-pc`.
 
 ### SC-240 — Ngôn ngữ IT trộn Anh–Việt + viết tắt + sai chính tả nặng qua 8 lượt (8 lượt)
+
 - **Tiền điều kiện:** Phiên mới.
 - **Các bước thực hiện:**
   1. **Lượt 1:** `build ho cai may dev k8s microsvcs ram 64g ssd 2t k can vga roi tam 26cu`
@@ -624,6 +649,7 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** Hiểu chuẩn xác `SOFTWARE_DEV`, 64GB RAM, 2TB SSD, không VGA rời, upgrade PSU 650W Gold, tìm màn hình và cộng tổng chuẩn.
 
 ### SC-241 — Chạm giới hạn số sản phẩm so sánh (`compare_products`) rồi thu gọn & build (8 lượt)
+
 - **Tiền điều kiện:** Phiên mới.
 - **Các bước thực hiện:**
   1. **Lượt 1:** `Tìm tất cả card NVIDIA RTX 4060 / 4060 Ti / 4070 đang có ở shop.`
@@ -637,6 +663,7 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** Xử lý khéo yêu cầu so sánh 6 món (không lỗi schema), thu gọn mượt về 3 món rồi chốt build.
 
 ### SC-242 — Chạm giới hạn `max_tool_calls_per_batch` (>4 calls) trong phiên dài (8 lượt)
+
 - **Tiền điều kiện:** Phiên mới.
 - **Các bước thực hiện:**
   1. **Lượt 1:** `Tìm cùng lúc giúp mình: chuột, bàn phím, tai nghe, màn hình, webcam và lót chuột tầm 1-3 triệu mỗi thứ.`
@@ -650,11 +677,12 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** Nếu model gọi >4 tools/batch ở Lượt 1, cơ chế `REPAIR` tự chia nhỏ batch mượt mà và chạy trọn 8 lượt.
 
 ### SC-243 — Hai lần `PendingResolution` liên tiếp (mơ hồ cả CPU và GPU) (8 lượt)
+
 - **Tiền điều kiện:** Shop có nhiều biến thể RTX 4060 và nhiều biến thể Ryzen 5 / Core i5.
 - **Các bước thực hiện:**
   1. **Lượt 1:** `Build PC 25 triệu dùng chip Core i5 và card RTX 4060 của shop.`
-  2. **Lượt 2:** *(Nếu hỏi làm rõ biến thể CPU hoặc GPU)* Chọn mẫu thứ 1.
-  3. **Lượt 3:** *(Nếu hỏi tiếp biến thể món còn lại)* Chọn mẫu rẻ nhất.
+  2. **Lượt 2:** _(Nếu hỏi làm rõ biến thể CPU hoặc GPU)_ Chọn mẫu thứ 1.
+  3. **Lượt 3:** _(Nếu hỏi tiếp biến thể món còn lại)_ Chọn mẫu rẻ nhất.
   4. **Lượt 4:** `Xác nhận lại 2 món mình vừa chọn đã được pin đúng vào cấu hình 25 triệu chưa?`
   5. **Lượt 5:** `Kiểm tra nguồn trong bộ này có dư công suất không.`
   6. **Lượt 6:** `Đổi RAM lên 32GB xem còn vừa 25 triệu không.`
@@ -663,6 +691,7 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** Không bị lẫn `pending_draft` giữa 2 lần chọn biến thể liên tiếp.
 
 ### SC-244 — Thử Read-Only / Xem lại lịch sử hội thoại cũ rồi tạo hội thoại mới so sánh (8 lượt)
+
 - **Tiền điều kiện:** Có sẵn 1 conversation cũ đã build PC xong.
 - **Các bước thực hiện:**
   1. **Lượt 1–2 (Conversation cũ):** Mở lại conversation cũ, hỏi: `Xem lại cấu hình và lý do chọn nguồn ở phiên này.`
@@ -672,6 +701,7 @@ Phạm vi: Kiểm thử sức chịu tải của `FlexibleState`, `Postgres` che
 - **Kỳ vọng:** Cô lập state & `saved_build` hoàn hảo giữa conversation cũ và mới.
 
 ### SC-245 — Full-Stack Audit: 8 Lượt Chat + `/build-pc` + Grafana Loki/Tempo/Prometheus (8 lượt)
+
 - **Tiền điều kiện:** Bật đủ `compose.yaml` + `lgtm`.
 - **Các bước thực hiện:**
   1. **Lượt 1:** `Chào shop, tư vấn giúp mình dàn PC 34 triệu vừa chơi game 2K vừa làm AI nhẹ.`
