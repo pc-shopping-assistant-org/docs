@@ -47,6 +47,8 @@ Build clarification lấy blockers từ requirement compiler. Backend dựng câ
 lưu `WAITING_INPUT` để người dùng trả lời ở lượt sau. Khi BUILD đã xác định và
 yêu cầu vừa được cập nhật, graph hỏi tiếp trực tiếp nếu vẫn còn thiếu thông tin.
 Ví dụ, sau khi nhận ngân sách, graph chỉ hỏi nhu cầu sử dụng.
+Lượt tiếp theo nhận mã còn thiếu trong `pending.missing_fields`. Một số tiền
+đứng riêng trả lời câu hỏi về mức chi tối đa được resolve thành giới hạn `LTE`.
 
 Compiler, catalog policy và bộ dựng câu hỏi dùng chung `CompilationReason` và
 `CompilationStatus`. JSON của checkpoint lưu mã chuỗi ổn định.

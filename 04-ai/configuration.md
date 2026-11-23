@@ -42,6 +42,16 @@ riêng. Chúng không phải toàn run deadline.
 `AI_PROVIDER=fallback` không hợp lệ cho server. Thiếu provider/key sẽ làm
 startup lỗi; Settings/OpenAPI và các công cụ offline vẫn dựng được không cần network.
 
+Để thử ReAct với model có sẵn trên Ollama local, giữ cấu hình DB và JWKS của môi
+trường dev rồi chạy AI service với các biến sau. Tên model lấy từ `ollama list`.
+
+```bash
+AI_PROVIDER=qwen \
+AI_QWEN_BASE_URL=http://127.0.0.1:11434/v1 \
+AI_QWEN_MODEL_NAME=qwen3.5:9b-q4_K_M \
+uv run uvicorn ai_service.main:app --reload
+```
+
 ## Hardware mapping
 
 Category type lấy từ `hardwareType` (code của master data) trong snapshot catalog,
