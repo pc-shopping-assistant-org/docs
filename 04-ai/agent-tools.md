@@ -28,6 +28,10 @@ Load accepted context → Agent
                               Prepare publication
 ```
 
+Các node, bảng routing và bước kiểm tra publication dùng chung `ReActPhase`.
+Checkpoint lưu `ReActPhase.code` dưới dạng chuỗi, nên graph có thể resume từ các
+checkpoint đã lưu trước đó.
+
 Requirement resolution không là mandatory prefix của mọi câu hỏi. Agent có thể
 đọc catalog/web trước khi đủ thông tin build. Nó không được đổi BUILD/COMPARE thành
 ANSWER chỉ để kết thúc sớm.
@@ -102,6 +106,8 @@ Search hai sản phẩm có thể chạy cùng lượt; search rồi đọc URL 
 sau. Requirement controls chạy riêng, merge xong mới build. Optimizer chạy tuần tự.
 Mỗi call có result COMPLETED/REJECTED/FAILED riêng và ToolMessage khớp call_id;
 lỗi dependency ở một call không làm mất kết quả những call khác.
+Graph và model projection dùng chung `require_tool_results`. Khi đọc transcript
+mà vẫn còn call thiếu result, guard ném `UnresolvedToolCallError`.
 Native task writes giữ kết quả đã hoàn tất khi batch bị ngắt. Recovery dùng đúng
 checkpoint được coordinator cho phép, không lấy latest/orphan của thread.
 Ledger giữ nguyên dữ liệu; projection model tối đa 12 KB/result, toàn request
