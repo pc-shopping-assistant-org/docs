@@ -43,8 +43,17 @@ Internal RESPOND tạo response cho lượt hiện tại, không công nhận bu
 Khi có pending, agent có thể giải thích context và publish response trong khi giữ
 nguyên task/proposal; application revalidate việc bảo toàn này trước CAS.
 
-Clarification kết thúc execution với pending artifact; user trả lời ở run sau,
-không giữ coroutine chờ user.
+Build clarification lấy blockers từ requirement compiler. Backend dựng câu hỏi và
+lưu `WAITING_INPUT` để người dùng trả lời ở lượt sau. Khi BUILD đã xác định và
+yêu cầu vừa được cập nhật, graph hỏi tiếp trực tiếp nếu vẫn còn thiếu thông tin.
+Ví dụ, sau khi nhận ngân sách, graph chỉ hỏi nhu cầu sử dụng.
+
+Compiler, catalog policy và bộ dựng câu hỏi dùng chung `CompilationReason` và
+`CompilationStatus`. JSON của checkpoint lưu mã chuỗi ổn định.
+
+Blockers dựa trên tồn kho hoặc thông số chỉ được dùng sau khi có catalog snapshot.
+Hết tồn của SKU đã pin thì hỏi có muốn đổi mẫu. Thiếu thông số thì nêu giới hạn dữ liệu.
+Yêu cầu đã chấp nhận vẫn được giữ cho đến khi người dùng thay đổi hoặc xác nhận.
 
 ## Actions and protocol
 
@@ -52,7 +61,7 @@ không giữ coroutine chờ user.
 | --- | --- |
 | `CALL_TOOLS` | Mảng typed invocations; checkpoint cũ `CALL_TOOL` vẫn đọc được |
 | `PROPOSE_REQUIREMENTS` | Draft được application resolve/validate; không tự merge |
-| `ASK_CLARIFICATION` | Hỏi đúng thông tin thiếu hoặc confirmation |
+| `ASK_CLARIFICATION` | Yêu cầu backend xác định và diễn đạt blocker của build |
 | `FINAL_ANSWER` | Candidate phải qua grounding/completion trước publish |
 | `RESPOND` | Hội thoại thường hoặc câu hỏi chen ngang; không tự hoàn tất task |
 
@@ -66,9 +75,9 @@ application suy ra outcome từ canonical ledger. `task_index=null` trả ground
 response cho lượt này mà không hoàn tất task pending. Model không xuất JSON
 FlexibleDecision; union này chỉ còn là representation nội bộ/đọc dữ liệu đã lưu.
 
-Protocol `compact-native-tools-v6` giữ wire nhỏ: proposal dùng items phẳng với
+Protocol `compact-native-tools-v7` giữ wire nhỏ: proposal dùng items phẳng với
 `value`, optional `unit`, `quote`; application chuyển thành domain draft và validate.
-Không chạy extractor lần hai. Submit dùng `refs`/`calls`; web quote/review fields
+Không chạy extractor lần hai. `ask_clarification` nhận `{}`. Submit dùng `refs`/`calls`; web quote/review fields
 chỉ expose sau readable web evidence. Ordinary clarification có thể là text.
 Serving/training dùng chung projection; không đưa toàn bộ domain JSON schema vào tools.
 

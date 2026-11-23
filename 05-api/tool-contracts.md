@@ -157,7 +157,9 @@ contract is `react/submissions.py`. RepairFeedback restricts corrective actions;
 invalid protocol returns no decision, not a fake answer. Control acknowledgements
 are checkpointed separately from business ToolResults, with matched provider pairs.
 
-Model-facing protocol `compact-native-tools-v6` uses `react/model_contracts.py`.
+Model-facing protocol `compact-native-tools-v7` uses `react/model_contracts.py`.
+`ask_clarification` takes `{}`. The application computes the build blockers and
+renders the question from the compiler and the canonical catalog snapshot.
 Proposal: `items[{subject,predicate,value,unit?,quote,...}]`, optional source_text only
 for agent suggestions requiring consent. Example budget: subject SETUP, predicate
 budget, target GOAL, value 25000000, unit VND, operator LTE, exact user quote.
